@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: feishu
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+

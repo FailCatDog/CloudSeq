@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.guet.feishu.mapper.ProjectMemberMapper">
+
+    <resultMap id="BaseResultMap" type="cn.guet.feishu.entity.ProjectMember">
+        <id column="id" property="id"/>
+        <result column="project_member_id" property="projectMemberId"/>
+        <result column="project_id" property="projectId"/>
+        <result column="user_id" property="userId"/>
+        <result column="role_in_project" property="roleInProject"/>
+        <result column="join_time" property="joinTime"/>
+        <result column="status" property="status"/>
+        <result column="invited_by" property="invitedBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, project_member_id, project_id, user_id, role_in_project,
+        join_time, status, invited_by, create_time, update_time
+    </sql>
+
+    <select id="selectByProjectMemberId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM project_member
+        WHERE project_member_id = #{projectMemberId}
+    </select>
+
+    <select id="selectByProjectIdAndUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM project_member
+        WHERE project_id = #{projectId} AND user_id = #{userId}
+    </select>
+
+    <select id="selectByProjectId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM project_member
+        WHERE project_id = #{projectId}
+        ORDER BY join_time ASC
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM project_member
+        WHERE user_id = #{userId}
+        ORDER BY join_time DESC
+    </select>
+
+    <insert id="insert" parameterType="cn.guet.feishu.entity.ProjectMember">
+        INSERT INTO project_member (
+            project_member_id, project_id, user_id, role_in_project,
+            status, invited_by
+        ) VALUES (
+            #{projectMemberId}, #{projectId}, #{userId}, #{roleInProject},
+            #{status}, #{invitedBy}
+        )
+    </insert>
+
+    <update id="updateByProjectMemberId" parameterType="cn.guet.feishu.entity.ProjectMember">
+        UPDATE project_member
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="roleInProject != null">role_in_project = #{roleInProject},</if>
+        </set>
+        WHERE project_member_id = #{projectMemberId}
+    </update>
+
+    <delete id="deleteByProjectMemberId">
+        DELETE FROM project_member WHERE project_member_id = #{projectMemberId}
+    </delete>
+
+</mapper>
+
