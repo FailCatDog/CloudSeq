@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.guet.feishu.mapper.ProjectGroupMapper">
+
+    <resultMap id="BaseResultMap" type="cn.guet.feishu.entity.ProjectGroup">
+        <id column="id" property="id"/>
+        <result column="group_id" property="groupId"/>
+        <result column="project_id" property="projectId"/>
+        <result column="group_name" property="groupName"/>
+        <result column="group_code" property="groupCode"/>
+        <result column="description" property="description"/>
+        <result column="leader_id" property="leaderId"/>
+        <result column="creator_id" property="creatorId"/>
+        <result column="current_members" property="currentMembers"/>
+        <result column="max_members" property="maxMembers"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, group_id, project_id, group_name, group_code, description,
+        leader_id, creator_id, current_members, max_members, status,
+        create_time, update_time
+    </sql>
+
+    <select id="selectByGroupId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM project_group
+        WHERE group_id = #{groupId}
+    </select>
+
+    <select id="selectByGroupCode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM project_group
+        WHERE project_id = #{projectId} AND group_code = #{groupCode}
+    </select>
+
+    <select id="selectByProjectId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM project_group
+        WHERE project_id = #{projectId}
+        ORDER BY create_time ASC
+    </select>
+
+    <select id="countByProjectId" resultType="int">
+        SELECT COUNT(*)
+        FROM project_group
+        WHERE project_id = #{projectId} AND status = 1
+    </select>
+
+    <insert id="insert" parameterType="cn.guet.feishu.entity.ProjectGroup">
+        INSERT INTO project_group (
+            group_id, project_id, group_name, group_code, description,
+            leader_id, creator_id, current_members, max_members, status
+        ) VALUES (
+            #{groupId}, #{projectId}, #{groupName}, #{groupCode}, #{description},
+            #{leaderId}, #{creatorId}, #{currentMembers}, #{maxMembers}, #{status}
+        )
+    </insert>
+
+    <update id="updateByGroupId" parameterType="cn.guet.feishu.entity.ProjectGroup">
+        UPDATE project_group
+        <set>
+            <if test="groupName != null">group_name = #{groupName},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="leaderId != null">leader_id = #{leaderId},</if>
+            <if test="currentMembers != null">current_members = #{currentMembers},</if>
+            <if test="maxMembers != null">max_members = #{maxMembers},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE group_id = #{groupId}
+    </update>
+
+    <delete id="deleteByGroupId">
+        DELETE FROM project_group WHERE group_id = #{groupId}
+    </delete>
+
+</mapper>
+
