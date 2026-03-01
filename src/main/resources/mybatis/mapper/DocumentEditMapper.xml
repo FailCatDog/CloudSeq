@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.guet.feishu.mapper.DocumentEditMapper">
+
+    <resultMap id="DocumentEditResultMap" type="cn.guet.feishu.entity.DocumentEdit">
+        <id property="id" column="id"/>
+        <result property="editId" column="edit_id"/>
+        <result property="documentId" column="document_id"/>
+        <result property="content" column="content"/>
+        <result property="editingUserId" column="editing_user_id"/>
+        <result property="editingStartTime" column="editing_start_time"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="findByDocumentId" resultMap="DocumentEditResultMap">
+        SELECT * FROM document_edit WHERE document_id = #{documentId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO document_edit (edit_id, document_id, content, editing_user_id, editing_start_time, status, create_time, update_time)
+        VALUES (#{editId}, #{documentId}, #{content}, #{editingUserId}, #{editingStartTime}, #{status}, NOW(), NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE document_edit
+        SET content = #{content},
+            editing_user_id = #{editingUserId},
+            editing_start_time = #{editingStartTime},
+            status = #{status},
+            update_time = NOW()
+        WHERE document_id = #{documentId}
+    </update>
+
+    <update id="releaseEditLock">
+        UPDATE document_edit
+        SET editing_user_id = NULL,
+            editing_start_time = NULL,
+            update_time = NOW()
+        WHERE document_id = #{documentId}
+    </update>
+
+    <update id="updateContent">
+        UPDATE document_edit
+        SET content = #{content},
+            update_time = NOW()
+        WHERE document_id = #{documentId}
+    </update>
+
+    <update id="updateEditingTime">
+        UPDATE document_edit
+        SET editing_start_time = NOW(),
+            update_time = NOW()
+        WHERE document_id = #{documentId}
+    </update>
+
+</mapper>
+
