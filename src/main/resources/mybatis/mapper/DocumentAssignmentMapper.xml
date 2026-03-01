@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.guet.feishu.mapper.DocumentAssignmentMapper">
+
+    <resultMap id="DocumentAssignmentResultMap" type="cn.guet.feishu.entity.DocumentAssignment">
+        <id property="id" column="id"/>
+        <result property="assignmentId" column="assignment_id"/>
+        <result property="documentId" column="document_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="assignedBy" column="assigned_by"/>
+        <result property="permission" column="permission"/>
+        <result property="assignTime" column="assign_time"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="cn.guet.feishu.entity.DocumentAssignment">
+        INSERT INTO document_assignment (assignment_id, document_id, user_id, assigned_by, permission)
+        VALUES (#{assignmentId}, #{documentId}, #{userId}, #{assignedBy}, #{permission})
+    </insert>
+
+    <update id="update" parameterType="cn.guet.feishu.entity.DocumentAssignment">
+        UPDATE document_assignment
+        SET permission = #{permission}
+        WHERE assignment_id = #{assignmentId}
+    </update>
+
+    <delete id="deleteByDocumentIdAndUserId">
+        DELETE FROM document_assignment 
+        WHERE document_id = #{documentId} AND user_id = #{userId}
+    </delete>
+
+    <delete id="deleteByDocumentId">
+        DELETE FROM document_assignment WHERE document_id = #{documentId}
+    </delete>
+
+    <select id="findByDocumentIdAndUserId" resultMap="DocumentAssignmentResultMap">
+        SELECT * FROM document_assignment 
+        WHERE document_id = #{documentId} AND user_id = #{userId}
+    </select>
+
+    <select id="findByDocumentId" resultMap="DocumentAssignmentResultMap">
+        SELECT * FROM document_assignment 
+        WHERE document_id = #{documentId}
+        ORDER BY assign_time DESC
+    </select>
+
+    <select id="findByUserId" resultMap="DocumentAssignmentResultMap">
+        SELECT * FROM document_assignment 
+        WHERE user_id = #{userId}
+        ORDER BY assign_time DESC
+    </select>
+
+</mapper>
+

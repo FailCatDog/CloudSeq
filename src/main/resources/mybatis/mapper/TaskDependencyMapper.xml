@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.guet.feishu.mapper.TaskDependencyMapper">
+
+    <resultMap id="BaseResultMap" type="cn.guet.feishu.entity.TaskDependency">
+        <id column="id" property="id"/>
+        <result column="dependency_id" property="dependencyId"/>
+        <result column="task_id" property="taskId"/>
+        <result column="depend_on_task_id" property="dependOnTaskId"/>
+        <result column="dependency_type" property="dependencyType"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="cn.guet.feishu.entity.TaskDependency">
+        INSERT INTO task_dependency (
+            dependency_id, task_id, depend_on_task_id, dependency_type
+        ) VALUES (
+            #{dependencyId}, #{taskId}, #{dependOnTaskId}, #{dependencyType}
+        )
+    </insert>
+
+    <delete id="deleteByDependencyId">
+        DELETE FROM task_dependency WHERE dependency_id = #{dependencyId}
+    </delete>
+
+    <delete id="deleteByTaskId">
+        DELETE FROM task_dependency WHERE task_id = #{taskId}
+    </delete>
+
+    <select id="selectByTaskIdAndDependOnTaskId" resultMap="BaseResultMap">
+        SELECT * FROM task_dependency 
+        WHERE task_id = #{taskId} AND depend_on_task_id = #{dependOnTaskId}
+    </select>
+
+    <select id="selectByTaskId" resultMap="BaseResultMap">
+        SELECT * FROM task_dependency WHERE task_id = #{taskId}
+    </select>
+
+    <select id="selectByDependOnTaskId" resultMap="BaseResultMap">
+        SELECT * FROM task_dependency WHERE depend_on_task_id = #{dependOnTaskId}
+    </select>
+
+</mapper>
+

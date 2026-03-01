@@ -16,4 +16,8 @@ mybatis:
 
 jwt:
   secret: feishu-secret-key-2024-very-long-secret-key-for-jwt-token
-  expiration: 7200000
+  expiration: 86400000
+
+file:
+  upload:
+    path: E:/Code-Project/Java-Project/feishu/uploads

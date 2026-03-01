@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.guet.feishu.mapper.TaskAssignmentMapper">
+
+    <resultMap id="BaseResultMap" type="cn.guet.feishu.entity.TaskAssignment">
+        <id column="id" property="id"/>
+        <result column="assignment_id" property="assignmentId"/>
+        <result column="task_id" property="taskId"/>
+        <result column="user_id" property="userId"/>
+        <result column="assigned_by" property="assignedBy"/>
+        <result column="status" property="status"/>
+        <result column="progress" property="progress"/>
+        <result column="actual_hours" property="actualHours"/>
+        <result column="assign_time" property="assignTime"/>
+        <result column="start_time" property="startTime"/>
+        <result column="finish_time" property="finishTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="cn.guet.feishu.entity.TaskAssignment">
+        INSERT INTO task_assignment (
+            assignment_id, task_id, user_id, assigned_by,
+            status, progress, actual_hours
+        ) VALUES (
+            #{assignmentId}, #{taskId}, #{userId}, #{assignedBy},
+            #{status}, #{progress}, #{actualHours}
+        )
+    </insert>
+
+    <update id="updateByAssignmentId" parameterType="cn.guet.feishu.entity.TaskAssignment">
+        UPDATE task_assignment
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="progress != null">progress = #{progress},</if>
+            <if test="actualHours != null">actual_hours = #{actualHours},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="finishTime != null">finish_time = #{finishTime},</if>
+        </set>
+        WHERE assignment_id = #{assignmentId}
+    </update>
+
+    <delete id="deleteByAssignmentId">
+        DELETE FROM task_assignment WHERE assignment_id = #{assignmentId}
+    </delete>
+
+    <delete id="deleteByTaskId">
+        DELETE FROM task_assignment WHERE task_id = #{taskId}
+    </delete>
+
+    <select id="selectByAssignmentId" resultMap="BaseResultMap">
+        SELECT * FROM task_assignment WHERE assignment_id = #{assignmentId}
+    </select>
+
+    <select id="selectByTaskIdAndUserId" resultMap="BaseResultMap">
+        SELECT * FROM task_assignment 
+        WHERE task_id = #{taskId} AND user_id = #{userId}
+    </select>
+
+    <select id="selectByTaskId" resultMap="BaseResultMap">
+        SELECT * FROM task_assignment WHERE task_id = #{taskId}
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM task_assignment 
+        WHERE user_id = #{userId}
+        ORDER BY assign_time DESC
+    </select>
+
+    <select id="countCompletedByUserId" resultType="int">
+        SELECT COUNT(*) FROM task_assignment 
+        WHERE user_id = #{userId} AND status = 2
+    </select>
+
+</mapper>
+
