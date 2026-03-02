@@ -18,6 +18,9 @@ public class TaskController {
 
     private final TaskService taskService;
 
+    /**
+     * 创建任务
+     */
     @PostMapping
     public Result<ProjectTask> createTask(HttpServletRequest request, 
                                           @Valid @RequestBody CreateTaskRequestDTO dto) {
@@ -26,6 +29,9 @@ public class TaskController {
         return Result.success(task);
     }
 
+    /**
+     * 更新任务
+     */
     @PutMapping("/{taskId}")
     public Result<Void> updateTask(HttpServletRequest request,
                                     @PathVariable String taskId,
@@ -35,6 +41,9 @@ public class TaskController {
         return Result.success();
     }
 
+    /**
+     * 删除任务
+     */
     @DeleteMapping("/{taskId}")
     public Result<Void> deleteTask(HttpServletRequest request,
                                     @PathVariable String taskId) {
@@ -43,12 +52,18 @@ public class TaskController {
         return Result.success();
     }
 
+    /**
+     * 获取任务详情
+     */
     @GetMapping("/{taskId}")
     public Result<TaskDetailDTO> getTaskDetail(@PathVariable String taskId) {
         TaskDetailDTO task = taskService.getTaskDetail(taskId);
         return Result.success(task);
     }
 
+    /**
+     * 获取项目任务列表
+     */
     @GetMapping("/project/{projectId}")
     public Result<List<ProjectTask>> getProjectTasks(@PathVariable String projectId,
                                                       @RequestParam(required = false) Integer status,
@@ -57,12 +72,18 @@ public class TaskController {
         return Result.success(tasks);
     }
 
+    /**
+     * 获取小组任务列表
+     */
     @GetMapping("/group/{groupId}")
     public Result<List<ProjectTask>> getGroupTasks(@PathVariable String groupId) {
         List<ProjectTask> tasks = taskService.getGroupTasks(groupId);
         return Result.success(tasks);
     }
 
+    /**
+     * 获取我的任务列表
+     */
     @GetMapping("/my")
     public Result<List<ProjectTask>> getMyTasks(HttpServletRequest request) {
         String userId = (String) request.getAttribute("userId");
@@ -70,6 +91,9 @@ public class TaskController {
         return Result.success(tasks);
     }
 
+    /**
+     * 分配任务
+     */
     @PostMapping("/{taskId}/assign")
     public Result<Void> assignTask(HttpServletRequest request,
                                     @PathVariable String taskId,
@@ -80,6 +104,9 @@ public class TaskController {
         return Result.success();
     }
 
+    /**
+     * 更新任务分配状态
+     */
     @PutMapping("/{taskId}/assignment")
     public Result<Void> updateAssignment(HttpServletRequest request,
                                           @PathVariable String taskId,
@@ -89,6 +116,9 @@ public class TaskController {
         return Result.success();
     }
 
+    /**
+     * 添加任务依赖
+     */
     @PostMapping("/{taskId}/dependency")
     public Result<Void> addDependency(HttpServletRequest request,
                                        @PathVariable String taskId,
@@ -98,6 +128,9 @@ public class TaskController {
         return Result.success();
     }
 
+    /**
+     * 移除任务依赖
+     */
     @DeleteMapping("/{taskId}/dependency")
     public Result<Void> removeDependency(HttpServletRequest request,
                                           @PathVariable String taskId,

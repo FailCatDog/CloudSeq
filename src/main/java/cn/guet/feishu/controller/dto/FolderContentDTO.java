@@ -8,7 +8,13 @@ import java.util.List;
 
 @Data
 public class FolderContentDTO {
+    /**
+     * 子文件夹列表
+     */
     private List<DocumentFolder> folders;
+    /**
+     * 文档列表
+     */
     private List<GroupDocument> documents;
 }
 

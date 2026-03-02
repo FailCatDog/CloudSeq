@@ -32,6 +32,9 @@ public class DocumentController {
 
     private final DocumentService documentService;
 
+    /**
+     * 创建文件夹
+     */
     @PostMapping("/folder")
     public Result<DocumentFolder> createFolder(HttpServletRequest request,
                                                 @Valid @RequestBody CreateFolderRequestDTO dto) {
@@ -40,6 +43,9 @@ public class DocumentController {
         return Result.success(folder);
     }
 
+    /**
+     * 删除文件夹
+     */
     @DeleteMapping("/folder/{folderId}")
     public Result<Void> deleteFolder(HttpServletRequest request,
                                       @PathVariable String folderId) {
@@ -48,6 +54,9 @@ public class DocumentController {
         return Result.success();
     }
 
+    /**
+     * 更新文件夹
+     */
     @PutMapping("/folder/{folderId}")
     public Result<Void> updateFolder(HttpServletRequest request,
                                       @PathVariable String folderId,
@@ -59,18 +68,27 @@ public class DocumentController {
         return Result.success();
     }
 
+    /**
+     * 获取小组文件夹列表
+     */
     @GetMapping("/folder/group/{groupId}")
     public Result<List<DocumentFolder>> getGroupFolders(@PathVariable String groupId) {
         List<DocumentFolder> folders = documentService.getGroupFolders(groupId);
         return Result.success(folders);
     }
 
+    /**
+     * 获取文件夹内容
+     */
     @GetMapping("/folder/{folderId}/content")
     public Result<FolderContentDTO> getFolderContent(@PathVariable String folderId) {
         FolderContentDTO content = documentService.getFolderContent(folderId);
         return Result.success(content);
     }
 
+    /**
+     * 上传文档
+     */
     @PostMapping("/upload")
     public Result<GroupDocument> uploadDocument(HttpServletRequest request,
                                                  @RequestParam String groupId,
@@ -83,6 +101,9 @@ public class DocumentController {
         return Result.success(document);
     }
 
+    /**
+     * 删除文档
+     */
     @DeleteMapping("/{documentId}")
     public Result<Void> deleteDocument(HttpServletRequest request,
                                         @PathVariable String documentId) {
@@ -91,6 +112,9 @@ public class DocumentController {
         return Result.success();
     }
 
+    /**
+     * 更新文档信息
+     */
     @PutMapping("/{documentId}")
     public Result<Void> updateDocument(HttpServletRequest request,
                                         @PathVariable String documentId,
@@ -100,18 +124,27 @@ public class DocumentController {
         return Result.success();
     }
 
+    /**
+     * 获取文档详情
+     */
     @GetMapping("/{documentId}")
     public Result<GroupDocument> getDocumentDetail(@PathVariable String documentId) {
         GroupDocument document = documentService.getDocumentDetail(documentId);
         return Result.success(document);
     }
 
+    /**
+     * 获取小组文档列表
+     */
     @GetMapping("/group/{groupId}")
     public Result<List<GroupDocument>> getGroupDocuments(@PathVariable String groupId) {
         List<GroupDocument> documents = documentService.getGroupDocuments(groupId);
         return Result.success(documents);
     }
 
+    /**
+     * 下载文档
+     */
     @GetMapping("/{documentId}/download")
     public ResponseEntity<Resource> downloadDocument(HttpServletRequest request,
                                                       @PathVariable String documentId,
@@ -130,6 +163,9 @@ public class DocumentController {
                 .body(resource);
     }
 
+    /**
+     * 分配文档权限
+     */
     @PostMapping("/{documentId}/assign")
     public Result<Void> assignDocument(HttpServletRequest request,
                                         @PathVariable String documentId,
@@ -139,6 +175,9 @@ public class DocumentController {
         return Result.success();
     }
 
+    /**
+     * 移除文档权限
+     */
     @DeleteMapping("/{documentId}/assign/{userId}")
     public Result<Void> removeAssignment(HttpServletRequest request,
                                           @PathVariable String documentId,
@@ -148,6 +187,9 @@ public class DocumentController {
         return Result.success();
     }
 
+    /**
+     * 更新文档权限
+     */
     @PutMapping("/{documentId}/assign/{userId}")
     public Result<Void> updateAssignment(HttpServletRequest request,
                                           @PathVariable String documentId,
@@ -158,12 +200,18 @@ public class DocumentController {
         return Result.success();
     }
 
+    /**
+     * 获取文档权限分配列表
+     */
     @GetMapping("/{documentId}/assignments")
     public Result<List<DocumentAssignmentDTO>> getDocumentAssignments(@PathVariable String documentId) {
         List<DocumentAssignmentDTO> assignments = documentService.getDocumentAssignments(documentId);
         return Result.success(assignments);
     }
 
+    /**
+     * 获取我的文档列表
+     */
     @GetMapping("/my")
     public Result<List<GroupDocument>> getMyDocuments(HttpServletRequest request) {
         String userId = (String) request.getAttribute("userId");

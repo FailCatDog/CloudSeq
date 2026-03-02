@@ -16,12 +16,18 @@ public class DocumentEditController {
 
     private final DocumentEditService documentEditService;
 
+    /**
+     * 获取文档编辑内容
+     */
     @GetMapping("/{documentId}")
     public Result<DocumentEdit> getDocumentEdit(@PathVariable String documentId) {
         DocumentEdit edit = documentEditService.getDocumentEdit(documentId);
         return Result.success(edit);
     }
 
+    /**
+     * 开始编辑文档
+     */
     @PostMapping("/{documentId}/start")
     public Result<DocumentEdit> startEdit(HttpServletRequest request,
                                           @PathVariable String documentId) {
@@ -30,6 +36,9 @@ public class DocumentEditController {
         return Result.success(edit);
     }
 
+    /**
+     * 保存文档内容
+     */
     @PostMapping("/{documentId}/save")
     public Result<Void> saveContent(@PathVariable String documentId,
                                      @RequestBody String content) {
@@ -37,6 +46,9 @@ public class DocumentEditController {
         return Result.success();
     }
 
+    /**
+     * 释放编辑锁
+     */
     @PostMapping("/{documentId}/release")
     public Result<Void> releaseEdit(HttpServletRequest request,
                                      @PathVariable String documentId) {
@@ -45,6 +57,9 @@ public class DocumentEditController {
         return Result.success();
     }
 
+    /**
+     * 编辑心跳
+     */
     @PostMapping("/{documentId}/heartbeat")
     public Result<Void> heartbeat(HttpServletRequest request,
                                    @PathVariable String documentId) {
