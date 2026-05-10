@@ -43,7 +43,7 @@ public class GroupServiceImpl implements GroupService {
         }
 
         if (project.getAllowStudentCreateGroup() == 0) {
-            throw new BusinessException("该项目不允许学生创建小组");
+            throw new BusinessException("该项目不允许创建小组");
         }
 
         if (project.getGroupDeadline() != null && LocalDateTime.now().isAfter(project.getGroupDeadline())) {
@@ -192,6 +192,16 @@ public class GroupServiceImpl implements GroupService {
         group.setStatus(2);
         group.setCurrentMembers(0);
         projectGroupMapper.updateByGroupId(group);
+    }
+
+    /**
+     * 项目创建者可视为小组管理者，后续若项目下仅保留单一核心小组，可直接复用此方法。
+     */
+    private void ensureProjectMember(String projectId, String userId) {
+        ProjectMember projectMember = projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
+        if (projectMember == null) {
+            throw new BusinessException("您不是该项目成员");
+        }
     }
 
     @Override

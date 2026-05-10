@@ -139,5 +139,26 @@ public class TaskController {
         taskService.removeDependency(userId, taskId, dependOnTaskId);
         return Result.success();
     }
+
+    /**
+     * 获取项目任务统计
+     */
+    @GetMapping("/statistics/project/{projectId}")
+    public Result<TaskStatisticsDTO> getProjectTaskStatistics(HttpServletRequest request,
+                                                               @PathVariable String projectId) {
+        String userId = (String) request.getAttribute("userId");
+        TaskStatisticsDTO statistics = taskService.getProjectTaskStatistics(userId, projectId);
+        return Result.success(statistics);
+    }
+
+    /**
+     * 获取我的任务统计
+     */
+    @GetMapping("/statistics/my")
+    public Result<TaskStatisticsDTO> getMyTaskStatistics(HttpServletRequest request) {
+        String userId = (String) request.getAttribute("userId");
+        TaskStatisticsDTO statistics = taskService.getMyTaskStatistics(userId);
+        return Result.success(statistics);
+    }
 }
 

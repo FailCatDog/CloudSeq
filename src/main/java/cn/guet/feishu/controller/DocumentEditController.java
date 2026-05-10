@@ -26,6 +26,14 @@ public class DocumentEditController {
     }
 
     /**
+     * 获取文档编辑状态
+     */
+    @GetMapping("/{documentId}/status")
+    public Result<cn.guet.feishu.controller.dto.DocumentEditStatusDTO> getEditStatus(@PathVariable String documentId) {
+        return Result.success(documentEditService.getEditStatus(documentId));
+    }
+
+    /**
      * 开始编辑文档
      */
     @PostMapping("/{documentId}/start")
@@ -40,9 +48,11 @@ public class DocumentEditController {
      * 保存文档内容
      */
     @PostMapping("/{documentId}/save")
-    public Result<Void> saveContent(@PathVariable String documentId,
-                                     @RequestBody String content) {
-        documentEditService.saveContent(documentId, content);
+    public Result<Void> saveContent(HttpServletRequest request,
+                                    @PathVariable String documentId,
+                                    @RequestBody String content) {
+        String userId = (String) request.getAttribute("userId");
+        documentEditService.saveContent(userId, documentId, content);
         return Result.success();
     }
 

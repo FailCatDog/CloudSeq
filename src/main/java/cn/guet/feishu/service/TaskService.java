@@ -102,5 +102,22 @@ public interface TaskService {
      * @param dependOnTaskId 依赖的任务ID
      */
     void removeDependency(String userId, String taskId, String dependOnTaskId);
+
+    /**
+     * 获取项目任务统计
+     * 
+     * @param userId 用户ID
+     * @param projectId 项目ID
+     * @return 任务统计信息
+     */
+    TaskStatisticsDTO getProjectTaskStatistics(String userId, String projectId);
+
+    /**
+     * 获取我的任务统计
+     * 
+     * @param userId 用户ID
+     * @return 任务统计信息
+     */
+    TaskStatisticsDTO getMyTaskStatistics(String userId);
 }
 

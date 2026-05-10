@@ -13,7 +13,7 @@ public interface ProjectService {
     /**
      * 创建项目
      * 
-     * @param creatorId 创建者ID（教师）
+     * @param creatorId 创建者ID（学生用户）
      * @param request 创建请求，包含项目名称、描述、时间等
      * @return 创建的项目
      */
@@ -66,12 +66,21 @@ public interface ProjectService {
     List<Project> getAllProjects();
     
     /**
-     * 加入项目
+     * 通过项目码加入项目
      * 
      * @param userId 用户ID
      * @param projectCode 项目编码
      */
     void joinProject(String userId, String projectCode);
+
+    /**
+     * 邀请用户加入项目
+     * 
+     * @param inviterId 邀请人ID
+     * @param projectId 项目ID
+     * @param targetUserId 被邀请用户ID
+     */
+    void inviteProjectMember(String inviterId, String projectId, String targetUserId);
     
     /**
      * 退出项目

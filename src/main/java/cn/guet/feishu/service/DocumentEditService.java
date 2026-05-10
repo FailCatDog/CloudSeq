@@ -1,5 +1,6 @@
 package cn.guet.feishu.service;
 
+import cn.guet.feishu.controller.dto.DocumentEditStatusDTO;
 import cn.guet.feishu.entity.DocumentEdit;
 
 public interface DocumentEditService {
@@ -13,6 +14,14 @@ public interface DocumentEditService {
     DocumentEdit getDocumentEdit(String documentId);
     
     /**
+     * 获取文档编辑状态
+     * 
+     * @param documentId 文档ID
+     * @return 文档编辑状态
+     */
+    DocumentEditStatusDTO getEditStatus(String documentId);
+    
+    /**
      * 开始编辑文档
      * 
      * @param userId 用户ID
@@ -24,10 +33,11 @@ public interface DocumentEditService {
     /**
      * 保存文档内容
      * 
+     * @param userId 用户ID
      * @param documentId 文档ID
      * @param content 文档内容
      */
-    void saveContent(String documentId, String content);
+    void saveContent(String userId, String documentId, String content);
     
     /**
      * 释放编辑锁

@@ -29,6 +29,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final GroupDocumentMapper groupDocumentMapper;
     private final DocumentAssignmentMapper documentAssignmentMapper;
     private final GroupMemberMapper groupMemberMapper;
+    private final ProjectGroupMapper projectGroupMapper;
+    private final ProjectMapper projectMapper;
     private final UserMapper userMapper;
 
     @Value("${file.upload.path:uploads}")
@@ -37,10 +39,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public DocumentFolder createFolder(String userId, CreateFolderRequestDTO dto) {
-        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(dto.getGroupId(), userId);
-        if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-            throw new BusinessException(403, "只有组长可以创建文件夹");
-        }
+        requireProjectOwnerOrLeader(userId, dto.getGroupId(), "只有项目创建者或组长可以创建文件夹");
 
         if (dto.getParentFolderId() != null) {
             DocumentFolder parentFolder = documentFolderMapper.findById(dto.getParentFolderId());
@@ -69,10 +68,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new BusinessException("文件夹不存在");
         }
 
-        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(folder.getGroupId(), userId);
-        if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-            throw new BusinessException(403, "只有组长可以删除文件夹");
-        }
+        requireProjectOwnerOrLeader(userId, folder.getGroupId(), "只有项目创建者或组长可以删除文件夹");
 
         deleteSubFoldersAndDocuments(folderId);
         documentFolderMapper.deleteById(folderId);
@@ -101,10 +97,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new BusinessException("文件夹不存在");
         }
 
-        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(folder.getGroupId(), userId);
-        if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-            throw new BusinessException(403, "只有组长可以更新文件夹");
-        }
+        requireProjectOwnerOrLeader(userId, folder.getGroupId(), "只有项目创建者或组长可以更新文件夹");
 
         folder.setFolderName(dto.getFolderName());
         documentFolderMapper.update(folder);
@@ -131,10 +124,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public GroupDocument uploadDocument(String userId, String groupId, String folderId, String description, MultipartFile file) {
-        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(groupId, userId);
-        if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-            throw new BusinessException(403, "只有组长可以上传文档");
-        }
+        requireProjectOwnerOrLeader(userId, groupId, "只有项目创建者或组长可以上传文档");
 
         if (folderId != null) {
             DocumentFolder folder = documentFolderMapper.findById(folderId);
@@ -205,10 +195,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new BusinessException("文档不存在");
         }
 
-        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(document.getGroupId(), userId);
-        if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-            throw new BusinessException(403, "只有组长可以删除文档");
-        }
+        requireProjectOwnerOrLeader(userId, document.getGroupId(), "只有项目创建者或组长可以删除文档");
 
         deleteDocumentFile(document.getFilePath());
         documentAssignmentMapper.deleteByDocumentId(documentId);
@@ -233,10 +220,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new BusinessException("文档不存在");
         }
 
-        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(document.getGroupId(), userId);
-        if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-            throw new BusinessException(403, "只有组长可以更新文档");
-        }
+        requireProjectOwnerOrLeader(userId, document.getGroupId(), "只有项目创建者或组长可以更新文档");
 
         if (dto.getDocumentName() != null) {
             document.setDocumentName(dto.getDocumentName());
@@ -289,10 +273,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new BusinessException("文档不存在");
         }
 
-        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(document.getGroupId(), userId);
-        if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-            throw new BusinessException(403, "只有组长可以分配文档权限");
-        }
+        requireProjectOwnerOrLeader(userId, document.getGroupId(), "只有项目创建者或组长可以分配文档权限");
 
         for (AssignDocumentRequestDTO dto : assignments) {
             DocumentAssignment existing = documentAssignmentMapper.findByDocumentIdAndUserId(documentId, dto.getUserId());
@@ -318,10 +299,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new BusinessException("文档不存在");
         }
 
-        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(document.getGroupId(), userId);
-        if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-            throw new BusinessException(403, "只有组长可以移除文档权限");
-        }
+        requireProjectOwnerOrLeader(userId, document.getGroupId(), "只有项目创建者或组长可以移除文档权限");
 
         documentAssignmentMapper.deleteByDocumentIdAndUserId(documentId, targetUserId);
     }
@@ -334,10 +312,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new BusinessException("文档不存在");
         }
 
-        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(document.getGroupId(), userId);
-        if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-            throw new BusinessException(403, "只有组长可以更新文档权限");
-        }
+        requireProjectOwnerOrLeader(userId, document.getGroupId(), "只有项目创建者或组长可以更新文档权限");
 
         DocumentAssignment assignment = documentAssignmentMapper.findByDocumentIdAndUserId(documentId, targetUserId);
         if (assignment == null) {
@@ -377,6 +352,28 @@ public class DocumentServiceImpl implements DocumentService {
                 .map(assignment -> groupDocumentMapper.findById(assignment.getDocumentId()))
                 .filter(doc -> doc != null)
                 .toList();
+    }
+
+    private void requireProjectOwnerOrLeader(String userId, String groupId, String message) {
+        if (groupId == null) {
+            throw new BusinessException(403, message);
+        }
+
+        ProjectGroup group = projectGroupMapper.selectByGroupId(groupId);
+        if (group == null) {
+            throw new BusinessException("小组不存在");
+        }
+
+        if (userId != null && userId.equals(group.getCreatorId())) {
+            return;
+        }
+
+        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(groupId, userId);
+        if (member != null && "LEADER".equals(member.getRoleInGroup())) {
+            return;
+        }
+
+        throw new BusinessException(403, message);
     }
 }
 

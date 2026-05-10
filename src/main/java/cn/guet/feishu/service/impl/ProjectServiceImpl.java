@@ -1,6 +1,5 @@
 package cn.guet.feishu.service.impl;
 
-import cn.guet.feishu.common.constant.RoleConstant;
 import cn.guet.feishu.common.exception.BusinessException;
 import cn.guet.feishu.controller.dto.CreateProjectRequestDTO;
 import cn.guet.feishu.controller.dto.ProjectListItemDTO;
@@ -34,8 +33,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     public Project createProject(String creatorId, CreateProjectRequestDTO request) {
         User creator = userMapper.selectByUserId(creatorId);
-        if (creator == null || !RoleConstant.TEACHER.equals(creator.getRole())) {
-            throw new BusinessException("只有教师可以创建项目");
+        if (creator == null) {
+            throw new BusinessException("用户不存在");
         }
 
         Project project = new Project();
@@ -159,7 +158,41 @@ public class ProjectServiceImpl implements ProjectService {
         member.setUserId(userId);
         member.setRoleInProject("MEMBER");
         member.setStatus(1);
+        member.setInvitedBy(project.getCreatorId());
 
+        projectMemberMapper.insert(member);
+    }
+
+    @Override
+    @Transactional
+    public void inviteProjectMember(String inviterId, String projectId, String targetUserId) {
+        Project project = projectMapper.selectByProjectId(projectId);
+        if (project == null) {
+            throw new BusinessException("项目不存在");
+        }
+
+        ProjectMember inviter = projectMemberMapper.selectByProjectIdAndUserId(projectId, inviterId);
+        if (inviter == null || !"OWNER".equals(inviter.getRoleInProject())) {
+            throw new BusinessException("只有项目创建者可以邀请成员");
+        }
+
+        ProjectMember existMember = projectMemberMapper.selectByProjectIdAndUserId(projectId, targetUserId);
+        if (existMember != null) {
+            throw new BusinessException("该用户已经是项目成员");
+        }
+
+        User targetUser = userMapper.selectByUserId(targetUserId);
+        if (targetUser == null) {
+            throw new BusinessException("被邀请用户不存在");
+        }
+
+        ProjectMember member = new ProjectMember();
+        member.setProjectMemberId(UUID.randomUUID().toString());
+        member.setProjectId(projectId);
+        member.setUserId(targetUserId);
+        member.setRoleInProject("MEMBER");
+        member.setStatus(1);
+        member.setInvitedBy(inviterId);
         projectMemberMapper.insert(member);
     }
 

@@ -39,19 +39,21 @@ public class TaskServiceImpl implements TaskService {
             throw new BusinessException("项目不存在");
         }
 
-        User user = userMapper.selectByUserId(userId);
-        boolean isTeacher = "TEACHER".equals(user.getRole());
+        User creator = userMapper.selectByUserId(userId);
+        if (creator == null) {
+            throw new BusinessException("创建者不存在");
+        }
 
         if (request.getGroupId() != null) {
             ProjectGroup group = projectGroupMapper.selectByGroupId(request.getGroupId());
             if (group == null) {
                 throw new BusinessException("小组不存在");
             }
-            if (!isTeacher) {
-                GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(request.getGroupId(), userId);
-                if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-                    throw new BusinessException("只有组长可以创建小组任务");
-                }
+            if (!request.getProjectId().equals(group.getProjectId())) {
+                throw new BusinessException("小组不属于当前项目");
+            }
+            if (!canManageGroupTask(userId, request.getGroupId())) {
+                throw new BusinessException("只有项目创建者或组长可以创建小组任务");
             }
         }
 
@@ -59,6 +61,12 @@ public class TaskServiceImpl implements TaskService {
             ProjectTask parentTask = projectTaskMapper.selectByTaskId(request.getParentTaskId());
             if (parentTask == null) {
                 throw new BusinessException("父任务不存在");
+            }
+            if (!request.getProjectId().equals(parentTask.getProjectId())) {
+                throw new BusinessException("父任务不属于当前项目");
+            }
+            if (request.getGroupId() != null && parentTask.getGroupId() != null && !request.getGroupId().equals(parentTask.getGroupId())) {
+                throw new BusinessException("子任务与父任务小组不一致");
             }
         }
 
@@ -80,7 +88,7 @@ public class TaskServiceImpl implements TaskService {
         task.setEndTime(request.getEndTime());
         task.setEstimatedHours(request.getEstimatedHours());
         task.setActualHours(BigDecimal.ZERO);
-        
+
         if (request.getTags() != null && !request.getTags().isEmpty()) {
             try {
                 task.setTags(objectMapper.writeValueAsString(request.getTags()));
@@ -93,6 +101,7 @@ public class TaskServiceImpl implements TaskService {
 
         if (request.getAssignToUserIds() != null && !request.getAssignToUserIds().isEmpty()) {
             for (String assignUserId : request.getAssignToUserIds()) {
+                validateTaskAssignee(request.getGroupId(), assignUserId);
                 TaskAssignment assignment = new TaskAssignment();
                 assignment.setAssignmentId(UUID.randomUUID().toString());
                 assignment.setTaskId(task.getTaskId());
@@ -117,17 +126,12 @@ public class TaskServiceImpl implements TaskService {
         }
 
         User user = userMapper.selectByUserId(userId);
-        boolean isTeacher = "TEACHER".equals(user.getRole());
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
 
-        if (!isTeacher && !task.getCreatorId().equals(userId)) {
-            if (task.getGroupId() != null) {
-                GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(task.getGroupId(), userId);
-                if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-                    throw new BusinessException("无权限修改该任务");
-                }
-            } else {
-                throw new BusinessException("无权限修改该任务");
-            }
+        if (!canManageTask(userId, task)) {
+            throw new BusinessException("无权限修改该任务");
         }
 
         if (request.getTaskTitle() != null) {
@@ -140,7 +144,11 @@ public class TaskServiceImpl implements TaskService {
             task.setPriority(request.getPriority());
         }
         if (request.getStatus() != null) {
+            validateTaskStatus(request.getStatus());
             task.setStatus(request.getStatus());
+            if (request.getStatus() == 2 && task.getProgress() == null) {
+                task.setProgress(100);
+            }
         }
         if (request.getStartTime() != null) {
             task.setStartTime(request.getStartTime());
@@ -171,9 +179,11 @@ public class TaskServiceImpl implements TaskService {
         }
 
         User user = userMapper.selectByUserId(userId);
-        boolean isTeacher = "TEACHER".equals(user.getRole());
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
 
-        if (!isTeacher && !task.getCreatorId().equals(userId)) {
+        if (!canManageTask(userId, task)) {
             throw new BusinessException("无权限删除该任务");
         }
 
@@ -281,6 +291,7 @@ public class TaskServiceImpl implements TaskService {
         List<TaskAssignment> assignments = taskAssignmentMapper.selectByUserId(userId);
         return assignments.stream()
                 .map(assignment -> projectTaskMapper.selectByTaskId(assignment.getTaskId()))
+                .filter(task -> task != null)
                 .collect(Collectors.toList());
     }
 
@@ -293,20 +304,16 @@ public class TaskServiceImpl implements TaskService {
         }
 
         User user = userMapper.selectByUserId(userId);
-        boolean isTeacher = "TEACHER".equals(user.getRole());
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
 
-        if (!isTeacher && !task.getCreatorId().equals(userId)) {
-            if (task.getGroupId() != null) {
-                GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(task.getGroupId(), userId);
-                if (member == null || !"LEADER".equals(member.getRoleInGroup())) {
-                    throw new BusinessException("无权限分配该任务");
-                }
-            } else {
-                throw new BusinessException("无权限分配该任务");
-            }
+        if (!canManageTask(userId, task)) {
+            throw new BusinessException("无权限分配该任务");
         }
 
         for (String assignUserId : userIds) {
+            validateTaskAssignee(task.getGroupId(), assignUserId);
             TaskAssignment existing = taskAssignmentMapper.selectByTaskIdAndUserId(taskId, assignUserId);
             if (existing != null) {
                 continue;
@@ -398,6 +405,79 @@ public class TaskServiceImpl implements TaskService {
         taskDependencyMapper.deleteByDependencyId(dependency.getDependencyId());
     }
 
+    @Override
+    public TaskStatisticsDTO getProjectTaskStatistics(String userId, String projectId) {
+        Project project = projectMapper.selectByProjectId(projectId);
+        if (project == null) {
+            throw new BusinessException("项目不存在");
+        }
+
+        List<ProjectTask> tasks = projectTaskMapper.selectByProjectId(projectId);
+        return buildTaskStatistics(tasks);
+    }
+
+    private boolean canManageTask(String userId, ProjectTask task) {
+        if (userId != null && userId.equals(task.getCreatorId())) {
+            return true;
+        }
+
+        Project project = projectMapper.selectByProjectId(task.getProjectId());
+        if (project != null && userId != null && userId.equals(project.getCreatorId())) {
+            return true;
+        }
+
+        if (task.getGroupId() != null) {
+            GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(task.getGroupId(), userId);
+            return member != null && "LEADER".equals(member.getRoleInGroup());
+        }
+
+        return false;
+    }
+
+    private boolean canManageGroupTask(String userId, String groupId) {
+        ProjectGroup group = projectGroupMapper.selectByGroupId(groupId);
+        if (group == null) {
+            return false;
+        }
+
+        if (userId != null && userId.equals(group.getCreatorId())) {
+            return true;
+        }
+
+        GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(groupId, userId);
+        return member != null && "LEADER".equals(member.getRoleInGroup());
+    }
+
+    @Override
+    public TaskStatisticsDTO getMyTaskStatistics(String userId) {
+        List<TaskAssignment> assignments = taskAssignmentMapper.selectByUserId(userId);
+        List<ProjectTask> tasks = assignments.stream()
+                .map(assignment -> projectTaskMapper.selectByTaskId(assignment.getTaskId()))
+                .filter(task -> task != null)
+                .collect(Collectors.toList());
+        return buildTaskStatistics(tasks);
+    }
+
+    private void validateTaskAssignee(String groupId, String assignUserId) {
+        User assignee = userMapper.selectByUserId(assignUserId);
+        if (assignee == null) {
+            throw new BusinessException("被分配用户不存在");
+        }
+
+        if (groupId != null) {
+            GroupMember member = groupMemberMapper.selectByGroupIdAndUserId(groupId, assignUserId);
+            if (member == null) {
+                throw new BusinessException("被分配用户不在小组中");
+            }
+        }
+    }
+
+    private void validateTaskStatus(Integer status) {
+        if (status == null || status < 0 || status > 4) {
+            throw new BusinessException("任务状态不合法");
+        }
+    }
+
     private String generateTaskCode(String projectId) {
         String maxCode = projectTaskMapper.selectMaxTaskCode(projectId);
         if (maxCode == null) {
@@ -437,6 +517,55 @@ public class TaskServiceImpl implements TaskService {
         }
 
         projectTaskMapper.updateByTaskId(task);
+    }
+
+    private TaskStatisticsDTO buildTaskStatistics(List<ProjectTask> tasks) {
+        TaskStatisticsDTO statistics = new TaskStatisticsDTO();
+        statistics.setTotalTasks((long) tasks.size());
+
+        long completed = 0;
+        long inProgress = 0;
+        long pending = 0;
+        int progressSum = 0;
+        BigDecimal totalEstimatedHours = BigDecimal.ZERO;
+        BigDecimal totalActualHours = BigDecimal.ZERO;
+
+        for (ProjectTask task : tasks) {
+            int status = task.getStatus() == null ? 0 : task.getStatus();
+            int priority = task.getPriority() == null ? 1 : task.getPriority();
+
+            statistics.getStatusCounts().merge(status, 1L, Long::sum);
+            statistics.getPriorityCounts().merge(priority, 1L, Long::sum);
+
+            if (status == 2) {
+                completed++;
+            } else if (status == 1) {
+                inProgress++;
+            } else if (status == 0) {
+                pending++;
+            }
+
+            progressSum += task.getProgress() == null ? 0 : task.getProgress();
+            if (task.getEstimatedHours() != null) {
+                totalEstimatedHours = totalEstimatedHours.add(task.getEstimatedHours());
+            }
+            if (task.getActualHours() != null) {
+                totalActualHours = totalActualHours.add(task.getActualHours());
+            }
+        }
+
+        statistics.setCompletedTasks(completed);
+        statistics.setInProgressTasks(inProgress);
+        statistics.setPendingTasks(pending);
+        statistics.setCompletionRate(tasks.isEmpty()
+                ? BigDecimal.ZERO
+                : BigDecimal.valueOf(completed).multiply(BigDecimal.valueOf(100)).divide(BigDecimal.valueOf(tasks.size()), 2, BigDecimal.ROUND_HALF_UP));
+        statistics.setAverageProgress(tasks.isEmpty()
+                ? BigDecimal.ZERO
+                : BigDecimal.valueOf(progressSum).divide(BigDecimal.valueOf(tasks.size()), 2, BigDecimal.ROUND_HALF_UP));
+        statistics.setTotalEstimatedHours(totalEstimatedHours);
+        statistics.setTotalActualHours(totalActualHours);
+        return statistics;
     }
 
     private boolean hasCircularDependency(String taskId, String dependOnTaskId) {

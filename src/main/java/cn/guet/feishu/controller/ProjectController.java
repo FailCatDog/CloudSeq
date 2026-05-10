@@ -87,12 +87,24 @@ public class ProjectController {
     }
 
     /**
-     * 加入项目
+     * 通过项目编码加入项目
      */
     @PostMapping("/join")
     public Result<Void> joinProject(HttpServletRequest request, @RequestParam String projectCode) {
         String userId = (String) request.getAttribute("userId");
         projectService.joinProject(userId, projectCode);
+        return Result.success();
+    }
+
+    /**
+     * 邀请用户加入项目
+     */
+    @PostMapping("/{projectId}/invite")
+    public Result<Void> inviteProjectMember(HttpServletRequest request,
+                                             @PathVariable String projectId,
+                                             @RequestParam String targetUserId) {
+        String userId = (String) request.getAttribute("userId");
+        projectService.inviteProjectMember(userId, projectId, targetUserId);
         return Result.success();
     }
 
