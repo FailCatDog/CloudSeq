@@ -16,7 +16,7 @@
     </settings>
 
     <typeAliases>
-        <package name="cn.guet.feishu.entity"/>
+        <package name="cn.guet.soft_manage.entity"/>
     </typeAliases>
 </configuration>
 

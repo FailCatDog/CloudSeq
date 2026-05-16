@@ -12,16 +12,17 @@
         <relativePath/>
     </parent>
 
-    <groupId>cn.guet.feishu</groupId>
+    <groupId>cn.guet.soft_manage</groupId>
     <artifactId>feishu</artifactId>
     <version>1.0.0</version>
-    <name>feishu</name>
-    <description>飞书仿真教学系统</description>
+    <name>soft_manage</name>
+    <description>软件项目管理系统</description>
 
     <properties>
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mybatis.version>3.0.3</mybatis.version>
+        <mybatis.plus.version>3.5.9</mybatis.plus.version>
         <mysql.version>8.0.33</mysql.version>
         <jjwt.version>0.12.5</jjwt.version>
         <lombok.version>1.18.30</lombok.version>
@@ -39,6 +40,18 @@
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <version>${mybatis.version}</version>
+        </dependency>
+
+        <!-- MyBatis-Plus -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>${mybatis.plus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>${mybatis.plus.version}</version>
         </dependency>
 
         <!-- MySQL -->

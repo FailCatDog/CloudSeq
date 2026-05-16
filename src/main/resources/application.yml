@@ -1,9 +1,9 @@
 spring:
   application:
-    name: feishu
+    name: soft_manage
   profiles:
     active: dev
 
 server:
-  port: 8080
+  port: 9001
 
