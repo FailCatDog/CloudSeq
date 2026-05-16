@@ -6,9 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 统一返回格式
- *
- * @param <T> 数据类型
+ * @Author: 黄光宇
+ * @CreateTime: 2026-05-16
+ * @Description: 统一返回格式
  */
 @Data
 @NoArgsConstructor

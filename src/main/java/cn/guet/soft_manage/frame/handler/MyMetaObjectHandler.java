@@ -7,7 +7,9 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 /**
- * MyBatis-Plus 自动填充处理器
+ * @Author: 黄光宇
+ * @CreateTime: 2026-05-16
+ * @Description: MyBatis-Plus 自动填充处理器
  *
  * 说明：当前先使用占位用户ID 0L，后续登录接入后改为从 JWT/登录上下文获取。
  */

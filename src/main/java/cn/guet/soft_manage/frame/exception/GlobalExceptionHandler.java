@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.stream.Collectors;
 
 /**
- * 全局异常处理器
+ * @Author: 黄光宇
+ * @CreateTime: 2026-05-16
+ * @Description: 全局异常处理器
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {

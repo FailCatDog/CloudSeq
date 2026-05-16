@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 自定义业务异常
+ * @Author: 黄光宇
+ * @CreateTime: 2026-05-16
+ * @Description: 自定义业务异常
  */
 @Getter
 @AllArgsConstructor

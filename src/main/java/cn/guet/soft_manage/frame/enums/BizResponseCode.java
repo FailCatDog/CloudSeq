@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 业务响应码
+ * @Author: 黄光宇
+ * @CreateTime: 2026-05-16
+ * @Description: 业务响应码
  *
  * 规则：
  * 0      - 成功
