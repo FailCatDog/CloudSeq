@@ -47,12 +47,12 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .eq(TeamMember::getMemberStatus, 1)
                 .eq(TeamMember::getDelFlag, 0));
         if (member == null) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "您尚未加入小组");
+            throw new BusinessException(BizResponseCode.NOT_IN_TEAM);
         }
 
         Team team = teamDao.selectById(member.getTeamId());
         if (team == null || Objects.equals(team.getDelFlag(), 1)) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "您尚未加入小组");
+            throw new BusinessException(BizResponseCode.NOT_IN_TEAM);
         }
 
         return createWorkspace(team.getId());

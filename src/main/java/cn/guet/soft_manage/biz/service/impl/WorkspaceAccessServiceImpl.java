@@ -95,7 +95,7 @@ public class WorkspaceAccessServiceImpl implements WorkspaceAccessService {
         WorkspaceAccessContext context = requireCurrentAccess(workspaceId);
         if (!context.isCanWrite()) {
             if (context.isReadOnly()) {
-                throw new BusinessException(BizResponseCode.FORBIDDEN.getCode(), "教师账号仅可查看文档");
+                throw new BusinessException(BizResponseCode.TEACHER_READ_ONLY);
             }
             throw new BusinessException(BizResponseCode.WORKSPACE_LOCKED);
         }

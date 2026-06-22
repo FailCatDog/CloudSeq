@@ -68,7 +68,7 @@ public class TeamServiceImpl implements TeamService {
                 .eq(Team::getLeaderUserId, request.getLeaderUserId())
                 .eq(Team::getDelFlag, 0));
         if (exists) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "该用户已经是其他小组组长");
+            throw new BusinessException(BizResponseCode.TEAM_LEADER_ALREADY_ASSIGNED);
         }
 
         Team team = Team.builder()
@@ -98,14 +98,14 @@ public class TeamServiceImpl implements TeamService {
     public TeamMember addMember(TeamMemberAddRequestDTO request) {
         Team team = teamDao.selectById(request.getTeamId());
         if (Objects.isNull(team)) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "小组不存在");
+            throw new BusinessException(BizResponseCode.TEAM_NOT_FOUND);
         }
         boolean inTeam = teamMemberDao.exists(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getUserId, request.getUserId())
                 .eq(TeamMember::getMemberStatus, 1)
                 .eq(TeamMember::getDelFlag, 0));
         if (inTeam) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "该用户已经在小组中");
+            throw new BusinessException(BizResponseCode.TEAM_MEMBER_ALREADY_EXISTS);
         }
 
         TeamMember member = TeamMember.builder()
@@ -129,10 +129,10 @@ public class TeamServiceImpl implements TeamService {
                 .eq(TeamMember::getUserId, userId)
                 .eq(TeamMember::getDelFlag, 0));
         if (Objects.isNull(member)) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "成员不存在");
+            throw new BusinessException(BizResponseCode.TEAM_MEMBER_NOT_FOUND);
         }
         if (Objects.equals(member.getIsLeader(), 1)) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "组长不能直接退出，请先转让组长");
+            throw new BusinessException(BizResponseCode.TEAM_LEADER_CANNOT_QUIT);
         }
         member.setMemberStatus(0);
         member.setLeftDate(LocalDateTime.now());
@@ -213,7 +213,7 @@ public class TeamServiceImpl implements TeamService {
     public Team submitTopic(TeamTopicSubmitRequestDTO request) {
         Team team = teamDao.selectById(request.getTeamId());
         if (Objects.isNull(team)) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "小组不存在");
+            throw new BusinessException(BizResponseCode.TEAM_NOT_FOUND);
         }
         team.setTopicTitle(request.getTopicTitle());
         team.setTopicDesc(request.getTopicDesc());
@@ -239,7 +239,7 @@ public class TeamServiceImpl implements TeamService {
     public void reviewTopic(TopicApprovalReviewRequestDTO request) {
         TopicApproval approval = topicApprovalDao.selectById(request.getApprovalId());
         if (Objects.isNull(approval) || Objects.equals(approval.getDelFlag(), 1)) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "审批记录不存在");
+            throw new BusinessException(BizResponseCode.APPROVAL_NOT_FOUND);
         }
 
         approval.setApprovalStatus(request.getApprovalStatus());

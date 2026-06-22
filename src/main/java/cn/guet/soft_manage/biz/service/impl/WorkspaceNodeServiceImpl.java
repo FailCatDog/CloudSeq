@@ -72,7 +72,7 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
         Long parentId = resolveParentId(request.getParentId(), root.getId());
         WorkspaceNode parent = requireNodeInWorkspace(parentId, request.getWorkspaceId());
         if (!Objects.equals(parent.getNodeType(), WorkspaceNodeType.FOLDER.getCode())) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "只能在文件夹下创建节点");
+            throw new BusinessException(BizResponseCode.NODE_PARENT_MUST_BE_FOLDER);
         }
 
         WorkspaceNodeType nodeType = WorkspaceNodeType.of(request.getNodeType());
@@ -106,7 +106,7 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
     @Transactional(rollbackFor = Exception.class)
     public WorkspaceNode renameNode(Long nodeId, WorkspaceNodeRenameRequestDTO request) {
         if (!StringUtils.hasText(request.getTitle())) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "标题不能为空");
+            throw new BusinessException(BizResponseCode.NODE_TITLE_REQUIRED);
         }
 
         WorkspaceNode node = requireExistingNode(nodeId);
@@ -134,15 +134,15 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
 
     private void validateCreateRequest(WorkspaceNodeCreateRequestDTO request) {
         if (request.getWorkspaceId() == null) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "工作区ID不能为空");
+            throw new BusinessException(BizResponseCode.WORKSPACE_ID_REQUIRED);
         }
         if (!StringUtils.hasText(request.getTitle())) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "标题不能为空");
+            throw new BusinessException(BizResponseCode.NODE_TITLE_REQUIRED);
         }
 
         WorkspaceNodeType nodeType = WorkspaceNodeType.of(request.getNodeType());
         if (nodeType == null || nodeType == WorkspaceNodeType.OFFICE) {
-            throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID.getCode(), "暂不支持创建该类型节点");
+            throw new BusinessException(BizResponseCode.NODE_TYPE_CREATE_UNSUPPORTED);
         }
     }
 

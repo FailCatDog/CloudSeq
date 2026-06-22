@@ -57,13 +57,13 @@ public class UserServiceImpl implements UserService {
     @Transactional(rollbackFor = Exception.class)
     public void register(RegisterRequestDTO request) {
         if (request.getRole().equals(UserRole.STUDENT.getCode()) && (Objects.isNull(request.getStudentNo()) || request.getStudentNo().isBlank())) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "学生注册时学号不能为空");
+            throw new BusinessException(BizResponseCode.STUDENT_NO_REQUIRED);
         }
 
         boolean exists = userDao.exists(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, request.getUsername()));
         if (exists) {
-            throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "用户名已存在");
+            throw new BusinessException(BizResponseCode.USERNAME_EXISTS);
         }
 
         User user = new User();
