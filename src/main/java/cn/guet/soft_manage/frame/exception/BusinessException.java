@@ -3,7 +3,6 @@ package cn.guet.soft_manage.frame.exception;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * @Author: 黄光宇

@@ -1,5 +1,6 @@
 package cn.guet.soft_manage.frame.config;
 
+import cn.guet.soft_manage.frame.interceptor.JwtInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -38,6 +39,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 后续可在这里注册登录拦截器、权限拦截器等
+        registry.addInterceptor(new JwtInterceptor())
+                .addPathPatterns("/**")
+                .excludePathPatterns("/**/login", "/**/register");
     }
 }

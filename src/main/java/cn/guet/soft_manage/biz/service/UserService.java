@@ -1,10 +1,10 @@
 package cn.guet.soft_manage.biz.service;
 
 import cn.guet.soft_manage.biz.pojo.dto.LoginRequestDTO;
+import cn.guet.soft_manage.biz.pojo.dto.LoginResponseDTO;
 import cn.guet.soft_manage.biz.pojo.dto.RegisterRequestDTO;
-import cn.guet.soft_manage.biz.pojo.dto.UpdateProfileRequest;
-import cn.guet.soft_manage.biz.pojo.vo.LoginVO;
-import cn.guet.soft_manage.biz.pojo.vo.UserProfileVO;
+import cn.guet.soft_manage.biz.pojo.entity.User;
+import cn.guet.soft_manage.biz.pojo.param.UserParam;
 
 /**
  * @Author: 黄光宇
@@ -13,11 +13,11 @@ import cn.guet.soft_manage.biz.pojo.vo.UserProfileVO;
  */
 public interface UserService {
 
-    LoginVO login(LoginRequestDTO request);
+    LoginResponseDTO login(LoginRequestDTO request);
 
     void register(RegisterRequestDTO request);
 
-    UserProfileVO getProfile(Long userId);
+    User getProfile(Long userId);
 
-    void updateProfile(Long userId, UpdateProfileRequest request);
+    void updateProfile(UserParam request);
 }

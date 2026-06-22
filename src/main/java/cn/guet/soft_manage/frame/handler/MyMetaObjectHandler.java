@@ -1,5 +1,6 @@
 package cn.guet.soft_manage.frame.handler;
 
+import cn.guet.soft_manage.frame.common.UserContext;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
@@ -16,19 +17,17 @@ import java.time.LocalDateTime;
 @Component
 public class MyMetaObjectHandler implements MetaObjectHandler {
 
-    private static final Long SYSTEM_USER_ID = 0L;
-
     @Override
     public void insertFill(MetaObject metaObject) {
-        this.strictInsertFill(metaObject, "create_user", Long.class, SYSTEM_USER_ID);
-        this.strictInsertFill(metaObject, "create_date", LocalDateTime.class, LocalDateTime.now());
-        this.strictInsertFill(metaObject, "update_user", Long.class, SYSTEM_USER_ID);
-        this.strictInsertFill(metaObject, "update_date", LocalDateTime.class, LocalDateTime.now());
+        this.strictInsertFill(metaObject, "createUser", Long.class, UserContext.getUserId());
+        this.strictInsertFill(metaObject, "createDate", LocalDateTime.class, LocalDateTime.now());
+        this.strictInsertFill(metaObject, "updateUser", Long.class, UserContext.getUserId());
+        this.strictInsertFill(metaObject, "updateDate", LocalDateTime.class, LocalDateTime.now());
     }
 
     @Override
     public void updateFill(MetaObject metaObject) {
-        this.strictUpdateFill(metaObject, "update_user", Long.class, SYSTEM_USER_ID);
-        this.strictUpdateFill(metaObject, "update_date", LocalDateTime.class, LocalDateTime.now());
+        this.strictUpdateFill(metaObject, "updateUser", Long.class, UserContext.getUserId());
+        this.strictUpdateFill(metaObject, "updateDate", LocalDateTime.class, LocalDateTime.now());
     }
 }

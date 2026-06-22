@@ -28,13 +28,20 @@ public enum BizResponseCode {
     PARAM_ERROR(10001, "请求参数错误"),
     REQUEST_BODY_INVALID(10002, "请求体格式错误"),
 
-    UNAUTHORIZED(20000, "未登录或登录已过期"),
-    LOGIN_FAILED(20001, "账号或密码错误"),
-    TOKEN_INVALID(20002, "Token无效"),
+    UNAUTHORIZED(20000, "未登录"),
+    TOKEN_EXPIRED(20001, "登录已过期，请重新登录"),
+    LOGIN_FAILED(20002, "账号或密码错误"),
+    TOKEN_INVALID(20003, "Token无效"),
 
     FORBIDDEN(30000, "无权限访问"),
 
-    USER_NOT_FOUND(40000, "用户不存在");
+    USER_NOT_FOUND(40000, "用户不存在"),
+
+    WORKSPACE_NOT_FOUND(50000, "工作区不存在"),
+    WORKSPACE_LOCKED(50001, "选题审批通过后方可编辑"),
+    NODE_NOT_FOUND(50002, "节点不存在"),
+    NODE_TYPE_INVALID(50003, "节点类型不支持该操作"),
+    ROOT_NODE_NOT_DELETABLE(50004, "根目录不可删除");
 
     private final int code;
     private final String message;

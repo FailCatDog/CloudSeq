@@ -11,54 +11,46 @@ import java.time.LocalDateTime;
 
 /**
  * @Author: 黄光宇
- * @CreateTime: 2026-05-16
- * @Description: 用户实体
+ * @CreateTime: 2026-05-18
+ * @Description: 小组成员实体
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_user")
-public class User {
+@TableName("sm_team_member")
+public class TeamMember {
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    private String username;
+    private Long teamId;
 
-    private String password;
+    private Long userId;
 
-    private Integer role;
+    private Integer isLeader;
 
-    private String studentNo;
-
-    private String nickName;
-
-    private String realName;
-
-    private String bio;
-
-    private String avatarUrl;
+    private Integer memberStatus;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime lastLoginAt;
+    private LocalDateTime joinDate;
 
-    private Integer isActive;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime leftDate;
+
+    @TableField(exist = false)
+    private Integer oneActive;
 
     @TableLogic
     private Integer delFlag;
 
-    @TableField(value = "create_user", fill = com.baomidou.mybatisplus.annotation.FieldFill.INSERT)
     private Long createUser;
 
-    @TableField(value = "create_date", fill = com.baomidou.mybatisplus.annotation.FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createDate;
 
-    @TableField(value = "update_user", fill = com.baomidou.mybatisplus.annotation.FieldFill.INSERT_UPDATE)
     private Long updateUser;
 
-    @TableField(value = "update_date", fill = com.baomidou.mybatisplus.annotation.FieldFill.INSERT_UPDATE)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateDate;
 

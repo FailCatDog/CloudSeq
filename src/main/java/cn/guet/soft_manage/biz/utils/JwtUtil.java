@@ -4,6 +4,7 @@ import cn.guet.soft_manage.biz.pojo.entity.User;
 import cn.guet.soft_manage.frame.constant.JwtConstants;
 import cn.guet.soft_manage.frame.enums.UserRole;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -41,11 +42,15 @@ public final class JwtUtil {
     }
 
     public static Claims parseToken(String token) {
-        return Jwts.parser()
-                .verifyWith(getSecretKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        try {
+            return Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException ex) {
+            throw ex;
+        }
     }
 
     public static User getLoginUser(String token) {

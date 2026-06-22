@@ -1,17 +1,17 @@
 package cn.guet.soft_manage.biz.service.impl;
 
-import cn.guet.soft_manage.biz.pojo.dto.LoginRequestDTO;
-import cn.guet.soft_manage.biz.pojo.dto.RegisterRequestDTO;
-import cn.guet.soft_manage.biz.pojo.dto.UpdateProfileRequest;
-import cn.guet.soft_manage.biz.pojo.entity.User;
 import cn.guet.soft_manage.biz.dao.UserDao;
+import cn.guet.soft_manage.biz.pojo.dto.LoginRequestDTO;
+import cn.guet.soft_manage.biz.pojo.dto.LoginResponseDTO;
+import cn.guet.soft_manage.biz.pojo.dto.RegisterRequestDTO;
+import cn.guet.soft_manage.biz.pojo.entity.User;
+import cn.guet.soft_manage.biz.pojo.param.UserParam;
 import cn.guet.soft_manage.biz.service.UserService;
-import cn.guet.soft_manage.biz.pojo.vo.LoginVO;
-import cn.guet.soft_manage.biz.pojo.vo.UserProfileVO;
+import cn.guet.soft_manage.biz.utils.JwtUtil;
+import cn.guet.soft_manage.frame.common.UserContext;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.enums.UserRole;
 import cn.guet.soft_manage.frame.exception.BusinessException;
-import cn.guet.soft_manage.biz.utils.JwtUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
 import org.mindrot.jbcrypt.BCrypt;
@@ -35,11 +35,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public LoginVO login(LoginRequestDTO request) {
+    public LoginResponseDTO login(LoginRequestDTO request) {
         User user = userDao.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, request.getUsername())
                 .eq(User::getIsActive, 1));
-        if (user == null) {
+        if (Objects.isNull(user)) {
             throw new BusinessException(BizResponseCode.LOGIN_FAILED);
         }
         if (!BCrypt.checkpw(request.getPassword(), user.getPassword())) {
@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
         userDao.updateById(user);
 
         String token = JwtUtil.generateToken(user);
-        return new LoginVO(user.getId(), user.getUsername(), user.getRole(), user.getNickName(), user.getRealName(), user.getAvatarUrl(), token);
+        return LoginResponseDTO.builder().user(user).authorization(token).build();
     }
 
     @Override
@@ -70,29 +70,29 @@ public class UserServiceImpl implements UserService {
         BeanUtils.copyProperties(request, user);
         user.setPassword(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()));
         user.setRole(UserRole.STUDENT.getCode());
+        user.setCreateUser(1L);
+        user.setUpdateUser(1L);
         userDao.insert(user);
     }
 
     @Override
-    public UserProfileVO getProfile(Long userId) {
+    public User getProfile(Long userId) {
         User user = userDao.selectById(userId);
-        if (Objects.isNull(user)) {
-            throw new BusinessException(BizResponseCode.USER_NOT_FOUND);
-        }
-        return new UserProfileVO(user.getId(), user.getUsername(), user.getRole(), user.getStudentNo(), user.getNickName(), user.getRealName(), user.getBio(), user.getAvatarUrl(), user.getLastLoginAt(), user.getIsActive());
+        if (Objects.isNull(user)) throw new BusinessException(BizResponseCode.USER_NOT_FOUND);
+        return user;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateProfile(Long userId, UpdateProfileRequest request) {
-        User user = userDao.selectById(userId);
+    public void updateProfile(UserParam param) {
+        User user = userDao.selectById(UserContext.getUserId());
         if (user == null) {
             throw new BusinessException(BizResponseCode.USER_NOT_FOUND);
         }
-        user.setNickName(request.getNickName());
-        user.setRealName(request.getRealName());
-        user.setBio(request.getBio());
-        user.setAvatarUrl(request.getAvatarUrl());
+        user.setNickName(param.getNickName());
+        user.setRealName(param.getRealName());
+        user.setBio(param.getBio());
+        user.setAvatarUrl(param.getAvatarUrl());
         userDao.updateById(user);
     }
 }
