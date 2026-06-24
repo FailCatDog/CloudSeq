@@ -7,3 +7,9 @@ spring:
 server:
   port: 9001
 
+collab:
+  ws-url: ws://localhost:1234
+  jwt-secret: soft_manage-collab-jwt-secret-change-me
+  token-expire-seconds: 600
+  room-prefix: doc-
+  internal-secret: soft_manage-collab-internal-secret-change-me

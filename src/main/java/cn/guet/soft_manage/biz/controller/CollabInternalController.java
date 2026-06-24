@@ -2,6 +2,7 @@ package cn.guet.soft_manage.biz.controller;
 
 import cn.guet.soft_manage.biz.pojo.dto.CollabLoadResponseDTO;
 import cn.guet.soft_manage.biz.pojo.dto.CollabPersistRequestDTO;
+import cn.guet.soft_manage.biz.pojo.dto.CollabPersistResponseDTO;
 import cn.guet.soft_manage.biz.service.DocumentService;
 import cn.guet.soft_manage.frame.common.Response;
 import jakarta.annotation.Resource;
@@ -25,8 +26,7 @@ public class CollabInternalController {
     }
 
     @PostMapping("/persist")
-    public Response<Void> persist(@RequestBody CollabPersistRequestDTO request) {
-        documentService.persistFromCollab(request);
-        return Response.success();
+    public Response<CollabPersistResponseDTO> persist(@RequestBody CollabPersistRequestDTO request) {
+        return Response.success(documentService.persistFromCollab(request));
     }
 }

@@ -5,6 +5,9 @@ spring:
     username: root
     password: guetHgy@123
 
+collab:
+  ws-url: ws://localhost:1234
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true

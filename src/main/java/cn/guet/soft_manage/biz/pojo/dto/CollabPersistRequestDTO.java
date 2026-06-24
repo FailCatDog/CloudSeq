@@ -23,4 +23,6 @@ public class CollabPersistRequestDTO {
     private String contentMd;
 
     private Long version;
+
+    private Long updateUser;
 }

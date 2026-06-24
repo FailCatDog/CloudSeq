@@ -68,6 +68,11 @@ public enum BizResponseCode {
     TEAM_MEMBER_NOT_FOUND(50023, "成员不存在"),
     TEAM_LEADER_CANNOT_QUIT(50024, "组长不能直接退出，请先转让组长"),
     NOT_IN_TEAM(50025, "您尚未加入小组"),
+    DOCUMENT_CONTENT_NOT_FOUND(50026, "文档正文不存在"),
+    DOCUMENT_STALE(50027, "文档已被他人修改，请刷新后重试"),
+    DOCUMENT_VERSION_REQUIRED(50028, "版本号不能为空"),
+    COLLAB_TOKEN_INVALID(50029, "协同令牌无效"),
+    COLLAB_TOKEN_EXPIRED(50030, "协同令牌已过期"),
 
     APPROVAL_NOT_FOUND(70000, "审批记录不存在");
 

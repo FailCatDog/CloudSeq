@@ -1,6 +1,8 @@
 package cn.guet.soft_manage.frame.config;
 
+import cn.guet.soft_manage.frame.interceptor.CollabInternalInterceptor;
 import cn.guet.soft_manage.frame.interceptor.JwtInterceptor;
+import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -15,6 +17,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Resource
+    private CollabInternalInterceptor collabInternalInterceptor;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -39,8 +44,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(collabInternalInterceptor)
+                .addPathPatterns("/api/internal/collab/**");
+
         registry.addInterceptor(new JwtInterceptor())
                 .addPathPatterns("/**")
-                .excludePathPatterns("/**/login", "/**/register");
+                .excludePathPatterns("/**/login", "/**/register", "/api/internal/collab/**");
     }
 }

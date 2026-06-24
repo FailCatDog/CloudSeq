@@ -2,6 +2,7 @@ package cn.guet.soft_manage.biz.service;
 
 import cn.guet.soft_manage.biz.pojo.dto.CollabLoadResponseDTO;
 import cn.guet.soft_manage.biz.pojo.dto.CollabPersistRequestDTO;
+import cn.guet.soft_manage.biz.pojo.dto.CollabPersistResponseDTO;
 import cn.guet.soft_manage.biz.pojo.dto.CollabTokenResponseDTO;
 import cn.guet.soft_manage.biz.pojo.dto.DocumentContentSaveRequestDTO;
 import cn.guet.soft_manage.biz.pojo.dto.DocumentDetailDTO;
@@ -21,5 +22,5 @@ public interface DocumentService {
 
     CollabLoadResponseDTO loadForCollab(Long nodeId);
 
-    void persistFromCollab(CollabPersistRequestDTO request);
+    CollabPersistResponseDTO persistFromCollab(CollabPersistRequestDTO request);
 }
