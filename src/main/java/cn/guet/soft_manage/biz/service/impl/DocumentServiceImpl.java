@@ -95,8 +95,9 @@ public class DocumentServiceImpl implements DocumentService {
         String displayName = user != null && StringUtils.hasText(user.getRealName()) ? user.getRealName()
                 : (user != null && StringUtils.hasText(user.getNickName()) ? user.getNickName()
                 : (user != null && StringUtils.hasText(user.getUsername()) ? user.getUsername() : "用户"));
+        String avatarUrl = user != null ? user.getAvatarUrl() : null;
 
-        String token = collabTokenUtil.generateToken(userId, nodeId, access.isCanWrite(), displayName);
+        String token = collabTokenUtil.generateToken(userId, nodeId, access.isCanWrite(), displayName, avatarUrl);
 
         return CollabTokenResponseDTO.builder()
                 .token(token)
@@ -104,6 +105,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .room(collabProperties.getRoomPrefix() + nodeId)
                 .canWrite(access.isCanWrite())
                 .displayName(displayName)
+                .avatarUrl(avatarUrl)
                 .build();
     }
 

@@ -49,6 +49,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         registry.addInterceptor(new JwtInterceptor())
                 .addPathPatterns("/**")
-                .excludePathPatterns("/**/login", "/**/register", "/api/internal/collab/**");
+                .excludePathPatterns(
+                        "/**/login",
+                        "/**/register",
+                        "/api/internal/collab/**",
+                        "/api/documents/*/office/download",
+                        "/api/documents/*/office/callback",
+                        "/api/documents/**/office/download",
+                        "/api/documents/**/office/callback");
     }
 }

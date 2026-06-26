@@ -25,6 +25,7 @@
         <mysql.version>8.0.33</mysql.version>
         <jjwt.version>0.12.5</jjwt.version>
         <lombok.version>1.18.30</lombok.version>
+        <minio.version>8.5.17</minio.version>
     </properties>
 
     <dependencies>
@@ -104,6 +105,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <!-- MinIO -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>${minio.version}</version>
         </dependency>
     </dependencies>
 

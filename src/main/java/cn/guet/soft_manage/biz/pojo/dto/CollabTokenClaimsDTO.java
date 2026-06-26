@@ -6,21 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * @Author: 黄光宇
- * @CreateTime: 2026-06-18
- * @Description: 协同令牌响应
+ * 协同 JWT 载荷
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CollabTokenResponseDTO {
+public class CollabTokenClaimsDTO {
 
-    private String token;
+    private Long userId;
 
-    private String wsUrl;
-
-    private String room;
+    private Long nodeId;
 
     private Boolean canWrite;
 

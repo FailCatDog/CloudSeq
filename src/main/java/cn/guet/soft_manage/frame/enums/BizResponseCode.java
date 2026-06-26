@@ -74,6 +74,12 @@ public enum BizResponseCode {
     COLLAB_TOKEN_INVALID(50029, "协同令牌无效"),
     COLLAB_TOKEN_EXPIRED(50030, "协同令牌已过期"),
 
+    FILE_NOT_FOUND(60000, "文件不存在"),
+    STORAGE_ERROR(60001, "文件存储服务异常"),
+    OFFICE_FILE_NOT_FOUND(60002, "Office 文件不存在"),
+    OFFICE_TOKEN_INVALID(60003, "Office 令牌无效"),
+    OFFICE_CALLBACK_FAILED(60004, "Office 文档保存失败"),
+
     APPROVAL_NOT_FOUND(70000, "审批记录不存在");
 
     private final int code;
