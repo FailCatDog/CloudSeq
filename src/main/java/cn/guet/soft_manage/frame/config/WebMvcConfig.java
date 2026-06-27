@@ -52,10 +52,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/**/login",
                         "/**/register",
-                        "/api/internal/collab/**",
-                        "/api/documents/*/office/download",
-                        "/api/documents/*/office/callback",
-                        "/api/documents/**/office/download",
-                        "/api/documents/**/office/callback");
+                        "/api/internal/collab/**");
     }
 }

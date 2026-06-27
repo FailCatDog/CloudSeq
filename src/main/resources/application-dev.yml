@@ -4,22 +4,10 @@ spring:
     url: jdbc:mysql://111.229.171.163:13306/soft_manage?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: guetHgy@123
-
+    hikari:
+      keepalive-time: 30000          # 30秒发送一次心跳，保持连接存活
 collab:
   ws-url: ws://localhost:1234
-
-minio:
-  endpoint: http://111.229.171.163:9000
-  access-key: admin
-  secret-key: guetHgy@123
-  bucket: workspace-docs
-
-office:
-  document-server-url: http://111.229.171.163:8082
-  # Spring 对外地址，OnlyOffice 容器必须能访问（保存回调用）。须与 Spring 实际部署地址一致，不能填 MinIO 端口
-  callback-base-url: https://frp-tip.com:53838
-  jwt-secret: soft_manage-onlyoffice-jwt-secret-change-me
-  jwt-enabled: true
 
 mybatis-plus:
   configuration:

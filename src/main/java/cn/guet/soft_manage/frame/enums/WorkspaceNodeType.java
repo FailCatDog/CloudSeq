@@ -13,8 +13,7 @@ import lombok.Getter;
 public enum WorkspaceNodeType {
 
     FOLDER(1),
-    MARKDOWN(2),
-    OFFICE(3),
+    DOCUMENT(2),
     ;
 
     private final int code;

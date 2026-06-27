@@ -32,7 +32,7 @@ import java.util.Objects;
 /**
  * @Author: 黄光宇
  * @CreateTime: 2026-06-18
- * @Description: Markdown 文档服务实现
+ * @Description: 工作区文档服务实现
  */
 @Service
 public class DocumentServiceImpl implements DocumentService {
@@ -58,7 +58,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
         if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.MARKDOWN.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         WorkspaceAccessContext access = workspaceAccessService.requireCurrentAccess(node.getWorkspaceId());
 
@@ -84,7 +84,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
         if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.MARKDOWN.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         WorkspaceAccessContext access = workspaceAccessService.requireCurrentAccess(node.getWorkspaceId());
 
@@ -117,7 +117,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
         if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.MARKDOWN.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         workspaceAccessService.requireWritableWorkspace(node.getWorkspaceId());
 
@@ -151,7 +151,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
         if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.MARKDOWN.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         WorkspaceContent content = workspaceContentDao.selectOne(new LambdaQueryWrapper<WorkspaceContent>()
                 .eq(WorkspaceContent::getNodeId, nodeId)
@@ -188,7 +188,7 @@ public class DocumentServiceImpl implements DocumentService {
         Long nodeId = request.getNodeId();
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
         if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.MARKDOWN.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         WorkspaceContent content = workspaceContentDao.selectOne(new LambdaQueryWrapper<WorkspaceContent>()
                 .eq(WorkspaceContent::getNodeId, nodeId)

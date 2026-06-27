@@ -10,7 +10,6 @@ import cn.guet.soft_manage.biz.pojo.entity.Workspace;
 import cn.guet.soft_manage.biz.pojo.entity.WorkspaceContent;
 import cn.guet.soft_manage.biz.pojo.entity.WorkspaceNode;
 import cn.guet.soft_manage.biz.service.WorkspaceAccessService;
-import cn.guet.soft_manage.biz.service.WorkspaceFileService;
 import cn.guet.soft_manage.biz.service.WorkspaceNodeService;
 import cn.guet.soft_manage.frame.common.UserContext;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
@@ -48,9 +47,6 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
 
     @Resource
     private WorkspaceAccessService workspaceAccessService;
-
-    @Resource
-    private WorkspaceFileService workspaceFileService;
 
     @Override
     public List<WorkspaceNodeTreeDTO> getTree(Long workspaceId) {
@@ -93,7 +89,7 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
                 .build();
         workspaceNodeDao.insert(node);
 
-        if (nodeType == WorkspaceNodeType.MARKDOWN) {
+        if (nodeType == WorkspaceNodeType.DOCUMENT) {
             WorkspaceContent content = WorkspaceContent.builder()
                     .nodeId(node.getId())
                     .contentMd("")
@@ -101,12 +97,6 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
                     .updateUser(userId)
                     .build();
             workspaceContentDao.insert(content);
-        } else if (nodeType == WorkspaceNodeType.OFFICE) {
-            workspaceFileService.createBlankDocx(
-                    request.getWorkspaceId(),
-                    node.getId(),
-                    node.getTitle(),
-                    userId);
         }
 
         return node;
@@ -200,11 +190,9 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
             deleteNodeRecursive(child);
         }
 
-        if (Objects.equals(node.getNodeType(), WorkspaceNodeType.MARKDOWN.getCode())) {
+        if (Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) {
             workspaceContentDao.delete(new LambdaQueryWrapper<WorkspaceContent>()
                     .eq(WorkspaceContent::getNodeId, node.getId()));
-        } else if (Objects.equals(node.getNodeType(), WorkspaceNodeType.OFFICE.getCode())) {
-            workspaceFileService.deleteByNodeId(node.getId());
         }
         workspaceNodeDao.deleteById(node.getId());
     }

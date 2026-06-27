@@ -13,9 +13,9 @@
     </parent>
 
     <groupId>cn.guet.soft_manage</groupId>
-    <artifactId>feishu</artifactId>
+    <artifactId>flowseque</artifactId>
     <version>1.0.0</version>
-    <name>soft_manage</name>
+    <name>flowseque</name>
     <description>软件项目管理系统</description>
 
     <properties>
@@ -25,7 +25,6 @@
         <mysql.version>8.0.33</mysql.version>
         <jjwt.version>0.12.5</jjwt.version>
         <lombok.version>1.18.30</lombok.version>
-        <minio.version>8.5.17</minio.version>
     </properties>
 
     <dependencies>
@@ -107,12 +106,6 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
 
-        <!-- MinIO -->
-        <dependency>
-            <groupId>io.minio</groupId>
-            <artifactId>minio</artifactId>
-            <version>${minio.version}</version>
-        </dependency>
     </dependencies>
 
     <build>

@@ -1,11 +1,12 @@
 spring:
   application:
-    name: soft_manage
+    name: flowseque
   profiles:
     active: dev
 
 server:
   port: 19001
+  address: 0.0.0.0
 
 collab:
   ws-url: ws://localhost:1234
@@ -14,16 +15,3 @@ collab:
   room-prefix: doc-
   internal-secret: soft_manage-collab-internal-secret-change-me
 
-minio:
-  endpoint: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin
-  bucket: workspace-docs
-  region: us-east-1
-
-office:
-  document-server-url: http://localhost:8082
-  callback-base-url: http://localhost:9001
-  jwt-secret: soft_manage-onlyoffice-jwt-secret-change-me
-  jwt-enabled: true
-  download-token-expire-seconds: 3600
