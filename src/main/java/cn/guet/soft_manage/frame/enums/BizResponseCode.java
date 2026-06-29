@@ -27,6 +27,7 @@ public enum BizResponseCode {
     SYSTEM_ERROR(10000, "系统异常，请稍后重试"),
     PARAM_ERROR(10001, "请求参数错误"),
     REQUEST_BODY_INVALID(10002, "请求体格式错误"),
+    DICT_KEY_NOT_FOUND(10003, "字典类型不存在"),
 
     UNAUTHORIZED(20000, "未登录"),
     TOKEN_EXPIRED(20001, "登录已过期，请重新登录"),

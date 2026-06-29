@@ -25,14 +25,14 @@ import java.time.LocalDateTime;
 @TableName("sm_workspace_node")
 public class WorkspaceNode {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private Long workspaceId;
 
     private Long parentId;
 
-    private Integer nodeType;
+    private String nodeType;
 
     private String title;
 

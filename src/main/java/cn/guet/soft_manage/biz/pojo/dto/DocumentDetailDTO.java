@@ -31,6 +31,14 @@ public class DocumentDetailDTO {
 
     private Boolean canWrite;
 
+    private Integer charCount;
+
+    private Integer contentBytes;
+
+    private Integer yjsBytes;
+
+    private String summary;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateDate;
 }

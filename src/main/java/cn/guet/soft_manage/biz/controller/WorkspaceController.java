@@ -22,6 +22,6 @@ public class WorkspaceController {
 
     @GetMapping("/current")
     public Response<Workspace> getCurrent() {
-        return Response.success(workspaceService.getOrCreateForCurrentTeam());
+        return Response.success(workspaceService.getCurrentTeamWorkspace());
     }
 }

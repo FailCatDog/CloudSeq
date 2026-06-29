@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
 @TableName("sm_plan_task")
 public class PlanTask {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private Long workspaceId;
@@ -54,7 +54,7 @@ public class PlanTask {
 
     private BigDecimal duration;
 
-    private Integer taskStatus;
+    private String taskStatus;
 
     private Integer sortOrder;
 

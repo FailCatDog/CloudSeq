@@ -13,7 +13,7 @@ import cn.guet.soft_manage.biz.service.WorkspaceAccessService;
 import cn.guet.soft_manage.biz.service.WorkspaceNodeService;
 import cn.guet.soft_manage.frame.common.UserContext;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
-import cn.guet.soft_manage.frame.enums.WorkspaceNodeType;
+import cn.guet.soft_manage.frame.enums.CacheCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
@@ -27,14 +27,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 工作区节点服务实现
  */
 @Service
 public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
-
-    private static final String DEFAULT_ROOT_TITLE = "项目文档";
 
     @Resource
     private WorkspaceNodeDao workspaceNodeDao;
@@ -51,15 +50,36 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
     @Override
     public List<WorkspaceNodeTreeDTO> getTree(Long workspaceId) {
         workspaceAccessService.requireCurrentAccess(workspaceId);
-        ensureRootNode(workspaceId);
 
         List<WorkspaceNode> nodes = workspaceNodeDao.selectList(new LambdaQueryWrapper<WorkspaceNode>()
                 .eq(WorkspaceNode::getWorkspaceId, workspaceId)
-                .eq(WorkspaceNode::getDelFlag, 0)
                 .orderByAsc(WorkspaceNode::getSortOrder)
                 .orderByAsc(WorkspaceNode::getId));
 
-        return buildTree(nodes);
+        List<WorkspaceNodeTreeDTO> tree = buildTree(nodes, loadDocumentMetadata(nodes));
+        return flattenLegacyRoot(workspaceId, tree);
+    }
+
+    private Map<Long, WorkspaceContent> loadDocumentMetadata(List<WorkspaceNode> nodes) {
+        List<Long> documentNodeIds = nodes.stream()
+                .filter(node -> Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode()))
+                .map(WorkspaceNode::getId)
+                .toList();
+        if (documentNodeIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return workspaceContentDao.selectList(new LambdaQueryWrapper<WorkspaceContent>()
+                        .in(WorkspaceContent::getNodeId, documentNodeIds)
+                        .select(
+                                WorkspaceContent::getNodeId,
+                                WorkspaceContent::getSummary,
+                                WorkspaceContent::getCharCount,
+                                WorkspaceContent::getContentBytes,
+                                WorkspaceContent::getUpdateDate
+                        ))
+                .stream()
+                .collect(Collectors.toMap(WorkspaceContent::getNodeId, content -> content, (left, right) -> left));
     }
 
     @Override
@@ -67,21 +87,22 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
     public WorkspaceNode createNode(WorkspaceNodeCreateRequestDTO request) {
         validateCreateRequest(request);
         workspaceAccessService.requireWritableWorkspace(request.getWorkspaceId());
-        WorkspaceNode root = ensureRootNode(request.getWorkspaceId());
 
-        Long parentId = resolveParentId(request.getParentId(), root.getId());
-        WorkspaceNode parent = requireNodeInWorkspace(parentId, request.getWorkspaceId());
-        if (!Objects.equals(parent.getNodeType(), WorkspaceNodeType.FOLDER.getCode())) {
-            throw new BusinessException(BizResponseCode.NODE_PARENT_MUST_BE_FOLDER);
+        Long parentId = request.getParentId();
+        if (parentId != null) {
+            WorkspaceNode parent = requireNodeInWorkspace(parentId, request.getWorkspaceId());
+            if (!Objects.equals(parent.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_FOLDER.getCode())) {
+                throw new BusinessException(BizResponseCode.NODE_PARENT_MUST_BE_FOLDER);
+            }
         }
 
-        WorkspaceNodeType nodeType = WorkspaceNodeType.of(request.getNodeType());
+        String nodeType = request.getNodeType();
         Long userId = UserContext.getUserId();
 
         WorkspaceNode node = WorkspaceNode.builder()
                 .workspaceId(request.getWorkspaceId())
                 .parentId(parentId)
-                .nodeType(nodeType.getCode())
+                .nodeType(nodeType)
                 .title(request.getTitle().trim())
                 .sortOrder(nextSortOrder(request.getWorkspaceId(), parentId))
                 .createUser(userId)
@@ -89,10 +110,14 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
                 .build();
         workspaceNodeDao.insert(node);
 
-        if (nodeType == WorkspaceNodeType.DOCUMENT) {
+        if (Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) {
             WorkspaceContent content = WorkspaceContent.builder()
                     .nodeId(node.getId())
                     .contentMd("")
+                    .charCount(0)
+                    .contentBytes(0)
+                    .yjsBytes(0)
+                    .summary("")
                     .createUser(userId)
                     .updateUser(userId)
                     .build();
@@ -140,76 +165,82 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
             throw new BusinessException(BizResponseCode.NODE_TITLE_REQUIRED);
         }
 
-        WorkspaceNodeType nodeType = WorkspaceNodeType.of(request.getNodeType());
-        if (nodeType == null) {
+        if (!isSupportedNodeType(request.getNodeType())) {
             throw new BusinessException(BizResponseCode.NODE_TYPE_CREATE_UNSUPPORTED);
         }
     }
 
-    private Long resolveParentId(Long parentId, Long rootNodeId) {
-        return parentId == null ? rootNodeId : parentId;
+    private boolean isSupportedNodeType(String nodeType) {
+        return Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_FOLDER.getCode())
+                || Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode());
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public WorkspaceNode ensureRootNode(Long workspaceId) {
+    /**
+     * 兼容历史数据：旧版自动创建的根文件夹不在树中展示，其子节点提升为顶层。
+     */
+    private List<WorkspaceNodeTreeDTO> flattenLegacyRoot(Long workspaceId, List<WorkspaceNodeTreeDTO> tree) {
         Workspace workspace = workspaceDao.selectById(workspaceId);
-        if (workspace == null || Objects.equals(workspace.getDelFlag(), 1)) {
-            throw new BusinessException(BizResponseCode.WORKSPACE_NOT_FOUND);
+        if (workspace == null || workspace.getRootNodeId() == null || tree.isEmpty()) {
+            return tree;
         }
 
-        if (workspace.getRootNodeId() != null) {
-            WorkspaceNode root = workspaceNodeDao.selectById(workspace.getRootNodeId());
-            if (root != null && !Objects.equals(root.getDelFlag(), 1)) {
-                return root;
+        Long rootId = workspace.getRootNodeId();
+        List<WorkspaceNodeTreeDTO> flattened = new ArrayList<>();
+        for (WorkspaceNodeTreeDTO node : tree) {
+            if (Objects.equals(node.getId(), rootId)) {
+                if (node.getChildren() != null) {
+                    flattened.addAll(node.getChildren());
+                }
+            } else {
+                flattened.add(node);
             }
         }
-
-        Long userId = UserContext.getUserId();
-        WorkspaceNode root = WorkspaceNode.builder()
-                .workspaceId(workspaceId)
-                .parentId(null)
-                .nodeType(WorkspaceNodeType.FOLDER.getCode())
-                .title(DEFAULT_ROOT_TITLE)
-                .sortOrder(0)
-                .createUser(userId)
-                .updateUser(userId)
-                .build();
-        workspaceNodeDao.insert(root);
-
-        workspace.setRootNodeId(root.getId());
-        workspace.setUpdateUser(userId);
-        workspaceDao.updateById(workspace);
-        return root;
+        sortTree(flattened);
+        return flattened;
     }
 
     private void deleteNodeRecursive(WorkspaceNode node) {
         List<WorkspaceNode> children = workspaceNodeDao.selectList(new LambdaQueryWrapper<WorkspaceNode>()
-                .eq(WorkspaceNode::getParentId, node.getId())
-                .eq(WorkspaceNode::getDelFlag, 0));
+                .eq(WorkspaceNode::getParentId, node.getId()));
         for (WorkspaceNode child : children) {
             deleteNodeRecursive(child);
         }
 
-        if (Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) {
+        if (Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) {
             workspaceContentDao.delete(new LambdaQueryWrapper<WorkspaceContent>()
                     .eq(WorkspaceContent::getNodeId, node.getId()));
         }
         workspaceNodeDao.deleteById(node.getId());
     }
 
-    private List<WorkspaceNodeTreeDTO> buildTree(List<WorkspaceNode> nodes) {
+    private List<WorkspaceNodeTreeDTO> buildTree(List<WorkspaceNode> nodes, Map<Long, WorkspaceContent> contentMetadata) {
         Map<Long, WorkspaceNodeTreeDTO> dtoMap = new HashMap<>();
         List<WorkspaceNodeTreeDTO> roots = new ArrayList<>();
 
         for (WorkspaceNode node : nodes) {
-            dtoMap.put(node.getId(), WorkspaceNodeTreeDTO.builder()
+            WorkspaceNodeTreeDTO.WorkspaceNodeTreeDTOBuilder builder = WorkspaceNodeTreeDTO.builder()
                     .id(node.getId())
                     .parentId(node.getParentId())
                     .nodeType(node.getNodeType())
                     .title(node.getTitle())
                     .sortOrder(node.getSortOrder())
-                    .children(new ArrayList<>())
-                    .build());
+                    .children(new ArrayList<>());
+
+            if (Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) {
+                WorkspaceContent content = contentMetadata.get(node.getId());
+                if (content != null) {
+                    builder.summary(content.getSummary() != null ? content.getSummary() : "")
+                            .charCount(content.getCharCount() != null ? content.getCharCount() : 0)
+                            .contentBytes(content.getContentBytes() != null ? content.getContentBytes() : 0)
+                            .contentUpdateDate(content.getUpdateDate());
+                } else {
+                    builder.summary("")
+                            .charCount(0)
+                            .contentBytes(0);
+                }
+            }
+
+            dtoMap.put(node.getId(), builder.build());
         }
 
         for (WorkspaceNode node : nodes) {
@@ -244,10 +275,13 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
     private int nextSortOrder(Long workspaceId, Long parentId) {
         LambdaQueryWrapper<WorkspaceNode> wrapper = new LambdaQueryWrapper<WorkspaceNode>()
                 .eq(WorkspaceNode::getWorkspaceId, workspaceId)
-                .eq(WorkspaceNode::getDelFlag, 0)
                 .orderByDesc(WorkspaceNode::getSortOrder)
                 .last("LIMIT 1");
-        wrapper.eq(WorkspaceNode::getParentId, parentId);
+        if (parentId == null) {
+            wrapper.isNull(WorkspaceNode::getParentId);
+        } else {
+            wrapper.eq(WorkspaceNode::getParentId, parentId);
+        }
 
         WorkspaceNode last = workspaceNodeDao.selectOne(wrapper);
         return last == null ? 0 : last.getSortOrder() + 1;
@@ -255,7 +289,7 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
 
     private WorkspaceNode requireExistingNode(Long nodeId) {
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
-        if (node == null || Objects.equals(node.getDelFlag(), 1)) {
+        if (node == null) {
             throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
         }
         return node;

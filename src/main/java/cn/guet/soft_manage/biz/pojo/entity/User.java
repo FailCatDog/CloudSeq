@@ -21,14 +21,14 @@ import java.time.LocalDateTime;
 @TableName("sm_user")
 public class User {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private String username;
 
     private String password;
 
-    private Integer role;
+    private String role;
 
     private String studentNo;
 

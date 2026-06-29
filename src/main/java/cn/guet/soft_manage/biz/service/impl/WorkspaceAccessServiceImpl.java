@@ -12,8 +12,7 @@ import cn.guet.soft_manage.biz.pojo.entity.Workspace;
 import cn.guet.soft_manage.biz.service.WorkspaceAccessService;
 import cn.guet.soft_manage.frame.common.UserContext;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
-import cn.guet.soft_manage.frame.enums.TeamStatus;
-import cn.guet.soft_manage.frame.enums.UserRole;
+import cn.guet.soft_manage.frame.enums.CacheCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
@@ -47,16 +46,16 @@ public class WorkspaceAccessServiceImpl implements WorkspaceAccessService {
         }
 
         Workspace workspace = workspaceDao.selectById(workspaceId);
-        if (workspace == null || Objects.equals(workspace.getDelFlag(), 1)) {
+        if (workspace == null) {
             throw new BusinessException(BizResponseCode.WORKSPACE_NOT_FOUND);
         }
 
         User user = userDao.selectById(userId);
-        if (user == null || Objects.equals(user.getDelFlag(), 1)) {
+        if (user == null) {
             throw new BusinessException(BizResponseCode.USER_NOT_FOUND);
         }
 
-        if (Objects.equals(user.getRole(), UserRole.TEACHER.getCode())) {
+        if (Objects.equals(user.getRole(), CacheCode.USER_ROLE_TEACHER.getCode())) {
             return WorkspaceAccessContext.builder()
                     .userId(userId)
                     .workspaceId(workspace.getId())
@@ -69,18 +68,17 @@ public class WorkspaceAccessServiceImpl implements WorkspaceAccessService {
         TeamMember member = teamMemberDao.selectOne(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getUserId, userId)
                 .eq(TeamMember::getTeamId, workspace.getTeamId())
-                .eq(TeamMember::getMemberStatus, 1)
-                .eq(TeamMember::getDelFlag, 0));
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
         if (member == null) {
             throw new BusinessException(BizResponseCode.FORBIDDEN);
         }
 
         Team team = teamDao.selectById(workspace.getTeamId());
-        if (team == null || Objects.equals(team.getDelFlag(), 1)) {
+        if (team == null) {
             throw new BusinessException(BizResponseCode.FORBIDDEN);
         }
 
-        boolean unlocked = Objects.equals(team.getStatus(), TeamStatus.UNLOCKED.getCode());
+        boolean unlocked = Objects.equals(team.getStatus(), CacheCode.TEAM_STATUS_UNLOCKED.getCode());
         return WorkspaceAccessContext.builder()
                 .userId(userId)
                 .workspaceId(workspace.getId())
@@ -101,7 +99,7 @@ public class WorkspaceAccessServiceImpl implements WorkspaceAccessService {
         }
 
         Workspace workspace = workspaceDao.selectById(workspaceId);
-        if (workspace == null || Objects.equals(workspace.getDelFlag(), 1)) {
+        if (workspace == null) {
             throw new BusinessException(BizResponseCode.WORKSPACE_NOT_FOUND);
         }
         return workspace;

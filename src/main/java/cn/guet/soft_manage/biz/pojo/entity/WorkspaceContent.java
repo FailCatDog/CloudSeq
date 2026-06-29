@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 @TableName("sm_workspace_content")
 public class WorkspaceContent {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private Long nodeId;
@@ -33,6 +33,18 @@ public class WorkspaceContent {
     private String contentMd;
 
     private byte[] yjsState;
+
+    /** 正文字符数 */
+    private Integer charCount;
+
+    /** Markdown 字节数（UTF-8） */
+    private Integer contentBytes;
+
+    /** Yjs 快照字节数 */
+    private Integer yjsBytes;
+
+    /** 正文摘要，供列表/导航展示 */
+    private String summary;
 
     @TableLogic
     private Integer delFlag;

@@ -18,11 +18,10 @@ import cn.guet.soft_manage.biz.service.TeamService;
 import cn.guet.soft_manage.biz.service.WorkspaceService;
 import cn.guet.soft_manage.frame.common.UserContext;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
-import cn.guet.soft_manage.frame.enums.TeamStatus;
+import cn.guet.soft_manage.frame.enums.CacheCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,8 +64,7 @@ public class TeamServiceImpl implements TeamService {
             throw new BusinessException(BizResponseCode.USER_NOT_FOUND);
         }
         boolean exists = teamDao.exists(new LambdaQueryWrapper<Team>()
-                .eq(Team::getLeaderUserId, request.getLeaderUserId())
-                .eq(Team::getDelFlag, 0));
+                .eq(Team::getLeaderUserId, request.getLeaderUserId()));
         if (exists) {
             throw new BusinessException(BizResponseCode.TEAM_LEADER_ALREADY_ASSIGNED);
         }
@@ -74,7 +72,7 @@ public class TeamServiceImpl implements TeamService {
         Team team = Team.builder()
                 .teamName(request.getTeamName())
                 .leaderUserId(request.getLeaderUserId())
-                .status(1)
+                .status(CacheCode.TEAM_STATUS_NORMAL.getCode())
                 .createUser(UserContext.getUserId())
                 .updateUser(UserContext.getUserId())
                 .build();
@@ -84,7 +82,7 @@ public class TeamServiceImpl implements TeamService {
                 .teamId(team.getId())
                 .userId(request.getLeaderUserId())
                 .isLeader(1)
-                .memberStatus(1)
+                .memberStatus(CacheCode.MEMBER_STATUS_ACTIVE.getCode())
                 .joinDate(LocalDateTime.now())
                 .createUser(UserContext.getUserId())
                 .updateUser(UserContext.getUserId())
@@ -102,8 +100,7 @@ public class TeamServiceImpl implements TeamService {
         }
         boolean inTeam = teamMemberDao.exists(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getUserId, request.getUserId())
-                .eq(TeamMember::getMemberStatus, 1)
-                .eq(TeamMember::getDelFlag, 0));
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
         if (inTeam) {
             throw new BusinessException(BizResponseCode.TEAM_MEMBER_ALREADY_EXISTS);
         }
@@ -112,7 +109,7 @@ public class TeamServiceImpl implements TeamService {
                 .teamId(request.getTeamId())
                 .userId(request.getUserId())
                 .isLeader(0)
-                .memberStatus(1)
+                .memberStatus(CacheCode.MEMBER_STATUS_ACTIVE.getCode())
                 .joinDate(LocalDateTime.now())
                 .createUser(UserContext.getUserId())
                 .updateUser(UserContext.getUserId())
@@ -126,15 +123,14 @@ public class TeamServiceImpl implements TeamService {
     public void removeMember(Long teamId, Long userId) {
         TeamMember member = teamMemberDao.selectOne(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getTeamId, teamId)
-                .eq(TeamMember::getUserId, userId)
-                .eq(TeamMember::getDelFlag, 0));
+                .eq(TeamMember::getUserId, userId));
         if (Objects.isNull(member)) {
             throw new BusinessException(BizResponseCode.TEAM_MEMBER_NOT_FOUND);
         }
         if (Objects.equals(member.getIsLeader(), 1)) {
             throw new BusinessException(BizResponseCode.TEAM_LEADER_CANNOT_QUIT);
         }
-        member.setMemberStatus(0);
+        member.setMemberStatus(CacheCode.MEMBER_STATUS_LEFT.getCode());
         member.setLeftDate(LocalDateTime.now());
         teamMemberDao.updateById(member);
     }
@@ -143,8 +139,7 @@ public class TeamServiceImpl implements TeamService {
     public TeamMembersResponseDTO listMembers(Long teamId) {
         List<TeamMember> members = teamMemberDao.selectList(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getTeamId, teamId)
-                .eq(TeamMember::getMemberStatus, 1)
-                .eq(TeamMember::getDelFlag, 0)
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode())
                 .orderByDesc(TeamMember::getIsLeader)
                 .orderByAsc(TeamMember::getJoinDate)
                 .orderByAsc(TeamMember::getId));
@@ -170,7 +165,6 @@ public class TeamServiceImpl implements TeamService {
         }
 
         Map<Long, User> userMap = userDao.selectBatchIds(userIds).stream()
-                .filter(user -> !Objects.equals(user.getDelFlag(), 1))
                 .collect(Collectors.toMap(User::getId, Function.identity(), (left, right) -> left));
 
         return members.stream()
@@ -217,14 +211,14 @@ public class TeamServiceImpl implements TeamService {
         }
         team.setTopicTitle(request.getTopicTitle());
         team.setTopicDesc(request.getTopicDesc());
-        team.setStatus(2);
+        team.setStatus(CacheCode.TEAM_STATUS_PENDING_TOPIC.getCode());
         teamDao.updateById(team);
 
         TopicApproval approval = TopicApproval.builder()
                 .teamId(request.getTeamId())
                 .topicTitle(request.getTopicTitle())
                 .topicDesc(request.getTopicDesc())
-                .approvalStatus(1)
+                .approvalStatus(CacheCode.APPROVAL_STATUS_PENDING.getCode())
                 .submitUserId(team.getLeaderUserId())
                 .submitDate(LocalDateTime.now())
                 .createUser(UserContext.getUserId())
@@ -238,7 +232,7 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(rollbackFor = Exception.class)
     public void reviewTopic(TopicApprovalReviewRequestDTO request) {
         TopicApproval approval = topicApprovalDao.selectById(request.getApprovalId());
-        if (Objects.isNull(approval) || Objects.equals(approval.getDelFlag(), 1)) {
+        if (Objects.isNull(approval)) {
             throw new BusinessException(BizResponseCode.APPROVAL_NOT_FOUND);
         }
 
@@ -250,17 +244,17 @@ public class TeamServiceImpl implements TeamService {
         topicApprovalDao.updateById(approval);
 
         Team team = teamDao.selectById(approval.getTeamId());
-        if (team == null || Objects.equals(team.getDelFlag(), 1)) {
+        if (team == null) {
             return;
         }
 
-        if (Objects.equals(request.getApprovalStatus(), 2)) {
-            team.setStatus(TeamStatus.UNLOCKED.getCode());
+        if (Objects.equals(request.getApprovalStatus(), CacheCode.APPROVAL_STATUS_APPROVED.getCode())) {
+            team.setStatus(CacheCode.TEAM_STATUS_UNLOCKED.getCode());
             team.setUpdateUser(UserContext.getUserId());
             teamDao.updateById(team);
             workspaceService.createWorkspace(team.getId());
-        } else if (Objects.equals(request.getApprovalStatus(), 3)) {
-            team.setStatus(TeamStatus.TOPIC_REJECTED.getCode());
+        } else if (Objects.equals(request.getApprovalStatus(), CacheCode.APPROVAL_STATUS_REJECTED.getCode())) {
+            team.setStatus(CacheCode.TEAM_STATUS_TOPIC_REJECTED.getCode());
             team.setUpdateUser(UserContext.getUserId());
             teamDao.updateById(team);
         }
@@ -270,7 +264,6 @@ public class TeamServiceImpl implements TeamService {
     public List<TopicApproval> listTopicApprovals(Long teamId) {
         return topicApprovalDao.selectList(new LambdaQueryWrapper<TopicApproval>()
                 .eq(TopicApproval::getTeamId, teamId)
-                .eq(TopicApproval::getDelFlag, 0)
                 .orderByDesc(TopicApproval::getSubmitDate));
     }
 
@@ -283,14 +276,13 @@ public class TeamServiceImpl implements TeamService {
 
         TeamMember member = teamMemberDao.selectOne(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getUserId, userId)
-                .eq(TeamMember::getMemberStatus, 1)
-                .eq(TeamMember::getDelFlag, 0));
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
         if (Objects.isNull(member)) {
             return null;
         }
 
         Team team = teamDao.selectById(member.getTeamId());
-        if (Objects.isNull(team) || Objects.equals(team.getDelFlag(), 1)) {
+        if (Objects.isNull(team)) {
             return null;
         }
         return team;

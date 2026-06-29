@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 @TableName("sm_workspace")
 public class Workspace {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private Long teamId;

@@ -2,9 +2,7 @@ package cn.guet.soft_manage.biz.utils;
 
 import cn.guet.soft_manage.biz.pojo.entity.User;
 import cn.guet.soft_manage.frame.constant.JwtConstants;
-import cn.guet.soft_manage.frame.enums.UserRole;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -27,7 +25,7 @@ public final class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put(JwtConstants.CLAIM_ID, user.getId());
         claims.put(JwtConstants.CLAIM_USERNAME, user.getUsername());
-        claims.put(JwtConstants.CLAIM_ROLE, UserRole.getRoleName(user.getRole()));
+        claims.put(JwtConstants.CLAIM_ROLE, user.getRole());
         claims.put(JwtConstants.CLAIM_STUDENT_NO, user.getStudentNo());
 
         Date now = new Date();
@@ -42,15 +40,11 @@ public final class JwtUtil {
     }
 
     public static Claims parseToken(String token) {
-        try {
-            return Jwts.parser()
-                    .verifyWith(getSecretKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-        } catch (ExpiredJwtException ex) {
-            throw ex;
-        }
+        return Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public static User getLoginUser(String token) {
@@ -58,7 +52,7 @@ public final class JwtUtil {
         return User.builder()
                 .id(claims.get(JwtConstants.CLAIM_ID, Long.class))
                 .username(claims.get(JwtConstants.CLAIM_USERNAME, String.class))
-                .role(UserRole.getRoleCode(claims.get(JwtConstants.CLAIM_ROLE, String.class)))
+                .role(claims.get(JwtConstants.CLAIM_ROLE, String.class))
                 .studentNo(claims.get(JwtConstants.CLAIM_STUDENT_NO, String.class))
                 .build();
     }

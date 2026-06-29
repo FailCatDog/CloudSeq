@@ -15,3 +15,9 @@ collab:
   room-prefix: doc-
   internal-secret: soft_manage-collab-internal-secret-change-me
 
+dict:
+  cache:
+    redis-key: sm:dict
+    ttl-days: 7
+
+

@@ -9,6 +9,7 @@ import cn.guet.soft_manage.biz.pojo.entity.Workspace;
 import cn.guet.soft_manage.biz.service.WorkspaceService;
 import cn.guet.soft_manage.frame.common.UserContext;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
+import cn.guet.soft_manage.frame.enums.CacheCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
@@ -36,7 +37,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private TeamDao teamDao;
 
     @Override
-    public Workspace getOrCreateForCurrentTeam() {
+    public Workspace getCurrentTeamWorkspace() {
         Long userId = UserContext.getUserId();
         if (userId == null) {
             throw new BusinessException(BizResponseCode.UNAUTHORIZED);
@@ -44,18 +45,24 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
         TeamMember member = teamMemberDao.selectOne(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getUserId, userId)
-                .eq(TeamMember::getMemberStatus, 1)
-                .eq(TeamMember::getDelFlag, 0));
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
         if (member == null) {
             throw new BusinessException(BizResponseCode.NOT_IN_TEAM);
         }
 
         Team team = teamDao.selectById(member.getTeamId());
-        if (team == null || Objects.equals(team.getDelFlag(), 1)) {
+        if (team == null) {
             throw new BusinessException(BizResponseCode.NOT_IN_TEAM);
         }
 
-        return createWorkspace(team.getId());
+        Workspace workspace = getByTeamId(team.getId());
+        if (workspace == null) {
+            if (!Objects.equals(team.getStatus(), CacheCode.TEAM_STATUS_UNLOCKED.getCode())) {
+                throw new BusinessException(BizResponseCode.WORKSPACE_LOCKED);
+            }
+            throw new BusinessException(BizResponseCode.WORKSPACE_NOT_FOUND);
+        }
+        return workspace;
     }
 
     @Override
@@ -80,7 +87,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Override
     public Workspace getByTeamId(Long teamId) {
         return workspaceDao.selectOne(new LambdaQueryWrapper<Workspace>()
-                .eq(Workspace::getTeamId, teamId)
-                .eq(Workspace::getDelFlag, 0));
+                .eq(Workspace::getTeamId, teamId));
     }
 }

@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 @TableName("sm_topic_approval")
 public class TopicApproval {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private Long teamId;
@@ -36,7 +36,7 @@ public class TopicApproval {
 
     private String topicDesc;
 
-    private Integer approvalStatus;
+    private String approvalStatus;
 
     private String rejectReason;
 

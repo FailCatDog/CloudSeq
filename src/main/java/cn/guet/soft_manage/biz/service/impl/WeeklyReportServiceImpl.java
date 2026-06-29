@@ -5,6 +5,7 @@ import cn.guet.soft_manage.biz.pojo.entity.WeeklyReport;
 import cn.guet.soft_manage.biz.service.WeeklyReportService;
 import cn.guet.soft_manage.biz.utils.IsoWeekUtil;
 import cn.guet.soft_manage.frame.common.UserContext;
+import cn.guet.soft_manage.frame.enums.CacheCode;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -24,9 +25,6 @@ import java.util.Objects;
  */
 @Service
 public class WeeklyReportServiceImpl implements WeeklyReportService {
-
-    private static final int STATUS_DRAFT = 1;
-    private static final int STATUS_SUBMITTED = 2;
 
     @Resource
     private WeeklyReportDao weeklyReportDao;
@@ -51,11 +49,10 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
                 .eq(WeeklyReport::getWorkspaceId, report.getWorkspaceId())
                 .eq(WeeklyReport::getUserId, userId)
                 .eq(WeeklyReport::getReportYear, report.getReportYear())
-                .eq(WeeklyReport::getReportWeek, report.getReportWeek())
-                .eq(WeeklyReport::getDelFlag, 0));
+                .eq(WeeklyReport::getReportWeek, report.getReportWeek()));
         if (count != null && count > 0) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_DUPLICATE);
         report.setUserId(userId);
-        if (report.getReportStatus() == null) report.setReportStatus(STATUS_DRAFT);
+        if (report.getReportStatus() == null) report.setReportStatus(CacheCode.WEEKLY_REPORT_STATUS_DRAFT.getCode());
         if (!StringUtils.hasText(report.getTitle())) {
             var user = UserContext.get();
             String name = user != null && StringUtils.hasText(user.getRealName()) ? user.getRealName() : (user != null && StringUtils.hasText(user.getNickName()) ? user.getNickName() : "我的");
@@ -73,7 +70,7 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
         if (existing == null) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_NOT_FOUND);
         Long userId = UserContext.getUserId();
         if (userId == null || !userId.equals(existing.getUserId())) throw new BusinessException(BizResponseCode.UNAUTHORIZED);
-        if (!Objects.equals(existing.getReportStatus(), STATUS_DRAFT)) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_SUBMITTED);
+        if (!Objects.equals(existing.getReportStatus(), CacheCode.WEEKLY_REPORT_STATUS_DRAFT.getCode())) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_SUBMITTED);
         IsoWeekUtil.IsoWeek isoWeek;
         if (report.getWeekStartDate() != null) {
             isoWeek = IsoWeekUtil.of(report.getWeekStartDate());
@@ -90,7 +87,6 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
                 .eq(WeeklyReport::getUserId, existing.getUserId())
                 .eq(WeeklyReport::getReportYear, report.getReportYear())
                 .eq(WeeklyReport::getReportWeek, report.getReportWeek())
-                .eq(WeeklyReport::getDelFlag, 0)
                 .ne(WeeklyReport::getId, report.getId()));
         if (count != null && count > 0) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_DUPLICATE);
         if (!StringUtils.hasText(report.getTitle())) {
@@ -112,9 +108,9 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
         if (existing == null) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_NOT_FOUND);
         Long userId = UserContext.getUserId();
         if (userId == null || !userId.equals(existing.getUserId())) throw new BusinessException(BizResponseCode.UNAUTHORIZED);
-        if (!Objects.equals(existing.getReportStatus(), STATUS_DRAFT)) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_SUBMITTED);
+        if (!Objects.equals(existing.getReportStatus(), CacheCode.WEEKLY_REPORT_STATUS_DRAFT.getCode())) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_SUBMITTED);
         if (!StringUtils.hasText(existing.getWeeklyProgress())) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_PROGRESS_REQUIRED);
-        existing.setReportStatus(STATUS_SUBMITTED);
+        existing.setReportStatus(CacheCode.WEEKLY_REPORT_STATUS_SUBMITTED.getCode());
         existing.setSubmitUserId(userId);
         existing.setSubmitDate(LocalDateTime.now());
         int rows = weeklyReportDao.updateById(existing);
@@ -129,7 +125,7 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
         if (existing == null) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_NOT_FOUND);
         Long userId = UserContext.getUserId();
         if (userId == null || !userId.equals(existing.getUserId())) throw new BusinessException(BizResponseCode.UNAUTHORIZED);
-        if (!Objects.equals(existing.getReportStatus(), STATUS_DRAFT)) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_SUBMITTED);
+        if (!Objects.equals(existing.getReportStatus(), CacheCode.WEEKLY_REPORT_STATUS_DRAFT.getCode())) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_SUBMITTED);
         int rows = weeklyReportDao.deleteById(id);
         if (rows == 0) throw new BusinessException(BizResponseCode.WEEKLY_REPORT_NOT_FOUND);
     }
@@ -158,7 +154,6 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
                 .eq(WeeklyReport::getUserId, userId)
                 .eq(WeeklyReport::getReportYear, isoWeek.year())
                 .eq(WeeklyReport::getReportWeek, isoWeek.week())
-                .eq(WeeklyReport::getDelFlag, 0)
                 .last("LIMIT 1"));
     }
 
@@ -169,7 +164,6 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
         return weeklyReportDao.selectList(new LambdaQueryWrapper<WeeklyReport>()
                 .eq(WeeklyReport::getWorkspaceId, workspaceId)
                 .eq(WeeklyReport::getUserId, userId)
-                .eq(WeeklyReport::getDelFlag, 0)
                 .orderByDesc(WeeklyReport::getReportYear)
                 .orderByDesc(WeeklyReport::getReportWeek));
     }

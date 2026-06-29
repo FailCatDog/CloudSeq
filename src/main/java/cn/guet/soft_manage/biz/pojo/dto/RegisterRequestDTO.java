@@ -19,7 +19,7 @@ public class RegisterRequestDTO {
     private String password;
 
     @NotNull(message = "角色不能为空")
-    private Integer role;
+    private String role;
 
     @NotNull(message = "学号不能为空")
     private String studentNo;

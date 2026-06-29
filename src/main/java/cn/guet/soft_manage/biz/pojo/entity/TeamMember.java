@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @TableName("sm_team_member")
 public class TeamMember {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private Long teamId;
@@ -30,7 +30,7 @@ public class TeamMember {
 
     private Integer isLeader;
 
-    private Integer memberStatus;
+    private String memberStatus;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime joinDate;

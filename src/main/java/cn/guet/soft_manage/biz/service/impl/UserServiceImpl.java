@@ -10,7 +10,7 @@ import cn.guet.soft_manage.biz.service.UserService;
 import cn.guet.soft_manage.biz.utils.JwtUtil;
 import cn.guet.soft_manage.frame.common.UserContext;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
-import cn.guet.soft_manage.frame.enums.UserRole;
+import cn.guet.soft_manage.frame.enums.CacheCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void register(RegisterRequestDTO request) {
-        if (request.getRole().equals(UserRole.STUDENT.getCode()) && (Objects.isNull(request.getStudentNo()) || request.getStudentNo().isBlank())) {
+        if (CacheCode.USER_ROLE_STUDENT.getCode().equals(request.getRole()) && (Objects.isNull(request.getStudentNo()) || request.getStudentNo().isBlank())) {
             throw new BusinessException(BizResponseCode.STUDENT_NO_REQUIRED);
         }
 
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
         User user = new User();
         BeanUtils.copyProperties(request, user);
         user.setPassword(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()));
-        user.setRole(UserRole.STUDENT.getCode());
+        user.setRole(CacheCode.USER_ROLE_STUDENT.getCode());
         user.setCreateUser(1L);
         user.setUpdateUser(1L);
         userDao.insert(user);

@@ -15,10 +15,11 @@ import cn.guet.soft_manage.biz.pojo.entity.WorkspaceNode;
 import cn.guet.soft_manage.biz.service.DocumentService;
 import cn.guet.soft_manage.biz.service.WorkspaceAccessService;
 import cn.guet.soft_manage.biz.utils.CollabTokenUtil;
+import cn.guet.soft_manage.biz.utils.WorkspaceContentMetadataUtil;
 import cn.guet.soft_manage.frame.common.UserContext;
 import cn.guet.soft_manage.frame.config.CollabProperties;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
-import cn.guet.soft_manage.frame.enums.WorkspaceNodeType;
+import cn.guet.soft_manage.frame.enums.CacheCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
@@ -57,23 +58,30 @@ public class DocumentServiceImpl implements DocumentService {
         if (nodeId == null) throw new BusinessException(BizResponseCode.PARAM_ERROR);
 
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
-        if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (node == null) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
+        if (!Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         WorkspaceAccessContext access = workspaceAccessService.requireCurrentAccess(node.getWorkspaceId());
 
         WorkspaceContent content = workspaceContentDao.selectOne(new LambdaQueryWrapper<WorkspaceContent>()
-                .eq(WorkspaceContent::getNodeId, nodeId)
-                .eq(WorkspaceContent::getDelFlag, 0));
+                .eq(WorkspaceContent::getNodeId, nodeId));
         if (content == null) throw new BusinessException(BizResponseCode.DOCUMENT_CONTENT_NOT_FOUND);
 
+        return toDocumentDetail(node, content, access.isCanWrite());
+    }
+
+    private DocumentDetailDTO toDocumentDetail(WorkspaceNode node, WorkspaceContent content, boolean canWrite) {
         return DocumentDetailDTO.builder()
                 .nodeId(node.getId())
                 .workspaceId(node.getWorkspaceId())
                 .title(node.getTitle())
                 .contentMd(content.getContentMd() != null ? content.getContentMd() : "")
                 .version(content.getVersion())
-                .canWrite(access.isCanWrite())
+                .canWrite(canWrite)
+                .charCount(content.getCharCount() != null ? content.getCharCount() : 0)
+                .contentBytes(content.getContentBytes() != null ? content.getContentBytes() : 0)
+                .yjsBytes(content.getYjsBytes() != null ? content.getYjsBytes() : 0)
+                .summary(content.getSummary() != null ? content.getSummary() : "")
                 .updateDate(content.getUpdateDate())
                 .build();
     }
@@ -83,8 +91,8 @@ public class DocumentServiceImpl implements DocumentService {
         if (nodeId == null) throw new BusinessException(BizResponseCode.PARAM_ERROR);
 
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
-        if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (node == null) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
+        if (!Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         WorkspaceAccessContext access = workspaceAccessService.requireCurrentAccess(node.getWorkspaceId());
 
@@ -116,33 +124,25 @@ public class DocumentServiceImpl implements DocumentService {
         if (request.getVersion() == null) throw new BusinessException(BizResponseCode.DOCUMENT_VERSION_REQUIRED);
 
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
-        if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (node == null) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
+        if (!Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         workspaceAccessService.requireWritableWorkspace(node.getWorkspaceId());
 
         WorkspaceContent content = workspaceContentDao.selectOne(new LambdaQueryWrapper<WorkspaceContent>()
-                .eq(WorkspaceContent::getNodeId, nodeId)
-                .eq(WorkspaceContent::getDelFlag, 0));
+                .eq(WorkspaceContent::getNodeId, nodeId));
         if (content == null) throw new BusinessException(BizResponseCode.DOCUMENT_CONTENT_NOT_FOUND);
         if (!Objects.equals(content.getVersion(), request.getVersion())) throw new BusinessException(BizResponseCode.DOCUMENT_STALE);
 
         content.setContentMd(request.getContentMd() != null ? request.getContentMd() : "");
         content.setYjsState(null);
         content.setUpdateUser(UserContext.getUserId());
+        WorkspaceContentMetadataUtil.applyTo(content);
         int rows = workspaceContentDao.updateById(content);
         if (rows == 0) throw new BusinessException(BizResponseCode.DOCUMENT_STALE);
 
         WorkspaceContent saved = workspaceContentDao.selectById(content.getId());
-        return DocumentDetailDTO.builder()
-                .nodeId(node.getId())
-                .workspaceId(node.getWorkspaceId())
-                .title(node.getTitle())
-                .contentMd(saved.getContentMd() != null ? saved.getContentMd() : "")
-                .version(saved.getVersion())
-                .canWrite(true)
-                .updateDate(saved.getUpdateDate())
-                .build();
+        return toDocumentDetail(node, saved, true);
     }
 
     @Override
@@ -150,16 +150,19 @@ public class DocumentServiceImpl implements DocumentService {
         if (nodeId == null) throw new BusinessException(BizResponseCode.PARAM_ERROR);
 
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
-        if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (node == null) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
+        if (!Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         WorkspaceContent content = workspaceContentDao.selectOne(new LambdaQueryWrapper<WorkspaceContent>()
-                .eq(WorkspaceContent::getNodeId, nodeId)
-                .eq(WorkspaceContent::getDelFlag, 0));
+                .eq(WorkspaceContent::getNodeId, nodeId));
         if (content == null) {
             content = WorkspaceContent.builder()
                     .nodeId(nodeId)
                     .contentMd("")
+                    .charCount(0)
+                    .contentBytes(0)
+                    .yjsBytes(0)
+                    .summary("")
                     .createUser(0L)
                     .updateUser(0L)
                     .build();
@@ -187,18 +190,20 @@ public class DocumentServiceImpl implements DocumentService {
 
         Long nodeId = request.getNodeId();
         WorkspaceNode node = workspaceNodeDao.selectById(nodeId);
-        if (node == null || Objects.equals(node.getDelFlag(), 1)) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
-        if (!Objects.equals(node.getNodeType(), WorkspaceNodeType.DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
+        if (node == null) throw new BusinessException(BizResponseCode.NODE_NOT_FOUND);
+        if (!Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) throw new BusinessException(BizResponseCode.NODE_TYPE_INVALID);
 
         WorkspaceContent content = workspaceContentDao.selectOne(new LambdaQueryWrapper<WorkspaceContent>()
-                .eq(WorkspaceContent::getNodeId, nodeId)
-                .eq(WorkspaceContent::getDelFlag, 0));
+                .eq(WorkspaceContent::getNodeId, nodeId));
         if (content == null) throw new BusinessException(BizResponseCode.DOCUMENT_CONTENT_NOT_FOUND);
         if (!Objects.equals(content.getVersion(), request.getVersion())) throw new BusinessException(BizResponseCode.DOCUMENT_STALE);
 
         content.setYjsState(Base64.getDecoder().decode(request.getYjsStateBase64()));
-        if (StringUtils.hasText(request.getContentMd())) content.setContentMd(request.getContentMd());
+        if (StringUtils.hasText(request.getContentMd())) {
+            content.setContentMd(request.getContentMd());
+        }
         content.setUpdateUser(request.getUpdateUser() != null ? request.getUpdateUser() : 0L);
+        WorkspaceContentMetadataUtil.applyTo(content);
 
         int rows = workspaceContentDao.updateById(content);
         if (rows == 0) throw new BusinessException(BizResponseCode.DOCUMENT_STALE);

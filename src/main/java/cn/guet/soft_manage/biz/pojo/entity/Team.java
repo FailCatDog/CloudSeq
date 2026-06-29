@@ -27,14 +27,14 @@ import java.time.LocalDateTime;
 @TableName("sm_team")
 public class Team {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private String teamName;
 
     private Long leaderUserId;
 
-    private Integer status;
+    private String status;
 
     private String topicTitle;
 

@@ -6,8 +6,20 @@ spring:
     password: guetHgy@123
     hikari:
       keepalive-time: 30000          # 30秒发送一次心跳，保持连接存活
+  data:
+    redis:
+      host: 111.229.171.163
+      port: 16379
+      database: 0
+      sentinel:
+        password: guetHgy@123
 collab:
   ws-url: ws://localhost:1234
+
+dict:
+  cache:
+    redis-key: sm:dict
+    ttl-days: 7
 
 mybatis-plus:
   configuration:

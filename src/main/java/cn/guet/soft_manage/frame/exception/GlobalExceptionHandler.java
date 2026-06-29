@@ -2,6 +2,8 @@ package cn.guet.soft_manage.frame.exception;
 
 import cn.guet.soft_manage.frame.common.Response;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -55,6 +57,18 @@ public class GlobalExceptionHandler {
     public Response<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         log.error("请求体解析异常", ex);
         return Response.fail(BizResponseCode.REQUEST_BODY_INVALID);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public Response<Void> handleExpiredJwtException(ExpiredJwtException ex) {
+        log.warn("JWT 已过期", ex);
+        return Response.fail(BizResponseCode.TOKEN_EXPIRED);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public Response<Void> handleJwtException(JwtException ex) {
+        log.warn("JWT 无效", ex);
+        return Response.fail(BizResponseCode.TOKEN_INVALID);
     }
 
     @ExceptionHandler(Exception.class)

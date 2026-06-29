@@ -7,20 +7,20 @@ import lombok.NoArgsConstructor;
 
 /**
  * @Author: 黄光宇
- * @CreateTime: 2026-06-18
- * @Description: 创建节点请求
+ * @CreateTime: 2026-06-27
+ * @Description: 字典项对外 DTO
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class WorkspaceNodeCreateRequestDTO {
+@Builder
+public class DictValueDTO {
 
-    private Long workspaceId;
+    private String valueCode;
 
-    private Long parentId;
+    private String valueName;
 
-    private String nodeType;
+    private String remark;
 
-    private String title;
+    private Integer sort;
 }

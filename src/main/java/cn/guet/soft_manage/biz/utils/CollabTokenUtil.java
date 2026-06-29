@@ -7,6 +7,7 @@ import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Resource;
@@ -30,8 +31,9 @@ public class CollabTokenUtil {
     public String generateToken(Long userId, Long nodeId, boolean canWrite, String displayName, String avatarUrl) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(CollabConstants.CLAIM_TYPE, CollabConstants.TOKEN_TYPE);
-        claims.put(CollabConstants.CLAIM_USER_ID, userId);
-        claims.put(CollabConstants.CLAIM_NODE_ID, nodeId);
+        // 以字符串写入，避免 Node 端 jsonwebtoken 解析 JSON 数字时丢失雪花 ID 精度
+        claims.put(CollabConstants.CLAIM_USER_ID, String.valueOf(userId));
+        claims.put(CollabConstants.CLAIM_NODE_ID, String.valueOf(nodeId));
         claims.put(CollabConstants.CLAIM_CAN_WRITE, canWrite);
         claims.put(CollabConstants.CLAIM_DISPLAY_NAME, displayName);
         if (avatarUrl != null && !avatarUrl.isBlank()) {
@@ -59,7 +61,7 @@ public class CollabTokenUtil {
                     .getPayload();
         } catch (ExpiredJwtException ex) {
             throw new BusinessException(BizResponseCode.COLLAB_TOKEN_EXPIRED);
-        } catch (Exception ex) {
+        } catch (JwtException ex) {
             throw new BusinessException(BizResponseCode.COLLAB_TOKEN_INVALID);
         }
 
@@ -67,9 +69,20 @@ public class CollabTokenUtil {
             throw new BusinessException(BizResponseCode.COLLAB_TOKEN_INVALID);
         }
 
-        Long userId = claims.get(CollabConstants.CLAIM_USER_ID, Long.class);
-        Long nodeId = claims.get(CollabConstants.CLAIM_NODE_ID, Long.class);
-        if (userId == null || nodeId == null) throw new BusinessException(BizResponseCode.COLLAB_TOKEN_INVALID);
+        String userIdText = claims.get(CollabConstants.CLAIM_USER_ID, String.class);
+        String nodeIdText = claims.get(CollabConstants.CLAIM_NODE_ID, String.class);
+        if (userIdText == null || nodeIdText == null) {
+            throw new BusinessException(BizResponseCode.COLLAB_TOKEN_INVALID);
+        }
+
+        Long userId;
+        Long nodeId;
+        try {
+            userId = Long.parseLong(userIdText);
+            nodeId = Long.parseLong(nodeIdText);
+        } catch (NumberFormatException ex) {
+            throw new BusinessException(BizResponseCode.COLLAB_TOKEN_INVALID);
+        }
 
         return CollabTokenClaimsDTO.builder()
                 .userId(userId)

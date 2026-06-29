@@ -6,7 +6,6 @@ import cn.guet.soft_manage.frame.common.UserContext;
 import cn.guet.soft_manage.frame.constant.JwtConstants;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -28,14 +27,10 @@ public class JwtInterceptor implements HandlerInterceptor {
 
         String token = authHeader.substring(JwtConstants.TOKEN_PREFIX.length());
 
-        try {
-            User user = JwtUtil.getLoginUser(token);
-            log.info("userId={} 正在请求...", user.getId());
-            UserContext.set(user);
-            return true;
-        } catch (ExpiredJwtException ex) {
-            throw new BusinessException(BizResponseCode.TOKEN_EXPIRED);
-        }
+        User user = JwtUtil.getLoginUser(token);
+        log.info("userId={} 正在请求...", user.getId());
+        UserContext.set(user);
+        return true;
     }
 
     @Override

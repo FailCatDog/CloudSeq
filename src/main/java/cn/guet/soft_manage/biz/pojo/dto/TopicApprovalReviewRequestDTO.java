@@ -15,7 +15,7 @@ public class TopicApprovalReviewRequestDTO {
     private Long approvalId;
 
     @NotNull(message = "审批状态不能为空")
-    private Integer approvalStatus;
+    private String approvalStatus;
 
     private String rejectReason;
 }

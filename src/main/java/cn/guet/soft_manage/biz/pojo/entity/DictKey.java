@@ -13,53 +13,28 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
  * @Author: 黄光宇
- * @CreateTime: 2026-05-26
- * @Description: 周报实体
+ * @CreateTime: 2026-06-27
+ * @Description: 字典 Key 实体
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_weekly_report")
-public class WeeklyReport {
+@TableName("sm_dict_key")
+public class DictKey {
 
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private Long id;
+    @TableId(value = "dict_key_id", type = IdType.ASSIGN_ID)
+    private Long dictKeyId;
 
-    private Long workspaceId;
+    private String keyCode;
 
-    private Long userId;
+    private String keyName;
 
-    private Integer reportYear;
-
-    private Integer reportWeek;
-
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate weekStartDate;
-
-    private String title;
-
-    private String weeklyProgress;
-
-    private String problems;
-
-    private String nextPlan;
-
-    private Long projectId;
-
-    private String attachment;
-
-    private String reportStatus;
-
-    private Long submitUserId;
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime submitDate;
+    private String remark;
 
     @TableLogic
     private Integer delFlag;

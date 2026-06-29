@@ -9,9 +9,13 @@ import cn.guet.soft_manage.biz.pojo.entity.Workspace;
  */
 public interface WorkspaceService {
 
+    /**
+     * 获取当前用户所在小组的项目空间（仅查询，不在此创建）。
+     * 项目空间在选题审批通过时由 {@link cn.guet.soft_manage.biz.service.impl.TeamServiceImpl#reviewTopic} 自动创建。
+     */
+    Workspace getCurrentTeamWorkspace();
+
     Workspace createWorkspace(Long teamId);
 
     Workspace getByTeamId(Long teamId);
-
-    Workspace getOrCreateForCurrentTeam();
 }

@@ -31,7 +31,7 @@ public class TeamMemberInfoDTO {
 
     private Integer isLeader;
 
-    private Integer memberStatus;
+    private String memberStatus;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime joinDate;
