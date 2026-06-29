@@ -16,6 +16,11 @@ spring:
 collab:
   ws-url: ws://localhost:1234
 
+minio:
+  endpoint: http://111.229.171.163:9000
+  access-key: admin
+  secret-key: guetHgy@123
+
 dict:
   cache:
     redis-key: sm:dict

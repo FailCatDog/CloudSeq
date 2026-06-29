@@ -75,6 +75,9 @@ public enum BizResponseCode {
     COLLAB_TOKEN_INVALID(50029, "协同令牌无效"),
     COLLAB_TOKEN_EXPIRED(50030, "协同令牌已过期"),
 
+    OBJECT_STORAGE_ERROR(60000, "对象存储操作失败"),
+    OBJECT_STORAGE_DISABLED(60001, "对象存储未启用"),
+
     APPROVAL_NOT_FOUND(70000, "审批记录不存在");
 
     private final int code;
