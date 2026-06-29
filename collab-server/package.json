@@ -1,0 +1,15 @@
+{
+  "name": "collab-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@hocuspocus/server": "^4.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "yjs": "^13.6.31"
+  }
+}

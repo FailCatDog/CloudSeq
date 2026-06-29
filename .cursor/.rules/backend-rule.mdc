@@ -1,0 +1,106 @@
+---
+description: 本项目 Spring Boot 后端 Service 层编码规范（极简内联、谨慎抽取私有方法）
+alwaysApply: true
+---
+
+# 后端 Service 层编码规范
+
+约束 `backend/src/main/java` 下 Service 实现类保持主流程可读、避免碎片化私有方法。与接口契约、事务边界、异常码保持一致；按需与项目其他说明合并使用。
+
+**权衡：** 本规范偏向「主方法内联、改动面小」，而不是「每个小步骤都抽私有方法」。对递归、树构建、跨方法复用的复杂块仍可抽取。
+
+## 1. 私有方法：默认不写
+
+**Service 实现类里，逻辑优先写在 `@Override` 公开方法内，不要习惯性拆私有 helper。**
+
+禁止为以下场景单独抽私有方法（应直接内联到调用处）：
+
+- `requireUserId()`、`requireWorkspace()`、`requireExistingNode()` 等 **3～8 行**的「查库 + null 判断 + 抛异常」
+- `assertOwner()`、`ensureDraft()` 等 **单行或数行**的状态断言
+- **一行能写完**的包装，例如 `return parentId == null ? rootNodeId : parentId`
+- 只在 **一个** 公开方法里用一次、且 **不足 30 行** 的参数校验片段
+- **参数校验、默认值填充、字段归一化**（如 `validateDates`、`fillDefaultFields`、`normalizeDuration`），即使 create/update **共用** 也 **不抽** 私有方法，直接在各自公开方法内顺序写完
+
+自问：「这个私有方法是不是只是把主流程拆碎、跳转多读一遍？」若是，内联。
+
+## 2. 允许抽取私有方法的例外
+
+仅当满足 **至少一条** 时可保留或新增私有方法：
+
+| 条件 | 示例 |
+|------|------|
+| 单一职责块 **超过约 30 行**（含校验、组装、算法） | 权限上下文构建、重复性校验 SQL |
+| **递归** 或明显独立的 **算法/结构转换** | `deleteNodeRecursive`、`buildTree` + `sortTree` |
+| 逻辑 **跨 Service 复用** | 应抽到 `biz/utils` 或独立 Service，而不是每个类各写一套 `requireUserId` |
+
+**30 行** 指该私有方法自身有效代码行（不含空行与括号行），不是公开方法总行数。
+
+## 3. 主方法写法
+
+- 公开方法顺序建议：**鉴权/上下文 → 参数校验 → 核心业务 → 持久化 → 返回**；能顺序写清楚就不要拆成 5 个 `require*`。
+- 同一实体「查询 + 不存在抛错」在 **同一公开方法只查一次**；避免 `requireCurrentAccess` 后再 `requireWorkspace` 重复查库。
+- 事务注解放在公开入口（`@Transactional`），不要挂在仅供内部调用的私有方法上（除非该私有方法被同类公开方法通过 self 调用且确有事务需求）。
+
+## 4. 业务异常与响应码
+
+**Service 层抛错统一使用 `BizResponseCode`，禁止在 Service 中硬编码异常文案。**
+
+正确：
+
+```java
+throw new BusinessException(BizResponseCode.PLAN_TASK_NOT_FOUND);
+```
+
+禁止：
+
+```java
+throw new BusinessException(BizResponseCode.PARAM_ERROR.getCode(), "任务不存在");
+throw new BusinessException("任务不存在");
+```
+
+规则：
+
+- 每条业务错误在 `BizResponseCode` 中 **新增枚举项**，`message` 字段存放对用户展示的文案
+- 按模块段号递增维护：`1xxxx` 通用、`2xxxx` 认证、`3xxxx` 权限、`4xxxx` 用户、`5xxxx` 业务、`7xxxx` 审批流程等
+- 优先使用语义明确的枚举（如 `WEEKLY_REPORT_DUPLICATE`），不要复用笼统的 `PARAM_ERROR` 再拼字符串
+- 仅 `GlobalExceptionHandler` 等框架层可对 `PARAM_ERROR` 做参数校验类兜底
+
+## 5. 单行 if 省略大括号
+
+**仅当单独的 `if`（无 `else` / `else if`）且语句体只有一行、不冗长时：不写 `{}`，条件与语句体写在同一行。**
+
+适用：
+
+- 单行 `throw new BusinessException(...)`
+- 单行 `return`
+- 单行赋值或 setter，例如 `if (task.getTaskStatus() == null) task.setTaskStatus(1);`
+
+不适用（必须写 `{}`）：
+
+- 存在 **`else` 或 `else if`** 分支
+- 语句体 **多于一行**
+- 单行但过长（例如链式调用、复杂表达式超过约 **120 字符**）
+
+示例：
+
+```java
+if (rows == 0) throw new BusinessException(BizResponseCode.PLAN_TASK_NOT_FOUND);
+
+if (task.getTaskStatus() == null) task.setTaskStatus(1);
+
+if (task.getDuration() != null) {
+    task.setDuration(task.getDuration().setScale(1, RoundingMode.HALF_UP));
+} else if (task.getStartDate() != null && task.getEndDate() != null) {
+    task.setDuration(BigDecimal.valueOf(ChronoUnit.DAYS.between(task.getStartDate(), task.getEndDate()) + 1));
+}
+```
+
+## 6. 注释与分层
+
+- 类上可保留简短 JavaDoc；**方法体内**不写逐步说明注释（与前端规范一致：靠命名表达意图）。
+- Controller 只做入参绑定与调用 Service；**不在 Controller 抽私有方法做业务**。
+- 可复用的纯函数（如 ISO 周、展示名解析）放在 `biz/utils`，不要在每个 ServiceImpl 复制一套 `resolveDisplayName`。
+
+---
+
+**规范生效时可观察为：** 打开 ServiceImpl 时主流程在一个公开方法内能顺读到底；私有方法数量少且每个都有「复用 / 超 30 行 / 递归算法」的明确理由；不再出现大量 `requireXxx` / `ensureXxx` 跳转。

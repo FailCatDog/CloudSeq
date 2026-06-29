@@ -37,3 +37,11 @@ build/
 
 ### Mac OS ###
 .DS_Store
+/collab-server/node_modules/
+/collab-server/package-lock.json
+/frontend/node_modules/
+/frontend/dist/
+/docs/
+/scripts/
+/.idea/
+/frontend/.idea/
