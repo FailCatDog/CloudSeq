@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://111.229.171.163:13306/soft_manage?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: guetHgy@123
+    hikari:
+      keepalive-time: 30000          # 30秒发送一次心跳，保持连接存活
+  data:
+    redis:
+      host: 111.229.171.163
+      port: 16379
+      database: 0
+      sentinel:
+        password: guetHgy@123
+collab:
+  ws-url: ws://localhost:1234
+
+minio:
+  endpoint: http://111.229.171.163:9000
+  access-key: admin
+  secret-key: guetHgy@123
+
+dict:
+  cache:
+    redis-key: sm:dict
+    ttl-days: 7
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      logic-delete-field: del_flag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
