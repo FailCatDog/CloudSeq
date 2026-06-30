@@ -363,6 +363,7 @@
   min-height: 0;
   display: flex;
   overflow: hidden;
+  position: relative;
 }
 
 .ps-doc-outline {
@@ -401,6 +402,400 @@
   flex: 1;
   min-height: 0;
   padding: 8px 0 16px;
+}
+
+.ps-doc-comments {
+  width: 0;
+  min-width: 0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  border-left: 1px solid transparent;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 0.22s ease, min-width 0.22s ease, opacity 0.18s ease, border-color 0.22s ease;
+}
+
+.ps-doc-comments.is-open {
+  width: 300px;
+  min-width: 300px;
+  border-left-color: #e5e7eb;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ps-doc-comments__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px 10px 16px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.ps-doc-comments__header-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ps-doc-comments__close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.ps-doc-comments__close:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: #64748b;
+}
+
+.ps-doc-comments__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ps-doc-comments-rail {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 5;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 72px;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  background: #fff;
+  color: #64748b;
+  box-shadow: -2px 0 12px rgba(15, 23, 42, 0.06);
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.ps-doc-comments-rail:hover {
+  color: #7c5cfc;
+  border-color: rgba(124, 92, 252, 0.25);
+  box-shadow: -4px 0 16px rgba(124, 92, 252, 0.1);
+}
+
+.ps-doc-comments-rail__badge {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #7c5cfc;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.ps-comment-gutter {
+  width: 28px;
+  min-width: 28px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  position: relative;
+  user-select: none;
+}
+
+.ps-comment-gutter__row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.ps-comment-gutter__btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.ps-comment-gutter__btn.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ps-comment-gutter__row:hover .ps-comment-gutter__btn,
+.ps-comment-gutter__row.is-panel-active .ps-comment-gutter__btn,
+.ps-comment-gutter__btn:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ps-comment-gutter__row.is-panel-active .ps-comment-gutter__btn {
+  color: #7c5cfc;
+  background: rgba(124, 92, 252, 0.1);
+}
+
+.ps-comment-gutter__btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.ps-comment-gutter__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #7c5cfc;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ps-doc-comments__composer {
+  flex-shrink: 0;
+  padding: 12px 14px 14px;
+  border-top: 1px solid #eef2f7;
+  background: #fff;
+}
+
+.ps-doc-comments__composer-quote {
+  margin: 0 0 8px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(124, 92, 252, 0.35);
+  font-size: 11px;
+  line-height: 1.5;
+  color: #64748b;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ps-doc-comments__composer-box {
+  position: relative;
+}
+
+.ps-doc-comments__composer-input {
+  display: block;
+  width: 100%;
+  min-height: 88px;
+  padding: 10px 44px 36px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #111827;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.ps-doc-comments__composer-input::placeholder {
+  color: #94a3b8;
+}
+
+.ps-doc-comments__composer-input:focus {
+  border-color: rgba(124, 92, 252, 0.45);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.08);
+}
+
+.ps-doc-comments__composer-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.ps-doc-comments__composer-send {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: #7c5cfc;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.12s ease, opacity 0.12s ease;
+}
+
+.ps-doc-comments__composer-send:hover:not(:disabled) {
+  background: #6d4ef0;
+  transform: scale(1.04);
+}
+
+.ps-doc-comments__composer-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ps-doc-comments__composer-error {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #dc2626;
+}
+
+.ps-doc-comments__title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.ps-doc-comments__count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(124, 92, 252, 0.12);
+  color: #7c5cfc;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.ps-doc-comments__state {
+  padding: 16px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+.ps-doc-comments__state--error {
+  color: #dc2626;
+}
+
+.ps-doc-comments__list {
+  flex: 1;
+  min-height: 0;
+  padding: 8px 10px 16px;
+}
+
+.ps-doc-comment-item {
+  position: relative;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.ps-doc-comment-item:hover {
+  border-color: rgba(124, 92, 252, 0.25);
+}
+
+.ps-doc-comment-item.is-active {
+  border-color: rgba(124, 92, 252, 0.45);
+  box-shadow: 0 0 0 1px rgba(124, 92, 252, 0.08);
+}
+
+.ps-doc-comment-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ps-doc-comment-item__author {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.ps-doc-comment-item__time {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.ps-doc-comment-item__quote {
+  margin: 0 0 6px;
+  padding-left: 8px;
+  border-left: 2px solid #e2e8f0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #64748b;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ps-doc-comment-item__content {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #111827;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ps-doc-comment-item__delete {
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.ps-doc-comment-item__delete:hover:not(:disabled) {
+  color: #dc2626;
+}
+
+.ps-doc-comment-item__delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .ps-outline-tree,

@@ -12,12 +12,14 @@ import { ProjectDocTableCell, ProjectDocTableHeader } from '../script/projectDoc
 import ProjectDocTableControls from './ProjectDocTableControls.vue'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import * as Y from 'yjs'
-import { onBeforeUnmount, ref, shallowRef, watch, nextTick } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, watch, nextTick } from 'vue'
 import { buildCollabUser, hashCollabColor, renderCollabCaret, renderCollabSelection } from '@/utils/collabCaret'
 import { formatDocUpdateLabel } from '@/utils/formatDocUpdate'
 import { invalidateCollabToken } from '@/utils/collabTokenCache'
 import ProjectDocBlockGutter from './ProjectDocBlockGutter.vue'
+import ProjectDocCommentGutter from './ProjectDocCommentGutter.vue'
 import ProjectDocOutline from './ProjectDocOutline.vue'
+import ProjectDocCommentPanel from './ProjectDocCommentPanel.vue'
 import { ProjectDocKeyboardShortcuts } from '../script/projectDocKeyboardShortcuts.js'
 import {
   ProjectDocImage,
@@ -25,6 +27,9 @@ import {
   tryHandleImagePaste,
   triggerImageUpload,
 } from '../script/projectDocImage.js'
+import { focusCommentAnchor, getBlockQuoteText, filterCommentsByAnchor, countCommentsByAnchor } from '../script/projectDocComment.js'
+import { openAppConfirm } from '@/composables/appPrompt'
+import { useDocumentComments } from '@/composables/useDocumentComments.js'
 import AppScrollArea from '@/components/AppScrollArea.vue'
 
 const props = defineProps({
@@ -45,6 +50,10 @@ const uploadMessage = ref('')
 const uploadingImage = ref(false)
 const onlineUsers = ref([])
 const lastEditedLabel = ref('')
+const activeCommentId = ref(null)
+const commentsPanelOpen = ref(false)
+const pendingCommentAnchor = ref(null)
+const commentPanelRef = ref(null)
 let provider = null
 let ydoc = null
 let contentSeeded = false
@@ -52,6 +61,25 @@ let snapshotTimer = null
 let awarenessChangeHandler = null
 
 const SNAPSHOT_DEBOUNCE_MS = 2000
+
+const {
+  comments,
+  loading: commentsLoading,
+  errorMessage: commentsErrorMessage,
+  submitting: commentSubmitting,
+  addComment,
+  removeComment,
+} = useDocumentComments(
+  () => props.docId,
+  () => collabReady.value,
+)
+
+const commentCountByPos = computed(() => countCommentsByAnchor(comments.value))
+
+const blockComments = computed(() => {
+  const anchorPos = pendingCommentAnchor.value?.anchorPos
+  return filterCommentsByAnchor(comments.value, anchorPos)
+})
 
 const buildSessionUser = () => {
   if (!props.collabSession) return null
@@ -324,6 +352,84 @@ const handleTitleInput = (event) => {
 
 const getSnapshot = () => editor.value?.getMarkdown() ?? ''
 
+const openCommentsPanel = (anchor = null) => {
+  pendingCommentAnchor.value = anchor
+  commentsPanelOpen.value = true
+  commentPanelRef.value?.focusComposer()
+}
+
+const closeCommentsPanel = () => {
+  commentsPanelOpen.value = false
+  pendingCommentAnchor.value = null
+}
+
+const handleCommentBlock = (row) => {
+  if (!row || row.pos == null) return
+  activeCommentId.value = null
+  commentsErrorMessage.value = ''
+  openCommentsPanel({
+    anchorPos: row.pos,
+    quoteText: getBlockQuoteText(editor.value, row.pos),
+  })
+}
+
+const handlePublishComment = async (content) => {
+  const resolved = pendingCommentAnchor.value
+  if (!resolved || resolved.anchorPos == null) {
+    commentsErrorMessage.value = '请从段落右侧点击评论按钮后再发表'
+    return
+  }
+
+  try {
+    const created = await addComment({
+      anchorPos: resolved.anchorPos,
+      quoteText: resolved.quoteText || getBlockQuoteText(editor.value, resolved.anchorPos),
+      content,
+    })
+    activeCommentId.value = created?.id ?? null
+    commentPanelRef.value?.clearDraft()
+    focusCommentAnchor(editor.value, resolved.anchorPos)
+  } catch {
+    // error handled in composable
+  }
+}
+
+const handleSelectComment = (comment) => {
+  if (!comment) return
+  activeCommentId.value = comment.id
+  focusCommentAnchor(editor.value, comment.anchorPos)
+}
+
+const handleDeleteComment = async (comment) => {
+  if (!comment?.id) return
+
+  const confirmed = await openAppConfirm({
+    title: '删除评论',
+    message: '确定删除这条评论吗？',
+    confirmLabel: '删除',
+    cancelLabel: '取消',
+    danger: true,
+  })
+  if (!confirmed) return
+
+  try {
+    await removeComment(comment.id)
+    if (String(activeCommentId.value) === String(comment.id)) {
+      activeCommentId.value = null
+    }
+  } catch {
+    // errorMessage handled in composable
+  }
+}
+
+watch(
+  () => props.docId,
+  () => {
+    closeCommentsPanel()
+    activeCommentId.value = null
+  },
+)
+
 watch(
   () => [props.collabSession, props.docId],
   ([session]) => {
@@ -416,9 +522,33 @@ onBeforeUnmount(async () => {
                 加载编辑器…
               </div>
               <EditorContent v-if="collabReady" :editor="editor" class="ps-doc-editor-content" />
+              <ProjectDocCommentGutter
+                v-if="collabReady"
+                :editor="editor"
+                :comment-count-by-pos="commentCountByPos"
+                :active-anchor-pos="pendingCommentAnchor?.anchorPos ?? null"
+                @comment-block="handleCommentBlock"
+              />
             </div>
           </div>
         </AppScrollArea>
+
+        <ProjectDocCommentPanel
+          v-if="collabReady"
+          ref="commentPanelRef"
+          :open="commentsPanelOpen"
+          :comments="blockComments"
+          :loading="commentsLoading"
+          :error-message="commentsErrorMessage"
+          :submitting="commentSubmitting"
+          :active-comment-id="activeCommentId"
+          :pending-quote-text="pendingCommentAnchor?.quoteText ?? ''"
+          :has-anchor="pendingCommentAnchor?.anchorPos != null"
+          @close="closeCommentsPanel"
+          @select="handleSelectComment"
+          @delete="handleDeleteComment"
+          @publish="handlePublishComment"
+        />
       </div>
     </div>
   </div>

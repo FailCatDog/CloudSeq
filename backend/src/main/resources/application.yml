@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: flowseque
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  port: 19001
+  address: 0.0.0.0
+
+collab:
+  ws-url: ws://localhost:1234
+  jwt-secret: soft_manage-collab-jwt-secret-change-me
+  token-expire-seconds: 600
+  room-prefix: doc-
+  internal-secret: soft_manage-collab-internal-secret-change-me
+
+dict:
+  cache:
+    redis-key: sm:dict
+    ttl-days: 7
+
+# MinIO 对象存储（后期可迁至 Nacos）
+minio:
+  enabled: true
+  endpoint: http://127.0.0.1:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  region: us-east-1
+
+# 文档资产上传限制
+document:
+  asset:
+    max-size-bytes: 10485760
+
+

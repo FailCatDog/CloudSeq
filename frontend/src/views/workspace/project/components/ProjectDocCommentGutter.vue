@@ -1,8 +1,5 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import ProjectDocFormatPicker from './ProjectDocFormatPicker.vue'
-import { openAppTableSize } from '@/composables/appPrompt'
-import { DOC_BLOCK_FORMATS, applyBlockFormatToRow, deleteTableAtRow, getBlockFormatsForRow, insertTableAtRow } from '@/constants/docBlockFormats'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   getEditorView,
   getEditorViewDom,
@@ -16,19 +13,22 @@ const props = defineProps({
     type: Object,
     default: null,
   },
-  canWrite: {
-    type: Boolean,
-    default: true,
+  commentCountByPos: {
+    type: Object,
+    default: () => ({}),
+  },
+  activeAnchorPos: {
+    type: Number,
+    default: null,
   },
 })
+
+const emit = defineEmits(['comment-block'])
 
 const gutterRef = ref(null)
 const rows = ref([])
 const gutterHeight = ref(0)
 const activeRowIndex = ref(null)
-const openRowIndex = ref(null)
-const pickerAnchor = ref(null)
-const selectedRow = shallowRef(null)
 
 let proseMirrorEl = null
 let resizeObserver = null
@@ -36,6 +36,8 @@ let mutationObserver = null
 let unmounted = false
 /** @type {number | null} */
 let rafId = null
+
+const getCommentCount = (pos) => props.commentCountByPos?.[pos] ?? 0
 
 const measureRows = () => {
   const gutterEl = gutterRef.value
@@ -118,40 +120,9 @@ const unbindEditor = () => {
   proseMirrorEl = null
 }
 
-const pickerFormats = ref(DOC_BLOCK_FORMATS)
-
-const openPicker = (row, event) => {
-  if (!props.canWrite) return
-  selectedRow.value = row
-  openRowIndex.value = row.index
-  pickerFormats.value = getBlockFormatsForRow(props.editor, row)
-  const rect = event.currentTarget.getBoundingClientRect()
-  pickerAnchor.value = {
-    top: Math.max(12, rect.top - 4),
-    left: rect.right + 10,
-  }
-}
-
-const closePicker = () => {
-  pickerAnchor.value = null
-  openRowIndex.value = null
-  selectedRow.value = null
-}
-
-const handleFormatSelect = async (formatId) => {
-  if (!selectedRow.value || !props.editor) return
-
-  if (formatId === 'table') {
-    const size = await openAppTableSize()
-    if (!size) return
-    insertTableAtRow(props.editor, selectedRow.value, size)
-  } else if (formatId === 'deleteTable') {
-    deleteTableAtRow(props.editor, selectedRow.value)
-  } else {
-    applyBlockFormatToRow(props.editor, selectedRow.value, formatId)
-  }
-
-  nextTick(scheduleMeasure)
+const handleCommentClick = (row, event) => {
+  event.stopPropagation()
+  emit('comment-block', row)
 }
 
 watch(
@@ -188,40 +159,34 @@ onBeforeUnmount(() => {
 <template>
   <div
     ref="gutterRef"
-    class="ps-block-gutter"
+    class="ps-comment-gutter"
     :style="{ height: `${gutterHeight}px` }"
-    aria-label="块插入区域"
+    aria-label="块评论区域"
     @mouseleave="activeRowIndex = null"
   >
     <div
       v-for="row in rows"
       :key="row.index"
-      class="ps-block-gutter__row"
-      :class="{ 'is-active': openRowIndex === row.index }"
+      class="ps-comment-gutter__row"
+      :class="{
+        'has-comments': getCommentCount(row.pos) > 0,
+        'is-panel-active': activeAnchorPos != null && activeAnchorPos === row.pos,
+      }"
       :style="{ top: `${row.top}px`, height: `${row.height}px` }"
       @mouseenter="activeRowIndex = row.index"
     >
       <button
-        v-if="canWrite"
-        v-show="activeRowIndex === row.index || openRowIndex === row.index"
         type="button"
-        class="ps-block-gutter__btn"
-        :aria-label="`设置第 ${row.index + 1} 行格式`"
-        @click="openPicker(row, $event)"
+        class="ps-comment-gutter__btn"
+        :class="{ 'is-visible': activeRowIndex === row.index || getCommentCount(row.pos) > 0 }"
+        :aria-label="`评论第 ${row.index + 1} 行${getCommentCount(row.pos) ? `，${getCommentCount(row.pos)} 条` : ''}`"
+        @click="handleCommentClick(row, $event)"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
         </svg>
+        <span v-if="getCommentCount(row.pos)" class="ps-comment-gutter__badge">{{ getCommentCount(row.pos) }}</span>
       </button>
     </div>
-
-    <ProjectDocFormatPicker
-      v-if="pickerAnchor"
-      :anchor="pickerAnchor"
-      :formats="pickerFormats"
-      @select="handleFormatSelect"
-      @close="closePicker"
-    />
   </div>
 </template>

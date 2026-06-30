@@ -1,0 +1,9 @@
+# 生产环境配置见 docs/TODO.md →「生产环境 WebSocket / 协同服务配置」
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      logic-delete-field: del_flag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
