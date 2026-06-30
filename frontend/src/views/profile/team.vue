@@ -108,7 +108,7 @@
 
     <teleport to="body">
       <div v-if="topicDialogVisible" class="dialog-mask" @click.self="closeTopicDialog">
-        <div class="dialog-panel">
+        <div class="dialog-panel app-scrollbar">
           <div class="dialog-head">
             <div>
               <p class="section-label">选题操作</p>

@@ -1,6 +1,12 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import {
+  getEditorViewDom,
+  isEditorDestroyed,
+  safeEditorOff,
+  safeEditorOn,
+} from '@/utils/tiptapSafe'
+import {
   buildTableContextMenuItems,
   TABLE_MENU_COMMANDS,
 } from '../script/projectDocTableMenu.js'
@@ -32,6 +38,9 @@ let scrollEl = null
 let activeWrapper = null
 /** @type {number | null} */
 let savedTablePos = null
+let unmounted = false
+/** @type {number | null} */
+let rafId = null
 
 const handleEditorBlur = () => {
   setTimeout(() => {
@@ -65,7 +74,7 @@ const clearActiveWrapper = () => {
 }
 
 const updateControls = () => {
-  if (!props.editor || !props.canWrite || !isCursorInTable(props.editor)) {
+  if (unmounted || isEditorDestroyed(props.editor) || !props.canWrite || !isCursorInTable(props.editor)) {
     if (!rowMenuOpen.value && !colMenuOpen.value && !menuOpen.value) {
       closeMenus()
     }
@@ -103,7 +112,12 @@ const updateControls = () => {
 }
 
 const scheduleUpdate = () => {
-  requestAnimationFrame(updateControls)
+  if (unmounted) return
+  if (rafId != null) cancelAnimationFrame(rafId)
+  rafId = requestAnimationFrame(() => {
+    rafId = null
+    if (!unmounted) updateControls()
+  })
 }
 
 const runMenuAction = (key) => {
@@ -130,9 +144,10 @@ const closeMenus = () => {
 }
 
 const openContextMenu = (event) => {
-  if (!props.canWrite || !props.editor?.view) return
+  const dom = getEditorViewDom(props.editor)
+  if (!props.canWrite || !dom) return
   const cell = event.target instanceof Element ? event.target.closest('td, th') : null
-  if (!cell || !props.editor.view.dom.contains(cell)) return
+  if (!cell || !dom.contains(cell)) return
 
   event.preventDefault()
 
@@ -176,15 +191,15 @@ const handleKeydown = (event) => {
 
 const bindEditor = () => {
   unbindEditor()
-  if (!props.editor?.view) return
+  const dom = getEditorViewDom(props.editor)
+  if (!dom) return
 
-  const dom = props.editor.view.dom
   dom.addEventListener('contextmenu', openContextMenu)
 
-  props.editor.on('selectionUpdate', scheduleUpdate)
-  props.editor.on('transaction', scheduleUpdate)
-  props.editor.on('focus', scheduleUpdate)
-  props.editor.on('blur', handleEditorBlur)
+  safeEditorOn(props.editor, 'selectionUpdate', scheduleUpdate)
+  safeEditorOn(props.editor, 'transaction', scheduleUpdate)
+  safeEditorOn(props.editor, 'focus', scheduleUpdate)
+  safeEditorOn(props.editor, 'blur', handleEditorBlur)
 
   scrollEl = dom.closest('.ps-doc-editor-scroll')
   scrollEl?.addEventListener('scroll', scheduleUpdate, { passive: true })
@@ -195,13 +210,14 @@ const bindEditor = () => {
 }
 
 const unbindEditor = () => {
-  if (props.editor?.view) {
-    props.editor.view.dom.removeEventListener('contextmenu', openContextMenu)
-    props.editor.off('selectionUpdate', scheduleUpdate)
-    props.editor.off('transaction', scheduleUpdate)
-    props.editor.off('focus', scheduleUpdate)
-    props.editor.off('blur', handleEditorBlur)
+  const dom = getEditorViewDom(props.editor)
+  if (dom) {
+    dom.removeEventListener('contextmenu', openContextMenu)
   }
+  safeEditorOff(props.editor, 'selectionUpdate', scheduleUpdate)
+  safeEditorOff(props.editor, 'transaction', scheduleUpdate)
+  safeEditorOff(props.editor, 'focus', scheduleUpdate)
+  safeEditorOff(props.editor, 'blur', handleEditorBlur)
   scrollEl?.removeEventListener('scroll', scheduleUpdate)
   window.removeEventListener('resize', scheduleUpdate)
   document.removeEventListener('pointerdown', handleDocumentPointer, true)
@@ -213,7 +229,7 @@ const unbindEditor = () => {
 watch(
   () => [props.editor, props.canWrite],
   async ([editor]) => {
-    if (editor) {
+    if (editor && !isEditorDestroyed(editor)) {
       await nextTick()
       bindEditor()
     } else {
@@ -224,7 +240,11 @@ watch(
   { immediate: true },
 )
 
-onBeforeUnmount(unbindEditor)
+onBeforeUnmount(() => {
+  unmounted = true
+  if (rafId != null) cancelAnimationFrame(rafId)
+  unbindEditor()
+})
 </script>
 
 <template>

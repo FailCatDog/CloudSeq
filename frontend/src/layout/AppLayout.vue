@@ -90,7 +90,7 @@
         </div>
       </header>
 
-      <div class="wb-page-content" :class="pageContentClass">
+      <div class="wb-page-content app-scrollbar" :class="pageContentClass">
         <RouterView />
       </div>
     </main>

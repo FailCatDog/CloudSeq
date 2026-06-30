@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { openAppConfirm, openAppPrompt } from '@/composables/appPrompt'
 import { getDocumentApi } from '@/api/document'
@@ -15,8 +15,9 @@ import { WORKSPACE_NODE_TYPE } from '@/constants/workspace'
 const TITLE_SAVE_DELAY_MS = 500
 
 const findNode = (nodes, id) => {
+  const targetId = String(id)
   for (const node of nodes) {
-    if (node.id === id) return node
+    if (String(node.id) === targetId) return node
     if (node.children?.length) {
       const found = findNode(node.children, id)
       if (found) return found
@@ -42,6 +43,16 @@ const uniqueTitle = (nodes, base) => {
 }
 
 const isDocumentNode = (node) => node?.nodeType === WORKSPACE_NODE_TYPE.DOCUMENT
+
+export const PROJECT_DOCS_KEY = Symbol('projectDocs')
+
+export function useProjectDocsContext() {
+  const ctx = inject(PROJECT_DOCS_KEY)
+  if (!ctx) {
+    throw new Error('useProjectDocsContext must be used within ProjectLayout')
+  }
+  return ctx
+}
 
 export function useProjectDocs() {
   const router = useRouter()
@@ -69,7 +80,7 @@ export function useProjectDocs() {
     if (!node || !isDocumentNode(node)) return null
 
     const detail = activeDocDetail.value
-    if (!detail || detail.nodeId !== activeDocId.value) {
+    if (!detail || String(detail.nodeId) !== String(activeDocId.value)) {
       return {
         ...node,
         content: '',
@@ -77,6 +88,7 @@ export function useProjectDocs() {
         canWrite: false,
         collab: null,
         loading: true,
+        updateDate: null,
       }
     }
 
@@ -87,6 +99,7 @@ export function useProjectDocs() {
       canWrite: detail.canWrite,
       collab: detail.collab,
       loading: detail.loading,
+      updateDate: detail.updateDate ?? null,
     }
   })
 
@@ -164,6 +177,7 @@ export function useProjectDocs() {
         canWrite: Boolean(doc.canWrite),
         loading: false,
         collab,
+        updateDate: doc.updateDate ?? null,
       }
       latestContentSnapshot = doc.contentMd ?? ''
 
@@ -220,19 +234,17 @@ export function useProjectDocs() {
 
   watch(
     () => route.name,
-    async (name, prevName) => {
-      if (name === 'project-doc') return
-
-      if (activeDocId.value != null) {
-        activeDocId.value = null
-        activeDocDetail.value = null
-      }
-
-      if (prevName === 'project-doc') {
-        await flushPendingSaves()
+    (name, prevName) => {
+      if (prevName === 'project-doc' && name !== 'project-doc') {
+        void flushPendingSaves()
       }
     },
   )
+
+  const clearActiveDoc = () => {
+    activeDocId.value = null
+    activeDocDetail.value = null
+  }
 
   const toggleFolder = (id) => {
     const next = new Set(expandedFolders.value)
@@ -354,7 +366,10 @@ export function useProjectDocs() {
   const updateDocSnapshot = (content) => {
     latestContentSnapshot = content ?? ''
     const detail = activeDocDetail.value
-    if (detail) detail.contentMd = latestContentSnapshot
+    if (detail) {
+      detail.contentMd = latestContentSnapshot
+      detail.updateDate = new Date().toISOString()
+    }
   }
 
   const updateDocTitle = (id, title) => {
@@ -363,7 +378,7 @@ export function useProjectDocs() {
     node.title = title.trim()
 
     const detail = activeDocDetail.value
-    if (!detail || detail.nodeId !== id || !detail.canWrite || detail.loading) return
+    if (!detail || String(detail.nodeId) !== String(id) || !detail.canWrite || detail.loading) return
 
     pendingTitleNodeId = id
     pendingTitle = title.trim()
@@ -427,5 +442,6 @@ export function useProjectDocs() {
     updateDocSnapshot,
     updateDocTitle,
     flushPendingSaves,
+    clearActiveDoc,
   }
 }

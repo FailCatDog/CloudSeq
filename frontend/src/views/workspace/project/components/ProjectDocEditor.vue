@@ -12,19 +12,28 @@ import { ProjectDocTableCell, ProjectDocTableHeader } from '../script/projectDoc
 import ProjectDocTableControls from './ProjectDocTableControls.vue'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import * as Y from 'yjs'
-import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { buildCollabUser, renderCollabCaret, renderCollabSelection } from '@/utils/collabCaret'
+import { onBeforeUnmount, ref, shallowRef, watch, nextTick } from 'vue'
+import { buildCollabUser, hashCollabColor, renderCollabCaret, renderCollabSelection } from '@/utils/collabCaret'
+import { formatDocUpdateLabel } from '@/utils/formatDocUpdate'
 import { invalidateCollabToken } from '@/utils/collabTokenCache'
 import ProjectDocBlockGutter from './ProjectDocBlockGutter.vue'
 import ProjectDocOutline from './ProjectDocOutline.vue'
 import { ProjectDocKeyboardShortcuts } from '../script/projectDocKeyboardShortcuts.js'
+import {
+  ProjectDocImage,
+  tryHandleImageDrop,
+  tryHandleImagePaste,
+  triggerImageUpload,
+} from '../script/projectDocImage.js'
+import AppScrollArea from '@/components/AppScrollArea.vue'
 
 const props = defineProps({
   docId: { type: [String, Number], required: true },
   title: { type: String, default: '未命名文档' },
   initialContent: { type: String, default: '' },
   canWrite: { type: Boolean, default: true },
-  collabSession: { type: Object, required: true },
+  collabSession: { type: Object, default: null },
+  updateDate: { type: [String, Number, Date], default: null },
 })
 
 const emit = defineEmits(['update:title', 'snapshot'])
@@ -32,12 +41,87 @@ const emit = defineEmits(['update:title', 'snapshot'])
 const editor = shallowRef(null)
 const collabReady = ref(false)
 const collabError = ref('')
+const uploadMessage = ref('')
+const uploadingImage = ref(false)
+const onlineUsers = ref([])
+const lastEditedLabel = ref('')
 let provider = null
 let ydoc = null
 let contentSeeded = false
 let snapshotTimer = null
+let awarenessChangeHandler = null
 
 const SNAPSHOT_DEBOUNCE_MS = 2000
+
+const buildSessionUser = () => {
+  if (!props.collabSession) return null
+  return buildCollabUser({
+    name: props.collabSession.displayName,
+    avatarUrl: props.collabSession.avatarUrl,
+  })
+}
+
+const syncOnlineUsers = () => {
+  const sessionUser = buildSessionUser()
+  const awareness = provider?.awareness
+  if (!awareness) {
+    onlineUsers.value = sessionUser ? [sessionUser] : []
+    return
+  }
+
+  const seen = new Set()
+  const users = []
+  awareness.getStates().forEach((state) => {
+    const user = state?.user
+    if (!user?.name || seen.has(user.name)) return
+    seen.add(user.name)
+    users.push({
+      name: user.name,
+      avatarUrl: user.avatarUrl || '',
+      color: user.color || hashCollabColor(user.name),
+    })
+  })
+
+  onlineUsers.value = users.length > 0 ? users : sessionUser ? [sessionUser] : []
+}
+
+const bindAwareness = () => {
+  unbindAwareness()
+  if (!provider?.awareness) {
+    syncOnlineUsers()
+    return
+  }
+
+  awarenessChangeHandler = () => syncOnlineUsers()
+  provider.awareness.on('change', awarenessChangeHandler)
+  provider.on('awarenessUpdate', awarenessChangeHandler)
+  syncOnlineUsers()
+}
+
+const unbindAwareness = () => {
+  if (provider?.awareness && awarenessChangeHandler) {
+    provider.awareness.off('change', awarenessChangeHandler)
+    provider.off('awarenessUpdate', awarenessChangeHandler)
+  }
+  awarenessChangeHandler = null
+  onlineUsers.value = []
+}
+
+const getImageUploadContext = () => ({
+  editor: editor.value,
+  nodeId: props.docId,
+  canWrite: props.canWrite,
+  onUploadStart: () => {
+    uploadingImage.value = true
+    uploadMessage.value = ''
+  },
+  onUploadEnd: () => {
+    uploadingImage.value = false
+  },
+  onUploadError: (message) => {
+    uploadMessage.value = message
+  },
+})
 
 const pushContentSnapshot = (markdown, { immediate = false } = {}) => {
   if (!props.canWrite || !provider) return
@@ -72,6 +156,7 @@ const teardownCollab = () => {
     clearTimeout(snapshotTimer)
     snapshotTimer = null
   }
+  unbindAwareness()
   editor.value?.destroy()
   editor.value = null
   provider?.destroy()
@@ -80,6 +165,8 @@ const teardownCollab = () => {
   contentSeeded = false
   collabReady.value = false
   collabError.value = ''
+  uploadMessage.value = ''
+  uploadingImage.value = false
 }
 
 const setupCollab = () => {
@@ -122,6 +209,8 @@ const setupCollab = () => {
       },
     })
 
+    bindAwareness()
+
     editor.value = new Editor({
       editable: props.canWrite,
       editorProps: {
@@ -138,7 +227,7 @@ const setupCollab = () => {
           }
           return false
         },
-        handleKeyDown: (_view, event) => {
+        handleKeyDown: (view, event) => {
           if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
             event.preventDefault()
             if (editor.value) {
@@ -148,8 +237,34 @@ const setupCollab = () => {
             }
             return true
           }
+
+          if (
+            props.canWrite
+            && (event.ctrlKey || event.metaKey)
+            && event.shiftKey
+            && event.key.toLowerCase() === 'i'
+          ) {
+            event.preventDefault()
+            void triggerImageUpload(editor.value, props.docId, {
+              onUploadStart: () => {
+                uploadingImage.value = true
+                uploadMessage.value = ''
+              },
+              onUploadEnd: () => {
+                uploadingImage.value = false
+              },
+              onUploadError: (message) => {
+                uploadMessage.value = message
+              },
+            })
+            return true
+          }
+
           return false
         },
+        handlePaste: (view, event) => tryHandleImagePaste(view, event, getImageUploadContext()),
+        handleDrop: (view, event, _slice, moved) =>
+          tryHandleImageDrop(view, event, moved, getImageUploadContext()),
       },
       extensions: [
         StarterKit.configure({
@@ -169,6 +284,7 @@ const setupCollab = () => {
         TableRow,
         ProjectDocTableHeader,
         ProjectDocTableCell,
+        ProjectDocImage,
         Markdown.configure({
           markedOptions: { gfm: true },
         }),
@@ -191,6 +307,7 @@ const setupCollab = () => {
         const markdown = currentEditor.getMarkdown()
         emit('snapshot', markdown)
         pushContentSnapshot(markdown)
+        lastEditedLabel.value = formatDocUpdateLabel(new Date())
       },
     })
 
@@ -207,16 +324,25 @@ const handleTitleInput = (event) => {
 
 const getSnapshot = () => editor.value?.getMarkdown() ?? ''
 
-onMounted(() => {
-  setupCollab()
-})
+watch(
+  () => [props.collabSession, props.docId],
+  ([session]) => {
+    if (session) {
+      setupCollab()
+    } else {
+      teardownCollab()
+    }
+  },
+  { immediate: true },
+)
 
-onBeforeUnmount(() => {
-  if (editor.value && props.canWrite && provider) {
-    pushContentSnapshot(editor.value.getMarkdown(), { immediate: true })
-  }
-  teardownCollab()
-})
+watch(
+  () => props.updateDate,
+  (value) => {
+    lastEditedLabel.value = formatDocUpdateLabel(value)
+  },
+  { immediate: true },
+)
 
 watch(
   () => props.canWrite,
@@ -226,31 +352,73 @@ watch(
 )
 
 defineExpose({ getSnapshot })
+
+onBeforeUnmount(async () => {
+  collabReady.value = false
+  await nextTick()
+  if (editor.value && props.canWrite && provider) {
+    try {
+      pushContentSnapshot(editor.value.getMarkdown(), { immediate: true })
+    } catch {
+      // editor may already be torn down
+    }
+  }
+  teardownCollab()
+})
 </script>
 
 <template>
   <div class="ps-doc-editor">
-    <header class="ps-doc-editor-header">
-      <input
-        class="ps-doc-editor-title"
-        type="text"
-        :value="title"
-        :readonly="!canWrite"
-        placeholder="未命名文档"
-        @input="handleTitleInput"
-      />
-    </header>
-
     <div class="ps-doc-editor-body">
       <div class="ps-doc-editor-workspace">
         <ProjectDocOutline :editor="editor" />
-        <div class="ps-doc-editor-scroll">
+        <AppScrollArea class="ps-doc-editor-scroll" axis="both" flex hover-reveal>
           <ProjectDocTableControls v-if="collabReady" :editor="editor" :can-write="canWrite" />
           <div class="ps-doc-editor-canvas">
-            <ProjectDocBlockGutter v-if="collabReady" :editor="editor" :can-write="canWrite" />
-            <EditorContent v-if="collabReady" :editor="editor" class="ps-doc-editor-content" />
+            <div class="ps-doc-article-head">
+              <input
+                class="ps-doc-editor-title"
+                type="text"
+                :value="title"
+                :readonly="!canWrite"
+                placeholder="未命名文档"
+                @input="handleTitleInput"
+              />
+
+              <div class="ps-doc-article-meta">
+                <div class="ps-doc-article-presence" aria-label="当前在线编辑者">
+                  <div
+                    v-for="(user, index) in onlineUsers"
+                    :key="`${user.name}-${index}`"
+                    class="ps-doc-article-avatar"
+                    :style="{ '--ps-collab-color': user.color, zIndex: onlineUsers.length - index }"
+                    :title="user.name"
+                  >
+                    <img v-if="user.avatarUrl" :src="user.avatarUrl" :alt="user.name" />
+                    <span v-else>{{ user.name.slice(0, 1).toUpperCase() }}</span>
+                  </div>
+                </div>
+                <span class="ps-doc-article-updated">{{ lastEditedLabel }}</span>
+              </div>
+
+              <p v-if="collabError" class="ps-doc-editor-notice ps-doc-editor-notice--error">{{ collabError }}</p>
+              <p v-else-if="uploadMessage" class="ps-doc-editor-notice ps-doc-editor-notice--error">{{ uploadMessage }}</p>
+              <p v-else-if="uploadingImage" class="ps-doc-editor-notice">图片上传中…</p>
+            </div>
+
+            <div class="ps-doc-editor-body-row">
+              <ProjectDocBlockGutter
+                v-if="collabReady"
+                :editor="editor"
+                :can-write="canWrite"
+              />
+              <div v-if="!collabReady && !collabError" class="ps-doc-editor-loading">
+                加载编辑器…
+              </div>
+              <EditorContent v-if="collabReady" :editor="editor" class="ps-doc-editor-content" />
+            </div>
           </div>
-        </div>
+        </AppScrollArea>
       </div>
     </div>
   </div>

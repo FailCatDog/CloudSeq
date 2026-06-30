@@ -1,11 +1,17 @@
 <script setup>
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import ProjectDocOutlineNode from './ProjectDocOutlineNode.vue'
+import AppScrollArea from '@/components/AppScrollArea.vue'
 import {
   buildHeadingTree,
   extractHeadingFlatList,
   findActiveHeadingId,
 } from '@/utils/docOutline'
+import {
+  isEditorDestroyed,
+  safeEditorOff,
+  safeEditorOn,
+} from '@/utils/tiptapSafe'
 
 const props = defineProps({
   editor: {
@@ -17,9 +23,12 @@ const props = defineProps({
 const tree = ref([])
 const activeId = ref(null)
 const collapsedIds = ref(new Set())
+let unmounted = false
+/** @type {number | null} */
+let rafId = null
 
 const refreshOutline = () => {
-  if (!props.editor?.state) {
+  if (isEditorDestroyed(props.editor) || !props.editor?.state) {
     tree.value = []
     activeId.value = null
     return
@@ -31,28 +40,32 @@ const refreshOutline = () => {
 }
 
 const scheduleRefresh = () => {
-  requestAnimationFrame(refreshOutline)
+  if (unmounted) return
+  if (rafId != null) cancelAnimationFrame(rafId)
+  rafId = requestAnimationFrame(() => {
+    rafId = null
+    if (!unmounted) refreshOutline()
+  })
 }
 
 const bindEditor = () => {
   unbindEditor()
-  if (!props.editor) return
+  if (isEditorDestroyed(props.editor)) return
 
-  props.editor.on('update', scheduleRefresh)
-  props.editor.on('selectionUpdate', scheduleRefresh)
-  props.editor.on('transaction', scheduleRefresh)
+  safeEditorOn(props.editor, 'update', scheduleRefresh)
+  safeEditorOn(props.editor, 'selectionUpdate', scheduleRefresh)
+  safeEditorOn(props.editor, 'transaction', scheduleRefresh)
   scheduleRefresh()
 }
 
 const unbindEditor = () => {
-  if (!props.editor) return
-  props.editor.off('update', scheduleRefresh)
-  props.editor.off('selectionUpdate', scheduleRefresh)
-  props.editor.off('transaction', scheduleRefresh)
+  safeEditorOff(props.editor, 'update', scheduleRefresh)
+  safeEditorOff(props.editor, 'selectionUpdate', scheduleRefresh)
+  safeEditorOff(props.editor, 'transaction', scheduleRefresh)
 }
 
 const handleSelect = (item) => {
-  if (!props.editor?.view) return
+  if (isEditorDestroyed(props.editor)) return
   props.editor
     .chain()
     .focus()
@@ -73,7 +86,7 @@ watch(
   () => props.editor,
   (editor) => {
     collapsedIds.value = new Set()
-    if (editor) nextTick(bindEditor)
+    if (editor && !isEditorDestroyed(editor)) nextTick(bindEditor)
     else {
       unbindEditor()
       tree.value = []
@@ -83,7 +96,11 @@ watch(
   { immediate: true },
 )
 
-onBeforeUnmount(unbindEditor)
+onBeforeUnmount(() => {
+  unmounted = true
+  if (rafId != null) cancelAnimationFrame(rafId)
+  unbindEditor()
+})
 </script>
 
 <template>
@@ -94,7 +111,7 @@ onBeforeUnmount(unbindEditor)
 
     <div v-if="!tree.length" class="ps-doc-outline__empty" aria-hidden="true" />
 
-    <nav v-else class="ps-doc-outline__nav">
+    <AppScrollArea v-else tag="nav" class="ps-doc-outline__nav" axis="y" flex hover-reveal>
       <ul class="ps-outline-tree">
         <ProjectDocOutlineNode
           v-for="item in tree"
@@ -106,6 +123,6 @@ onBeforeUnmount(unbindEditor)
           @toggle="handleToggle"
         />
       </ul>
-    </nav>
+    </AppScrollArea>
   </aside>
 </template>

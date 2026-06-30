@@ -441,8 +441,9 @@ onMounted(loadWeekReport)
   min-height: 0;
   padding: 48px 20px 64px;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   overflow-x: hidden;
   overflow-y: auto;
   box-sizing: border-box;

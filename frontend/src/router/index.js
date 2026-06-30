@@ -5,6 +5,7 @@ import WorkspaceLayout from '../views/workspace/index.vue'
 import WorkspaceDashboard from '../views/workspace/dashboard/index.vue'
 import ProjectLayout from '../views/workspace/project/ProjectLayout.vue'
 import ProjectBoard from '../views/workspace/project/board/index.vue'
+import ProjectDocPage from '../views/workspace/project/doc/index.vue'
 import WorkspaceGantt from '../views/workspace/gantt/index.vue'
 import WorkspaceWeekly from '../views/workspace/weekly/index.vue'
 import MessagesView from '../views/messages/index.vue'
@@ -31,13 +32,13 @@ const routes = [
             meta: { title: '项目空间' },
             redirect: '/workspace/project/board',
             children: [
-              { path: 'board', component: ProjectBoard, meta: { title: '数据看板' } },
-              { path: 'gantt', component: WorkspaceGantt, meta: { title: '任务甘特图' } },
-              { path: 'weekly', component: WorkspaceWeekly, meta: { title: '周报' } },
+              { path: 'board', name: 'project-board', component: ProjectBoard, meta: { title: '数据看板' } },
+              { path: 'gantt', name: 'project-gantt', component: WorkspaceGantt, meta: { title: '任务甘特图' } },
+              { path: 'weekly', name: 'project-weekly', component: WorkspaceWeekly, meta: { title: '周报' } },
               {
                 path: 'doc/:nodeId',
                 name: 'project-doc',
-                component: { render: () => null },
+                component: ProjectDocPage,
                 meta: { title: '项目文档' },
               },
             ],

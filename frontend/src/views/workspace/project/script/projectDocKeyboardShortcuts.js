@@ -9,6 +9,7 @@ import { promptForLink } from './projectDocLink.js'
 export const PROJECT_DOC_SHORTCUTS = [
   { id: 'link', keys: 'Ctrl+Alt+K', label: '超链接' },
   { id: 'table', keys: 'Ctrl+Alt+T', label: '插入表格' },
+  { id: 'image', keys: 'Ctrl+Shift+I', label: '插入图片' },
   { id: 'bold', keys: 'Ctrl+B', label: '加粗' },
   { id: 'italic', keys: 'Ctrl+I', label: '斜体' },
   { id: 'underline', keys: 'Ctrl+U', label: '下划线' },

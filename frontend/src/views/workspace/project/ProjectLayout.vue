@@ -39,37 +39,32 @@
     </aside>
 
     <div class="ps-main">
-      <ProjectDocEditor
-        v-if="showDocEditor"
-        :key="`doc-${activeDoc.id}`"
-        :doc-id="activeDoc.id"
-        :title="activeDoc.title"
-        :initial-content="activeDoc.content"
-        :can-write="activeDoc.canWrite"
-        :collab-session="activeDoc.collab"
-        @snapshot="updateDocSnapshot"
-        @update:title="updateDocTitle(activeDoc.id, $event)"
-      />
-      <RouterView v-else />
+      <RouterView v-slot="{ Component }">
+        <component
+          :is="Component"
+          v-if="Component"
+          :key="route.fullPath"
+          class="ps-main-view"
+        />
+      </RouterView>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, provide } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import ProjectDocTree from './components/ProjectDocTree.vue'
-import ProjectDocEditor from './components/ProjectDocEditor.vue'
-import { useProjectDocs } from '@/composables/useProjectDocs'
-import { WORKSPACE_NODE_TYPE } from '@/constants/workspace'
+import { PROJECT_DOCS_KEY, useProjectDocs } from '@/composables/useProjectDocs'
 
 const route = useRoute()
+const projectDocs = useProjectDocs()
+provide(PROJECT_DOCS_KEY, projectDocs)
 
 const {
   nodes,
   rootTitle,
   activeDocId,
-  activeDoc,
   expandedFolders,
   renamingNodeId,
   loading,
@@ -83,10 +78,8 @@ const {
   commitNodeRename,
   cancelNodeRename,
   deleteNode,
-  updateDocSnapshot,
-  updateDocTitle,
   flushPendingSaves,
-} = useProjectDocs()
+} = projectDocs
 
 const navItems = [
   {
@@ -106,21 +99,14 @@ const navItems = [
   },
 ]
 
-const showDocEditor = computed(() => {
-  if (route.name !== 'project-doc') return false
-
-  const doc = activeDoc.value
-  if (!doc || doc.nodeType !== WORKSPACE_NODE_TYPE.DOCUMENT) return false
-  if (doc.loading) return true
-
-  return Boolean(doc.collab)
-})
-
 const activeNavPath = computed(() => {
   if (route.name === 'project-doc') return null
-  const match = navItems.find(
-    (item) => route.path === item.to || route.path.startsWith(`${item.to}/`),
-  )
+  const match = navItems.find((item) => {
+    if (item.to === '/workspace/project/board') return route.name === 'project-board'
+    if (item.to === '/workspace/project/gantt') return route.name === 'project-gantt'
+    if (item.to === '/workspace/project/weekly') return route.name === 'project-weekly'
+    return route.path === item.to || route.path.startsWith(`${item.to}/`)
+  })
   return match?.to ?? null
 })
 

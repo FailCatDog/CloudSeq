@@ -3,6 +3,13 @@ import { nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vu
 import ProjectDocFormatPicker from './ProjectDocFormatPicker.vue'
 import { openAppTableSize } from '@/composables/appPrompt'
 import { DOC_BLOCK_FORMATS, applyBlockFormatToRow, deleteTableAtRow, getBlockFormatsForRow, insertTableAtRow } from '@/constants/docBlockFormats'
+import {
+  getEditorView,
+  getEditorViewDom,
+  isEditorDestroyed,
+  safeEditorOff,
+  safeEditorOn,
+} from '@/utils/tiptapSafe'
 
 const props = defineProps({
   editor: {
@@ -26,24 +33,29 @@ const selectedRow = shallowRef(null)
 let proseMirrorEl = null
 let resizeObserver = null
 let mutationObserver = null
+let unmounted = false
+/** @type {number | null} */
+let rafId = null
 
 const measureRows = () => {
   const gutterEl = gutterRef.value
-  if (!props.editor?.view?.dom || !gutterEl) {
+  const dom = getEditorViewDom(props.editor)
+  if (!dom || !gutterEl) {
     rows.value = []
     gutterHeight.value = 0
     return
   }
 
-  const prose = props.editor.view.dom
+  const prose = dom
   const gutterRect = gutterEl.getBoundingClientRect()
   const blockElements = Array.from(prose.children)
+  const view = getEditorView(props.editor)
 
   rows.value = blockElements.map((element, index) => {
     const rect = element.getBoundingClientRect()
     let pos = 0
     try {
-      pos = props.editor.view.posAtDOM(element, 0)
+      pos = view?.posAtDOM(element, 0) ?? 0
     } catch {
       pos = 0
     }
@@ -66,18 +78,24 @@ const measureRows = () => {
 }
 
 const scheduleMeasure = () => {
-  requestAnimationFrame(measureRows)
+  if (unmounted) return
+  if (rafId != null) cancelAnimationFrame(rafId)
+  rafId = requestAnimationFrame(() => {
+    rafId = null
+    if (!unmounted) measureRows()
+  })
 }
 
 const bindEditor = () => {
   unbindEditor()
-  if (!props.editor?.view?.dom) return
+  const dom = getEditorViewDom(props.editor)
+  if (!dom) return
 
-  proseMirrorEl = props.editor.view.dom
+  proseMirrorEl = dom
 
-  props.editor.on('update', scheduleMeasure)
-  props.editor.on('selectionUpdate', scheduleMeasure)
-  props.editor.on('transaction', scheduleMeasure)
+  safeEditorOn(props.editor, 'update', scheduleMeasure)
+  safeEditorOn(props.editor, 'selectionUpdate', scheduleMeasure)
+  safeEditorOn(props.editor, 'transaction', scheduleMeasure)
 
   resizeObserver = new ResizeObserver(scheduleMeasure)
   resizeObserver.observe(proseMirrorEl)
@@ -90,11 +108,9 @@ const bindEditor = () => {
 }
 
 const unbindEditor = () => {
-  if (props.editor) {
-    props.editor.off('update', scheduleMeasure)
-    props.editor.off('selectionUpdate', scheduleMeasure)
-    props.editor.off('transaction', scheduleMeasure)
-  }
+  safeEditorOff(props.editor, 'update', scheduleMeasure)
+  safeEditorOff(props.editor, 'selectionUpdate', scheduleMeasure)
+  safeEditorOff(props.editor, 'transaction', scheduleMeasure)
   resizeObserver?.disconnect()
   mutationObserver?.disconnect()
   resizeObserver = null
@@ -148,7 +164,7 @@ watch(
 watch(
   () => props.editor,
   (editor) => {
-    if (editor) nextTick(bindEditor)
+    if (editor && !isEditorDestroyed(editor)) nextTick(bindEditor)
     else {
       unbindEditor()
       rows.value = []
@@ -163,6 +179,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  unmounted = true
+  if (rafId != null) cancelAnimationFrame(rafId)
   unbindEditor()
 })
 </script>

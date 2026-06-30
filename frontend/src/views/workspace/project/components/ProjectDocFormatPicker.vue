@@ -18,8 +18,12 @@ const emit = defineEmits(['select', 'close'])
 const hoveredId = ref(null)
 const panelRef = ref(null)
 
+const hoveredFormat = computed(() =>
+  props.formats.find((format) => format.id === hoveredId.value) ?? null,
+)
+
 const panelStyle = computed(() => {
-  const width = 248
+  const width = hoveredFormat.value ? 460 : 248
   const height = 120
   let top = props.anchor.top
   let left = props.anchor.left
@@ -68,6 +72,7 @@ onBeforeUnmount(() => {
       role="dialog"
       aria-label="选择文本格式"
       @pointerdown.stop
+      @mouseleave="hoveredId = null"
     >
       <div class="ps-format-picker__grid">
         <button
@@ -78,11 +83,23 @@ onBeforeUnmount(() => {
           :class="{ 'is-hovered': hoveredId === format.id, 'is-danger': format.danger }"
           :aria-label="format.label"
           @mouseenter="hoveredId = format.id"
-          @mouseleave="hoveredId = null"
+          @focus="hoveredId = format.id"
           @click="handleSelect(format.id)"
         >
           <span class="ps-format-picker__icon" :class="format.iconClass">{{ format.short }}</span>
         </button>
+      </div>
+
+      <div
+        v-if="hoveredFormat"
+        class="ps-format-picker__bubble"
+        :class="{ 'is-danger': hoveredFormat.danger }"
+        aria-live="polite"
+      >
+        <p class="ps-format-picker__bubble-title">{{ hoveredFormat.label }}</p>
+        <p v-if="hoveredFormat.description" class="ps-format-picker__bubble-desc">
+          {{ hoveredFormat.description }}
+        </p>
       </div>
     </div>
   </Teleport>

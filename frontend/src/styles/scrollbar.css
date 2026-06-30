@@ -1,0 +1,137 @@
+/* Shared scrollbar tokens — aligned with workbench purple theme */
+:root {
+  --scroll-size: 8px;
+  --scroll-size-thin: 6px;
+  --scroll-radius: 999px;
+  --scroll-track: transparent;
+  --scroll-thumb: rgba(196, 181, 253, 0.72);
+  --scroll-thumb-hover: var(--wb-purple-light, #a78bfa);
+  --scroll-thumb-active: var(--wb-purple, #8b5cf6);
+  --scroll-thumb-idle: rgba(196, 181, 253, 0.38);
+}
+
+/* Base styled scrollbar */
+.app-scrollbar,
+.wb-page-content,
+.ps-doc-editor-scroll,
+.ps-doc-outline__nav,
+.ps-board,
+.weekly-page,
+.ps-doc-editor-content .tiptap pre {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+.app-scrollbar::-webkit-scrollbar,
+.wb-page-content::-webkit-scrollbar,
+.ps-doc-editor-scroll::-webkit-scrollbar,
+.ps-doc-outline__nav::-webkit-scrollbar,
+.ps-board::-webkit-scrollbar,
+.weekly-page::-webkit-scrollbar,
+.ps-doc-editor-content .tiptap pre::-webkit-scrollbar {
+  width: var(--scroll-size);
+  height: var(--scroll-size);
+}
+
+.app-scrollbar::-webkit-scrollbar-track,
+.wb-page-content::-webkit-scrollbar-track,
+.ps-doc-editor-scroll::-webkit-scrollbar-track,
+.ps-doc-outline__nav::-webkit-scrollbar-track,
+.ps-board::-webkit-scrollbar-track,
+.weekly-page::-webkit-scrollbar-track,
+.ps-doc-editor-content .tiptap pre::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb,
+.wb-page-content::-webkit-scrollbar-thumb,
+.ps-doc-editor-scroll::-webkit-scrollbar-thumb,
+.ps-doc-outline__nav::-webkit-scrollbar-thumb,
+.ps-board::-webkit-scrollbar-thumb,
+.weekly-page::-webkit-scrollbar-thumb,
+.ps-doc-editor-content .tiptap pre::-webkit-scrollbar-thumb {
+  background-color: var(--scroll-thumb);
+  border-radius: var(--scroll-radius);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.18s ease;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb:hover,
+.wb-page-content::-webkit-scrollbar-thumb:hover,
+.ps-doc-editor-scroll::-webkit-scrollbar-thumb:hover,
+.ps-doc-outline__nav::-webkit-scrollbar-thumb:hover,
+.ps-board::-webkit-scrollbar-thumb:hover,
+.weekly-page::-webkit-scrollbar-thumb:hover,
+.ps-doc-editor-content .tiptap pre::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scroll-thumb-hover);
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb:active,
+.wb-page-content::-webkit-scrollbar-thumb:active,
+.ps-doc-editor-scroll::-webkit-scrollbar-thumb:active,
+.ps-doc-outline__nav::-webkit-scrollbar-thumb:active,
+.ps-board::-webkit-scrollbar-thumb:active,
+.weekly-page::-webkit-scrollbar-thumb:active,
+.ps-doc-editor-content .tiptap pre::-webkit-scrollbar-thumb:active {
+  background-color: var(--scroll-thumb-active);
+}
+
+.app-scrollbar::-webkit-scrollbar-corner,
+.wb-page-content::-webkit-scrollbar-corner,
+.ps-doc-editor-scroll::-webkit-scrollbar-corner,
+.ps-doc-outline__nav::-webkit-scrollbar-corner,
+.ps-board::-webkit-scrollbar-corner,
+.weekly-page::-webkit-scrollbar-corner,
+.ps-doc-editor-content .tiptap pre::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Variants */
+.app-scrollbar--thin,
+.ps-doc-editor-content .tiptap pre {
+  scrollbar-width: thin;
+}
+
+.app-scrollbar--thin::-webkit-scrollbar,
+.ps-doc-editor-content .tiptap pre::-webkit-scrollbar {
+  width: var(--scroll-size-thin);
+  height: var(--scroll-size-thin);
+}
+
+.app-scrollbar--hover-reveal {
+  scrollbar-color: var(--scroll-thumb-idle) var(--scroll-track);
+}
+
+.app-scrollbar--hover-reveal::-webkit-scrollbar-thumb {
+  background-color: var(--scroll-thumb-idle);
+}
+
+.app-scrollbar--hover-reveal:hover {
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+.app-scrollbar--hover-reveal:hover::-webkit-scrollbar-thumb {
+  background-color: var(--scroll-thumb);
+}
+
+/* AppScrollArea layout helpers */
+.app-scroll-area--y {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.app-scroll-area--x {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.app-scroll-area--both {
+  overflow: auto;
+}
+
+.app-scroll-area--flex {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}

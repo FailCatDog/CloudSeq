@@ -593,8 +593,8 @@ onBeforeUnmount(() => {
   --gantt-success: #22c55e;
   --gantt-warning: var(--wb-icon-orange);
   --gantt-danger: #ef4444;
-  --gantt-scrollbar-thumb: var(--wb-purple-border);
-  --gantt-scrollbar-thumb-hover: var(--wb-purple-light);
+  --gantt-scrollbar-thumb: var(--scroll-thumb);
+  --gantt-scrollbar-thumb-hover: var(--scroll-thumb-hover);
 }
 
 /* 时间轴头部与网格：今日列、指示线 */
