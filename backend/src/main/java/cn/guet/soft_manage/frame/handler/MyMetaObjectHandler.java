@@ -1,6 +1,6 @@
 package cn.guet.soft_manage.frame.handler;
 
-import cn.guet.soft_manage.frame.common.UserContext;
+import cn.guet.soft_manage.frame.auth.UserContext;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;

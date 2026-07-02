@@ -16,6 +16,9 @@ public final class JwtConstants {
     public static final String CLAIM_USERNAME = "username";
     public static final String CLAIM_ROLE = "role";
     public static final String CLAIM_STUDENT_NO = "studentNo";
+    public static final String CLAIM_NICK_NAME = "nickName";
+    public static final String CLAIM_REAL_NAME = "realName";
+    public static final String CLAIM_AVATAR_URL = "avatarUrl";
     public static final long EXPIRE_SECONDS = 24L * 60L * 60L;
     public static final String SECRET = "soft_manage-jwt-secret-key-change-me";
 }

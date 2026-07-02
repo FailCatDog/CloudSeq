@@ -1,8 +1,8 @@
 package cn.guet.soft_manage.frame.interceptor;
 
-import cn.guet.soft_manage.biz.pojo.entity.User;
-import cn.guet.soft_manage.biz.utils.JwtUtil;
-import cn.guet.soft_manage.frame.common.UserContext;
+import cn.guet.soft_manage.frame.auth.JwtUtil;
+import cn.guet.soft_manage.frame.auth.LoginUser;
+import cn.guet.soft_manage.frame.auth.UserContext;
 import cn.guet.soft_manage.frame.constant.JwtConstants;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
@@ -24,9 +24,9 @@ public class JwtInterceptor implements HandlerInterceptor {
             throw new BusinessException(BizResponseCode.UNAUTHORIZED);
         }
 
-        User user = JwtUtil.getLoginUser(token);
-        log.info("userId={} 正在请求...", user.getId());
-        UserContext.set(user);
+        LoginUser loginUser = JwtUtil.parseLoginUser(token);
+        log.info("userId={} 正在请求...", loginUser.getId());
+        UserContext.set(loginUser);
         return true;
     }
 
