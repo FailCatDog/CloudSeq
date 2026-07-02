@@ -157,6 +157,9 @@ const pageTitle = computed(() => {
   if (route.name === 'project-doc') {
     return '项目文档'
   }
+  if (route.name === 'project-sheet') {
+    return '项目表格'
+  }
   if (pageTitleMap[route.path]) {
     return pageTitleMap[route.path]
   }

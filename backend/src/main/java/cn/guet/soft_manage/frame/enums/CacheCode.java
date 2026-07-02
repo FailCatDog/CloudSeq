@@ -44,6 +44,7 @@ public enum CacheCode {
     WORKSPACE_NODE_TYPE("workspace_node_type", "工作区节点类型"),
     WORKSPACE_NODE_TYPE_FOLDER("FOLDER", "文件夹"),
     WORKSPACE_NODE_TYPE_DOCUMENT("DOCUMENT", "文档"),
+    WORKSPACE_NODE_TYPE_SHEET("SHEET", "表格"),
     ;
 
     private final String code;

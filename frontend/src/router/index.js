@@ -41,6 +41,12 @@ const routes = [
                 component: ProjectDocPage,
                 meta: { title: '项目文档' },
               },
+              {
+                path: 'sheet/:nodeId',
+                name: 'project-sheet',
+                component: () => import('../views/workspace/project/sheet/index.vue'),
+                meta: { title: '项目表格' },
+              },
             ],
           },
           { path: 'gantt', redirect: '/workspace/project/gantt' },

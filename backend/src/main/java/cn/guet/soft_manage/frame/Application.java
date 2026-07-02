@@ -1,5 +1,6 @@
 package cn.guet.soft_manage.frame;
 
+import org.apache.ibatis.annotations.Mapper;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,7 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @Description: 应用启动类
  */
 @SpringBootApplication(scanBasePackages = "cn.guet.soft_manage")
-@MapperScan("cn.guet.soft_manage.biz")
+@MapperScan(basePackages = "cn.guet.soft_manage.biz", annotationClass = Mapper.class)
 public class Application {
 
     public static void main(String args[]) {

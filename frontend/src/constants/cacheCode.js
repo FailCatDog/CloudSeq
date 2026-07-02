@@ -33,6 +33,7 @@ export const CacheCode = {
   WORKSPACE_NODE_TYPE: 'workspace_node_type',
   WORKSPACE_NODE_TYPE_FOLDER: 'FOLDER',
   WORKSPACE_NODE_TYPE_DOCUMENT: 'DOCUMENT',
+  WORKSPACE_NODE_TYPE_SHEET: 'SHEET',
 }
 
 /** 计划任务状态 value */

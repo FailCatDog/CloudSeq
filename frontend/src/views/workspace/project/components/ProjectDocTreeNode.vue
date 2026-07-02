@@ -19,12 +19,15 @@ const emit = defineEmits([
 ])
 
 const isFolder = (node) => node.nodeType === WORKSPACE_NODE_TYPE.FOLDER
+const isDocument = (node) => node.nodeType === WORKSPACE_NODE_TYPE.DOCUMENT
+const isSheet = (node) => node.nodeType === WORKSPACE_NODE_TYPE.SHEET
+const isLeaf = (node) => isDocument(node) || isSheet(node)
 
 const isRenaming = computed(() =>
   props.renamingNodeId != null && String(props.renamingNodeId) === String(props.node.id),
 )
 
-const isDocActive = computed(() =>
+const isLeafActive = computed(() =>
   String(props.activeDocId) === String(props.node.id),
 )
 
@@ -129,13 +132,32 @@ const handleRenameKeydown = (event) => {
     </button>
 
     <div
-      v-else-if="isRenaming"
+      v-else-if="isLeaf(node) && isRenaming"
       class="ps-doc-node-row ps-doc-node-row--doc ps-doc-node-row--renaming"
-      :class="{ active: isDocActive }"
+      :class="{ active: isLeafActive }"
       @contextmenu="handleRowContextMenu($event, node)"
     >
       <span class="ps-doc-chevron-placeholder" aria-hidden="true" />
       <svg
+        v-if="isSheet(node)"
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="3" y1="9" x2="21" y2="9" />
+        <line x1="3" y1="15" x2="21" y2="15" />
+        <line x1="9" y1="3" x2="9" y2="21" />
+        <line x1="15" y1="3" x2="15" y2="21" />
+      </svg>
+      <svg
+        v-else
         width="15"
         height="15"
         viewBox="0 0 24 24"
@@ -163,15 +185,34 @@ const handleRenameKeydown = (event) => {
     </div>
 
     <button
-      v-else
+      v-else-if="isLeaf(node)"
       type="button"
       class="ps-doc-node-row ps-doc-node-row--doc"
-      :class="{ active: isDocActive }"
+      :class="{ active: isLeafActive }"
       @click="emit('select', node.id)"
       @contextmenu="handleRowContextMenu($event, node)"
     >
       <span class="ps-doc-chevron-placeholder" aria-hidden="true" />
       <svg
+        v-if="isSheet(node)"
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="3" y1="9" x2="21" y2="9" />
+        <line x1="3" y1="15" x2="21" y2="15" />
+        <line x1="9" y1="3" x2="9" y2="21" />
+        <line x1="15" y1="3" x2="15" y2="21" />
+      </svg>
+      <svg
+        v-else
         width="15"
         height="15"
         viewBox="0 0 24 24"

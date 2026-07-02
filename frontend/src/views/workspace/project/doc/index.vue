@@ -1,21 +1,17 @@
 <script setup>
-import { computed, onBeforeUnmount } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import ProjectDocEditor from '../components/ProjectDocEditor.vue'
 import { useProjectDocsContext } from '@/composables/useProjectDocs'
 
 const route = useRoute()
-const { activeDoc, errorMessage, updateDocSnapshot, updateDocTitle, clearActiveDoc } =
+const { activeDoc, errorMessage, updateDocSnapshot, updateDocTitle } =
   useProjectDocsContext()
 
 const editorReady = computed(() => {
   const doc = activeDoc.value
   if (!doc || String(doc.id) !== String(route.params.nodeId)) return false
   return !doc.loading && doc.collab
-})
-
-onBeforeUnmount(() => {
-  clearActiveDoc()
 })
 </script>
 

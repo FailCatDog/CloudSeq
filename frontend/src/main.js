@@ -8,4 +8,7 @@ import './styles/workbench.css'
 import './styles/scrollbar.css'
 import './styles/project-space.css'
 
-createApp(App).use(router).use(appPromptPlugin).mount('#app')
+const app = createApp(App)
+app.use(router)
+app.use(appPromptPlugin)
+app.mount('#app')

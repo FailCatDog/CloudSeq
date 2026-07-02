@@ -37,6 +37,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'create-document',
+  'create-sheet',
   'create-folder',
   'select',
   'toggle-folder',
@@ -48,6 +49,7 @@ const emit = defineEmits([
 
 const ICON_FOLDER = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`
 const ICON_DOC = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
+const ICON_SHEET = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>`
 const ICON_RENAME = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`
 const ICON_DELETE = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`
 const ICON_OPEN = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`
@@ -69,6 +71,7 @@ const closeMenu = () => {
 
 const isFolderNode = (node) => node?.nodeType === WORKSPACE_NODE_TYPE.FOLDER
 const isDocumentNode = (node) => node?.nodeType === WORKSPACE_NODE_TYPE.DOCUMENT
+const isSheetNode = (node) => node?.nodeType === WORKSPACE_NODE_TYPE.SHEET
 
 const menuItems = computed(() => {
   const target = menuTarget.value
@@ -77,6 +80,7 @@ const menuItems = computed(() => {
   const createItems = (parentId) => [
     { key: 'new-folder', label: '新建文件夹', icon: ICON_FOLDER, parentId },
     { key: 'new-document', label: '新建文档', icon: ICON_DOC, parentId },
+    { key: 'new-sheet', label: '新建表格', icon: ICON_SHEET, parentId },
   ]
 
   if (target.type === 'root') {
@@ -99,7 +103,7 @@ const menuItems = computed(() => {
     ]
   }
 
-  if (isDocumentNode(node)) {
+  if (isDocumentNode(node) || isSheetNode(node)) {
     return [
       { key: 'open', label: '打开', icon: ICON_OPEN, nodeId: node.id },
       { key: 'divider-1', divider: true },
@@ -149,6 +153,10 @@ const handleMenuSelect = (key) => {
     emit('create-document', item.parentId ?? null)
     return
   }
+  if (key === 'new-sheet') {
+    emit('create-sheet', item.parentId ?? null)
+    return
+  }
   if (key === 'open') {
     emit('select', item.nodeId)
     return
@@ -176,6 +184,11 @@ const togglePopover = () => {
 
 const closePopover = () => {
   showPopover.value = false
+}
+
+const handleCreateSheet = () => {
+  closePopover()
+  emit('create-sheet', null)
 }
 
 const handleCreateDocument = () => {
@@ -284,6 +297,21 @@ onBeforeUnmount(() => {
             type="button"
             class="ps-doc-popover-item"
             role="menuitem"
+            @click="handleCreateSheet"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <line x1="3" y1="9" x2="21" y2="9" />
+              <line x1="3" y1="15" x2="21" y2="15" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+              <line x1="15" y1="3" x2="15" y2="21" />
+            </svg>
+            <span>表格</span>
+          </button>
+          <button
+            type="button"
+            class="ps-doc-popover-item"
+            role="menuitem"
             @click="handleCreateDocument"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -319,7 +347,7 @@ onBeforeUnmount(() => {
           @commit-rename="(nodeId, title) => emit('commit-rename', nodeId, title)"
           @cancel-rename="(nodeId) => emit('cancel-rename', nodeId)"
         />
-        <p v-if="!nodes.length" class="ps-doc-empty-hint">暂无内容，点击 + 新建文件夹或文档</p>
+        <p v-if="!nodes.length" class="ps-doc-empty-hint">暂无内容，点击 + 新建文件夹、文档或表格</p>
       </template>
     </div>
 

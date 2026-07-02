@@ -10,6 +10,7 @@ import cn.guet.soft_manage.biz.workspace.entity.Workspace;
 import cn.guet.soft_manage.biz.workspace.entity.WorkspaceContent;
 import cn.guet.soft_manage.biz.workspace.entity.WorkspaceNode;
 import cn.guet.soft_manage.biz.document.service.DocumentManageService;
+import cn.guet.soft_manage.biz.sheet.service.SheetManageService;
 import cn.guet.soft_manage.biz.workspace.service.WorkspaceAccessService;
 import cn.guet.soft_manage.biz.workspace.service.WorkspaceNodeService;
 import cn.guet.soft_manage.frame.auth.UserContext;
@@ -51,6 +52,9 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
     @Resource
     private DocumentManageService documentManageService;
 
+    @Resource
+    private SheetManageService sheetManageService;
+
     @Override
     public List<WorkspaceNodeTreeDTO> getTree(Long workspaceId) {
         workspaceAccessService.requireCurrentAccess(workspaceId);
@@ -60,21 +64,22 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
                 .orderByAsc(WorkspaceNode::getSortOrder)
                 .orderByAsc(WorkspaceNode::getId));
 
-        List<WorkspaceNodeTreeDTO> tree = buildTree(nodes, loadDocumentMetadata(nodes));
+        List<WorkspaceNodeTreeDTO> tree = buildTree(nodes, loadContentMetadata(nodes));
         return flattenLegacyRoot(workspaceId, tree);
     }
 
-    private Map<Long, WorkspaceContent> loadDocumentMetadata(List<WorkspaceNode> nodes) {
-        List<Long> documentNodeIds = nodes.stream()
-                .filter(node -> Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode()))
+    private Map<Long, WorkspaceContent> loadContentMetadata(List<WorkspaceNode> nodes) {
+        List<Long> contentNodeIds = nodes.stream()
+                .filter(node -> Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())
+                        || Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_SHEET.getCode()))
                 .map(WorkspaceNode::getId)
                 .toList();
-        if (documentNodeIds.isEmpty()) {
+        if (contentNodeIds.isEmpty()) {
             return Map.of();
         }
 
         return workspaceContentDao.selectList(new LambdaQueryWrapper<WorkspaceContent>()
-                        .in(WorkspaceContent::getNodeId, documentNodeIds)
+                        .in(WorkspaceContent::getNodeId, contentNodeIds)
                         .select(
                                 WorkspaceContent::getNodeId,
                                 WorkspaceContent::getSummary,
@@ -114,14 +119,15 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
                 .build();
         workspaceNodeDao.insert(node);
 
-        if (Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) {
+        if (Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())
+                || Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_SHEET.getCode())) {
             WorkspaceContent content = WorkspaceContent.builder()
                     .nodeId(node.getId())
                     .contentMd("")
                     .charCount(0)
                     .contentBytes(0)
                     .yjsBytes(0)
-                    .summary("")
+                    .summary(Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_SHEET.getCode()) ? "空表格" : "")
                     .createUser(userId)
                     .updateUser(userId)
                     .build();
@@ -176,7 +182,8 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
 
     private boolean isSupportedNodeType(String nodeType) {
         return Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_FOLDER.getCode())
-                || Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode());
+                || Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())
+                || Objects.equals(nodeType, CacheCode.WORKSPACE_NODE_TYPE_SHEET.getCode());
     }
 
     /**
@@ -212,6 +219,8 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
 
         if (Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) {
             documentManageService.cleanupByNodeId(node.getId());
+        } else if (Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_SHEET.getCode())) {
+            sheetManageService.cleanupByNodeId(node.getId());
         }
         workspaceNodeDao.deleteById(node.getId());
     }
@@ -229,7 +238,8 @@ public class WorkspaceNodeServiceImpl implements WorkspaceNodeService {
                     .sortOrder(node.getSortOrder())
                     .children(new ArrayList<>());
 
-            if (Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())) {
+            if (Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT.getCode())
+                    || Objects.equals(node.getNodeType(), CacheCode.WORKSPACE_NODE_TYPE_SHEET.getCode())) {
                 WorkspaceContent content = contentMetadata.get(node.getId());
                 if (content != null) {
                     builder.summary(content.getSummary() != null ? content.getSummary() : "")

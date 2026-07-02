@@ -28,8 +28,9 @@
         :loading="loading"
         :error-message="errorMessage"
         @create-document="handleCreateDocument"
+        @create-sheet="handleCreateSheet"
         @create-folder="handleCreateFolder"
-        @select="selectDoc"
+        @select="selectLeaf"
         @toggle-folder="toggleFolder"
         @rename-node="handleRenameNode"
         @commit-rename="handleCommitRename"
@@ -70,9 +71,10 @@ const {
   loading,
   errorMessage,
   loadTree,
-  selectDoc,
+  selectLeaf,
   toggleFolder,
   createDocument,
+  createSheet,
   createFolder,
   renameNode,
   commitNodeRename,
@@ -100,7 +102,7 @@ const navItems = [
 ]
 
 const activeNavPath = computed(() => {
-  if (route.name === 'project-doc') return null
+  if (route.name === 'project-doc' || route.name === 'project-sheet') return null
   const match = navItems.find((item) => {
     if (item.to === '/workspace/project/board') return route.name === 'project-board'
     if (item.to === '/workspace/project/gantt') return route.name === 'project-gantt'
@@ -115,6 +117,14 @@ const handleCreateDocument = async (parentId = null) => {
     await createDocument(parentId)
   } catch (error) {
     window.alert(error?.message || '创建文档失败')
+  }
+}
+
+const handleCreateSheet = async (parentId = null) => {
+  try {
+    await createSheet(parentId)
+  } catch (error) {
+    window.alert(error?.message || '创建表格失败')
   }
 }
 
