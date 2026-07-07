@@ -5,6 +5,7 @@ import cn.guet.soft_manage.biz.team.dto.TeamMemberAddRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMembersResponseDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamTopicSubmitRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TopicApprovalReviewRequestDTO;
+import cn.guet.soft_manage.biz.team.dto.TopicApprovalSummaryDTO;
 import cn.guet.soft_manage.biz.team.entity.Team;
 import cn.guet.soft_manage.biz.team.entity.TeamMember;
 import cn.guet.soft_manage.biz.team.entity.TopicApproval;
@@ -65,6 +66,13 @@ public interface TeamService {
      * @return 审批记录列表
      */
     List<TopicApproval> listTopicApprovals(Long teamId);
+
+    /**
+     * 教师端选题审批收件箱
+     * @param approvalStatus 审批状态筛选，可为空
+     * @return 审批列表
+     */
+    List<TopicApprovalSummaryDTO> listTeacherTopicApprovals(String approvalStatus);
 
     /**
      * 获取当前用户所在小组

@@ -5,7 +5,7 @@
 
   <div v-else class="wb-app">
     <aside class="wb-sidebar" :class="{ expanded: sidebarExpanded }" id="sidebar">
-      <RouterLink to="/workspace/dashboard" class="wb-sidebar-logo" :aria-label="BRAND_NAME">
+      <RouterLink :to="homePath" class="wb-sidebar-logo" :aria-label="BRAND_NAME">
         <BrandLogo :size="40" src="/logo-40.png" />
         <span class="wb-sidebar-logo__label">{{ BRAND_NAME }}</span>
       </RouterLink>
@@ -53,12 +53,14 @@
       </div>
     </aside>
 
-    <main class="wb-main" :class="{ 'wb-main--project': isProjectRoute }">
+    <main class="wb-main" :class="{ 'wb-main--project': isProjectRoute, 'wb-main--profile': isProfileRoute }">
       <header v-if="!isProjectRoute" class="wb-topbar">
         <h1 class="wb-topbar-title">{{ pageTitle }}</h1>
 
         <div class="wb-topbar-actions">
-          <button type="button" class="wb-focus-mode-btn" @click="openComingSoon">
+          <CourseSelectDropdown v-if="isTeacherUser" />
+
+          <button v-if="!isTeacherUser" type="button" class="wb-focus-mode-btn" @click="openComingSoon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
               <circle cx="12" cy="12" r="3" />
@@ -76,10 +78,10 @@
               <RouterLink to="/profile" class="wb-user-menu-item" role="menuitem" @click="showUserMenu = false">
                 个人中心
               </RouterLink>
-              <RouterLink to="/profile/team" class="wb-user-menu-item" role="menuitem" @click="showUserMenu = false">
+              <RouterLink to="/profile?tab=team" class="wb-user-menu-item" role="menuitem" @click="showUserMenu = false">
                 我的小组
               </RouterLink>
-              <RouterLink to="/profile/security" class="wb-user-menu-item" role="menuitem" @click="showUserMenu = false">
+              <RouterLink to="/profile?tab=security" class="wb-user-menu-item" role="menuitem" @click="showUserMenu = false">
                 安全设置
               </RouterLink>
               <button type="button" class="wb-user-menu-item" role="menuitem" @click="logout">
@@ -101,56 +103,59 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import BrandLogo from '@/components/BrandLogo.vue'
+import CourseSelectDropdown from '@/components/CourseSelectDropdown.vue'
 import { BRAND_NAME } from '@/constants/brand'
+import { STUDENT_NAV, TEACHER_NAV } from '@/constants/roleNav'
 import { clearCollabTokenCache } from '@/utils/collabTokenCache'
+import { clearRoleAccess, getRoleHomePath, getUserFromStorage, isTeacherRole } from '@/utils/roleHome'
 
 const route = useRoute()
 const router = useRouter()
 const userMenuRef = ref(null)
 const showUserMenu = ref(false)
-const sidebarExpanded = ref(false)
+const sidebarExpanded = ref(true)
 
 const AUTH_STORAGE_KEY = 'authorization'
 const USER_STORAGE_KEY = 'user'
 
-const sidebarNav = [
-  {
-    to: '/workspace/dashboard',
-    label: '工作台',
-    ariaLabel: '工作台',
-    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`,
-  },
-  {
-    to: '/workspace/project',
-    label: '项目空间',
-    ariaLabel: '项目空间',
-    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`,
-  },
-  {
-    to: '/profile',
-    label: '个人中心',
-    ariaLabel: '个人中心',
-    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
-  },
-]
+const storageUser = getUserFromStorage()
+const isTeacherUser = computed(() => isTeacherRole(storageUser?.role))
+const isTeachingRoute = computed(() => route.path.startsWith('/teaching'))
+
+const sidebarNav = computed(() => (isTeacherUser.value ? TEACHER_NAV : STUDENT_NAV))
+
+const homePath = computed(() => getRoleHomePath(storageUser?.role))
 
 const pageTitleMap = {
   '/workspace/dashboard': '工作台',
   '/workspace/project/board': '数据看板',
   '/workspace/project/gantt': '任务甘特图',
   '/workspace/project/weekly': '周报',
+  '/teaching/dashboard': '教学工作台',
+  '/teaching/courses': '课号管理',
+  '/teaching/approvals': '选题审批',
+  '/teaching/teams': '小组总览',
+  '/teaching/reports': '周报审阅',
   '/profile': '个人中心',
-  '/profile/team': '我的小组',
-  '/profile/security': '安全设置',
+}
+
+const profileTabTitleMap = {
+  team: '我的小组',
+  security: '安全设置',
 }
 
 const showShell = computed(() => route.path !== '/auth')
-const isDashboardRoute = computed(() => route.path === '/workspace/dashboard')
+const isDashboardRoute = computed(() => {
+  return route.path === '/workspace/dashboard' || route.path === '/teaching/dashboard'
+})
 const isProjectRoute = computed(() => route.path.startsWith('/workspace/project'))
 
+const isProfileRoute = computed(() => route.path === '/profile' || route.path.startsWith('/profile/'))
+
 const pageContentClass = computed(() => ({
-  'wb-page-content--inner': !isDashboardRoute.value && !isProjectRoute.value,
+  'wb-page-content--inner': !isDashboardRoute.value && !isProjectRoute.value && !isProfileRoute.value,
   'wb-page-content--project': isProjectRoute.value,
+  'wb-page-content--profile-host': isProfileRoute.value,
 }))
 
 const pageTitle = computed(() => {
@@ -160,8 +165,18 @@ const pageTitle = computed(() => {
   if (route.name === 'project-sheet') {
     return '项目表格'
   }
+  if (route.path === '/profile' || route.path.startsWith('/profile/')) {
+    const tab = route.query.tab
+    if (typeof tab === 'string' && profileTabTitleMap[tab]) {
+      return profileTabTitleMap[tab]
+    }
+    return pageTitleMap['/profile']
+  }
   if (pageTitleMap[route.path]) {
     return pageTitleMap[route.path]
+  }
+  if (route.path.startsWith('/teaching')) {
+    return route.meta.title || '教师端'
   }
   if (route.path.startsWith('/workspace/project')) {
     return '项目空间'
@@ -172,30 +187,22 @@ const pageTitle = computed(() => {
   return '个人中心'
 })
 
-const getStorageUser = () => {
-  const raw = localStorage.getItem(USER_STORAGE_KEY) || sessionStorage.getItem(USER_STORAGE_KEY)
-  if (!raw) return null
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
-}
+const getStorageUser = () => getUserFromStorage()
 
-const storageUser = getStorageUser()
-const displayName = computed(() => storageUser?.realName || storageUser?.nickName || storageUser?.username || 'User')
+const storageUserRef = computed(() => getStorageUser())
+const displayName = computed(() => storageUserRef.value?.realName || storageUserRef.value?.nickName || storageUserRef.value?.username || 'User')
 const avatarText = computed(() => displayName.value.slice(0, 1).toUpperCase())
-const avatarUrl = computed(() => storageUser?.avatarUrl || '')
+const avatarUrl = computed(() => storageUserRef.value?.avatarUrl || '')
 
 const isNavActive = (to) => {
-  if (to === '/workspace/dashboard') {
-    return route.path === '/workspace/dashboard'
+  if (to === '/workspace/dashboard' || to === '/teaching/dashboard') {
+    return route.path === to
   }
   if (to === '/workspace/project') {
     return route.path.startsWith('/workspace/project')
   }
   if (to === '/profile') {
-    return route.path.startsWith('/profile')
+    return route.path === '/profile' || route.path.startsWith('/profile/')
   }
   return route.path === to || route.path.startsWith(`${to}/`)
 }
@@ -213,6 +220,7 @@ const closeUserMenu = (event) => {
 const logout = async () => {
   showUserMenu.value = false
   clearCollabTokenCache()
+  clearRoleAccess()
   localStorage.removeItem(AUTH_STORAGE_KEY)
   localStorage.removeItem(USER_STORAGE_KEY)
   sessionStorage.removeItem(AUTH_STORAGE_KEY)

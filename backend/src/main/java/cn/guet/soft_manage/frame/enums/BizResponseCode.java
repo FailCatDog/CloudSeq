@@ -78,6 +78,13 @@ public enum BizResponseCode {
     DOCUMENT_COMMENT_CONTENT_REQUIRED(50032, "评论内容不能为空"),
     DOCUMENT_COMMENT_ANCHOR_REQUIRED(50033, "评论锚点位置无效"),
 
+    COURSE_NOT_FOUND(50034, "课号不存在"),
+    COURSE_CODE_EXISTS(50035, "课号已存在"),
+    COURSE_TEACHER_NOT_FOUND(50036, "主讲教师不存在"),
+    COURSE_TEAM_SIZE_INVALID(50039, "最小组人数不能大于最大组人数"),
+    ENROLLMENT_ALREADY_EXISTS(50037, "该学生已选此课号"),
+    ENROLLMENT_NOT_FOUND(50038, "选课记录不存在"),
+
     OBJECT_STORAGE_ERROR(60000, "对象存储操作失败"),
     OBJECT_STORAGE_DISABLED(60001, "对象存储未启用"),
     ASSET_NOT_FOUND(60002, "资产不存在"),

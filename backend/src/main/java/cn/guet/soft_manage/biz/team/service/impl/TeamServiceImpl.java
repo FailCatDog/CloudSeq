@@ -3,6 +3,7 @@ package cn.guet.soft_manage.biz.team.service.impl;
 import cn.guet.soft_manage.biz.team.dao.TeamDao;
 import cn.guet.soft_manage.biz.team.dao.TeamMemberDao;
 import cn.guet.soft_manage.biz.team.dao.TopicApprovalDao;
+import cn.guet.soft_manage.biz.course.dao.CourseDao;
 import cn.guet.soft_manage.biz.user.dao.UserDao;
 import cn.guet.soft_manage.biz.team.dto.TeamCreateRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMemberAddRequestDTO;
@@ -10,9 +11,11 @@ import cn.guet.soft_manage.biz.team.dto.TeamMemberInfoDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMembersResponseDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamTopicSubmitRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TopicApprovalReviewRequestDTO;
+import cn.guet.soft_manage.biz.team.dto.TopicApprovalSummaryDTO;
 import cn.guet.soft_manage.biz.team.entity.Team;
 import cn.guet.soft_manage.biz.team.entity.TeamMember;
 import cn.guet.soft_manage.biz.team.entity.TopicApproval;
+import cn.guet.soft_manage.biz.course.entity.Course;
 import cn.guet.soft_manage.biz.user.entity.User;
 import cn.guet.soft_manage.biz.team.service.TeamService;
 import cn.guet.soft_manage.biz.workspace.service.WorkspaceService;
@@ -24,12 +27,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -52,6 +59,9 @@ public class TeamServiceImpl implements TeamService {
 
     @Resource
     private UserDao userDao;
+
+    @Resource
+    private CourseDao courseDao;
 
     @Resource
     private WorkspaceService workspaceService;
@@ -265,6 +275,106 @@ public class TeamServiceImpl implements TeamService {
         return topicApprovalDao.selectList(new LambdaQueryWrapper<TopicApproval>()
                 .eq(TopicApproval::getTeamId, teamId)
                 .orderByDesc(TopicApproval::getSubmitDate));
+    }
+
+    @Override
+    public List<TopicApprovalSummaryDTO> listTeacherTopicApprovals(String approvalStatus) {
+        LambdaQueryWrapper<TopicApproval> wrapper = new LambdaQueryWrapper<TopicApproval>()
+                .orderByDesc(TopicApproval::getSubmitDate);
+        if (StringUtils.hasText(approvalStatus)) {
+            wrapper.eq(TopicApproval::getApprovalStatus, approvalStatus.trim());
+        }
+
+        List<TopicApproval> approvals = topicApprovalDao.selectList(wrapper);
+        if (approvals.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> teamIds = approvals.stream()
+                .map(TopicApproval::getTeamId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (teamIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, Team> teamMap = teamDao.selectBatchIds(teamIds).stream()
+                .collect(Collectors.toMap(Team::getId, Function.identity(), (left, right) -> left));
+
+        List<TeamMember> activeMembers = teamMemberDao.selectList(new LambdaQueryWrapper<TeamMember>()
+                .in(TeamMember::getTeamId, teamIds)
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode())
+                .orderByDesc(TeamMember::getIsLeader)
+                .orderByAsc(TeamMember::getJoinDate)
+                .orderByAsc(TeamMember::getId));
+        Map<Long, List<TeamMember>> membersByTeam = activeMembers.stream()
+                .collect(Collectors.groupingBy(TeamMember::getTeamId));
+
+        Set<Long> userIds = new LinkedHashSet<>();
+        teamMap.values().forEach(team -> {
+            if (team.getLeaderUserId() != null) {
+                userIds.add(team.getLeaderUserId());
+            }
+        });
+        activeMembers.forEach(member -> {
+            if (member.getUserId() != null) {
+                userIds.add(member.getUserId());
+            }
+        });
+
+        Map<Long, User> userMap = userIds.isEmpty()
+                ? Collections.emptyMap()
+                : userDao.selectBatchIds(new ArrayList<>(userIds)).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity(), (left, right) -> left));
+
+        Set<Long> courseIds = teamMap.values().stream()
+                .map(Team::getCourseId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<Long, Course> courseMap = courseIds.isEmpty()
+                ? Collections.emptyMap()
+                : courseDao.selectBatchIds(new ArrayList<>(courseIds)).stream()
+                .collect(Collectors.toMap(Course::getId, Function.identity(), (left, right) -> left));
+
+        return approvals.stream()
+                .map(approval -> toApprovalSummary(
+                        approval,
+                        teamMap.get(approval.getTeamId()),
+                        membersByTeam.getOrDefault(approval.getTeamId(), Collections.emptyList()),
+                        userMap,
+                        courseMap))
+                .toList();
+    }
+
+    private TopicApprovalSummaryDTO toApprovalSummary(
+            TopicApproval approval,
+            Team team,
+            List<TeamMember> members,
+            Map<Long, User> userMap,
+            Map<Long, Course> courseMap) {
+        User leader = team != null ? userMap.get(team.getLeaderUserId()) : null;
+        List<String> memberNames = members.stream()
+                .map(member -> resolveDisplayName(userMap.get(member.getUserId()), member.getUserId()))
+                .toList();
+        Course course = team != null && team.getCourseId() != null ? courseMap.get(team.getCourseId()) : null;
+
+        return TopicApprovalSummaryDTO.builder()
+                .id(approval.getId())
+                .teamId(approval.getTeamId())
+                .courseId(team != null ? team.getCourseId() : null)
+                .courseCode(course != null ? course.getCourseCode() : null)
+                .teamLabel(team != null && StringUtils.hasText(team.getTeamName()) ? team.getTeamName() : "未命名小组")
+                .topicTitle(approval.getTopicTitle())
+                .topicDesc(approval.getTopicDesc())
+                .approvalStatus(approval.getApprovalStatus())
+                .rejectReason(approval.getRejectReason())
+                .leaderName(resolveDisplayName(leader, team != null ? team.getLeaderUserId() : null))
+                .leaderNo(leader != null ? leader.getStudentNo() : null)
+                .memberCount(memberNames.size())
+                .members(String.join("、", memberNames))
+                .submitDate(approval.getSubmitDate())
+                .build();
     }
 
     @Override

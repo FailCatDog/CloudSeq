@@ -1,18 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { buildPageTitle } from '@/constants/brand'
+import { resolveNavigationGuard } from '@/utils/roleHome'
 import AppLayout from '../layout/AppLayout.vue'
-import WorkspaceLayout from '../views/workspace/index.vue'
-import WorkspaceDashboard from '../views/workspace/dashboard/index.vue'
-import ProjectLayout from '../views/workspace/project/ProjectLayout.vue'
-import ProjectBoard from '../views/workspace/project/board/index.vue'
-import ProjectDocPage from '../views/workspace/project/doc/index.vue'
-import WorkspaceGantt from '../views/workspace/gantt/index.vue'
-import WorkspaceWeekly from '../views/workspace/weekly/index.vue'
-import MessagesView from '../views/messages/index.vue'
-import AuthView from '../views/auth/index.vue'
-import ProfileView from '../views/profile/index.vue'
-import ProfileSecurityView from '../views/profile/security.vue'
-import ProfileTeamView from '../views/profile/team.vue'
+import StudentLayout from '../views/student/index.vue'
+import StudentDashboard from '../views/student/dashboard/index.vue'
+import ProjectLayout from '../views/student/project/ProjectLayout.vue'
+import ProjectBoard from '../views/student/project/board/index.vue'
+import ProjectDocPage from '../views/student/project/doc/index.vue'
+import StudentGantt from '../views/student/gantt/index.vue'
+import StudentWeekly from '../views/student/weekly/index.vue'
+import TeacherLayout from '../views/teacher/index.vue'
+import TeachingDashboard from '../views/teacher/dashboard/index.vue'
+import TeachingApprovals from '../views/teacher/approvals/index.vue'
+import TeachingTeams from '../views/teacher/teams/index.vue'
+import TeachingReports from '../views/teacher/reports/index.vue'
+import TeachingCourses from '../views/teacher/courses/index.vue'
+import AdminLayout from '../views/admin/index.vue'
+import AdminDashboard from '../views/admin/dashboard/index.vue'
+import MessagesView from '../views/common/messages/index.vue'
+import AuthView from '../views/common/auth/index.vue'
+import ProfileView from '../views/common/profile/index.vue'
 
 const routes = [
   {
@@ -22,10 +29,10 @@ const routes = [
       { path: '', redirect: '/workspace' },
       {
         path: 'workspace',
-        component: WorkspaceLayout,
+        component: StudentLayout,
         children: [
           { path: '', redirect: '/workspace/dashboard' },
-          { path: 'dashboard', component: WorkspaceDashboard, meta: { title: '工作台' } },
+          { path: 'dashboard', component: StudentDashboard, meta: { title: '工作台' } },
           {
             path: 'project',
             component: ProjectLayout,
@@ -33,8 +40,8 @@ const routes = [
             redirect: '/workspace/project/board',
             children: [
               { path: 'board', name: 'project-board', component: ProjectBoard, meta: { title: '数据看板' } },
-              { path: 'gantt', name: 'project-gantt', component: WorkspaceGantt, meta: { title: '任务甘特图' } },
-              { path: 'weekly', name: 'project-weekly', component: WorkspaceWeekly, meta: { title: '周报' } },
+              { path: 'gantt', name: 'project-gantt', component: StudentGantt, meta: { title: '任务甘特图' } },
+              { path: 'weekly', name: 'project-weekly', component: StudentWeekly, meta: { title: '周报' } },
               {
                 path: 'doc/:nodeId',
                 name: 'project-doc',
@@ -44,7 +51,7 @@ const routes = [
               {
                 path: 'sheet/:nodeId',
                 name: 'project-sheet',
-                component: () => import('../views/workspace/project/sheet/index.vue'),
+                component: () => import('../views/student/project/sheet/index.vue'),
                 meta: { title: '项目表格' },
               },
             ],
@@ -53,13 +60,41 @@ const routes = [
           { path: 'weekly', redirect: '/workspace/project/weekly' },
         ],
       },
+      {
+        path: 'teaching',
+        component: TeacherLayout,
+        meta: { title: '教师端' },
+        children: [
+          { path: '', redirect: '/teaching/dashboard' },
+          { path: 'dashboard', component: TeachingDashboard, meta: { title: '教学工作台' } },
+          { path: 'courses', component: TeachingCourses, meta: { title: '课号管理' } },
+          { path: 'approvals', component: TeachingApprovals, meta: { title: '选题审批' } },
+          { path: 'teams', component: TeachingTeams, meta: { title: '小组总览' } },
+          { path: 'reports', component: TeachingReports, meta: { title: '周报审阅' } },
+        ],
+      },
+      {
+        path: 'admin',
+        component: AdminLayout,
+        meta: { title: '管理端' },
+        children: [
+          { path: '', redirect: '/admin/dashboard' },
+          { path: 'dashboard', component: AdminDashboard, meta: { title: '管理台' } },
+        ],
+      },
       { path: 'messages', component: MessagesView, meta: { title: '消息' } },
       {
         path: 'profile',
         children: [
           { path: '', component: ProfileView, meta: { title: '个人中心' } },
-          { path: 'security', component: ProfileSecurityView, meta: { title: '安全设置' } },
-          { path: 'team', component: ProfileTeamView, meta: { title: '我的小组' } },
+          {
+            path: 'team',
+            redirect: (to) => ({ path: '/profile', query: { ...to.query, tab: 'team' } }),
+          },
+          {
+            path: 'security',
+            redirect: (to) => ({ path: '/profile', query: { ...to.query, tab: 'security' } }),
+          },
         ],
       },
     ],
@@ -75,8 +110,21 @@ const router = createRouter({
   routes,
 })
 
+router.beforeEach((to) => {
+  const redirect = resolveNavigationGuard(to.path)
+  if (redirect && redirect !== to.path) {
+    return redirect
+  }
+})
+
 router.afterEach((to) => {
-  document.title = buildPageTitle(to.meta.title)
+  let title = to.meta.title
+  if (to.path === '/profile') {
+    if (to.query.tab === 'team') title = '我的小组'
+    else if (to.query.tab === 'security') title = '安全设置'
+    else title = '个人中心'
+  }
+  document.title = buildPageTitle(title)
 })
 
 export default router

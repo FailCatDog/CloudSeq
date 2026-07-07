@@ -7,10 +7,10 @@ import { getCollabSession } from '@/utils/collabTokenCache'
 import {
   createWorkspaceNodeApi,
   deleteWorkspaceNodeApi,
-  getCurrentWorkspaceApi,
   getWorkspaceTreeApi,
   renameWorkspaceNodeApi,
 } from '@/api/workspace'
+import { loadCurrentWorkspace, useWorkspace } from '@/composables/useWorkspace'
 import { WORKSPACE_NODE_TYPE } from '@/constants/workspace'
 
 const TITLE_SAVE_DELAY_MS = 500
@@ -60,7 +60,7 @@ export function useProjectDocsContext() {
 export function useProjectDocs() {
   const router = useRouter()
   const route = useRoute()
-  const workspaceId = ref(null)
+  const { workspaceId } = useWorkspace()
   const rootTitle = ref('项目文档')
   const nodes = ref([])
   const activeLeafId = ref(null)
@@ -143,8 +143,7 @@ export function useProjectDocs() {
     loading.value = true
     errorMessage.value = ''
     try {
-      const workspace = await getCurrentWorkspaceApi()
-      workspaceId.value = workspace.id
+      const workspace = await loadCurrentWorkspace()
 
       const tree = await getWorkspaceTreeApi(workspace.id)
       rootTitle.value = '项目文档'

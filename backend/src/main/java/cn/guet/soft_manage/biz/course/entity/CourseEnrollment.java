@@ -1,4 +1,4 @@
-package cn.guet.soft_manage.biz.team.entity;
+package cn.guet.soft_manage.biz.course.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -16,31 +16,31 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * @Author: 黄光宇
- * @CreateTime: 2026-05-18
- * @Description: 小组实体
+ * 学生选课号
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_team")
-public class Team {
+@TableName("sm_course_enrollment")
+public class CourseEnrollment {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
-    private String teamName;
-
     private Long courseId;
 
-    private Long leaderUserId;
+    private Long userId;
 
-    private String status;
+    private String studentNo;
 
-    private String topicTitle;
+    private String enrollStatus;
 
-    private String topicDesc;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime enrollDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime dropDate;
 
     @TableLogic
     private Integer delFlag;

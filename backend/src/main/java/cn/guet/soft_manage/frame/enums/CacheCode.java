@@ -45,6 +45,30 @@ public enum CacheCode {
     WORKSPACE_NODE_TYPE_FOLDER("FOLDER", "文件夹"),
     WORKSPACE_NODE_TYPE_DOCUMENT("DOCUMENT", "文档"),
     WORKSPACE_NODE_TYPE_SHEET("SHEET", "表格"),
+
+    COURSE_STATUS("course_status", "课号状态"),
+    COURSE_STATUS_DRAFT("DRAFT", "草稿"),
+    COURSE_STATUS_ACTIVE("ACTIVE", "进行中"),
+    COURSE_STATUS_ARCHIVED("ARCHIVED", "已归档"),
+
+    TERM_SEASON("term_season", "学期"),
+    TERM_SEASON_SPRING("SPRING", "春季"),
+    TERM_SEASON_SUMMER("SUMMER", "夏季"),
+    TERM_SEASON_AUTUMN("AUTUMN", "秋季"),
+    TERM_SEASON_WINTER("WINTER", "冬季"),
+
+    COURSE_STAFF_ROLE("course_staff_role", "课号教务角色"),
+    COURSE_STAFF_ROLE_TEACHER("TEACHER", "主讲"),
+    COURSE_STAFF_ROLE_TA("TA", "助教"),
+    COURSE_STAFF_ROLE_OBSERVER("OBSERVER", "督导"),
+
+    COURSE_STAFF_STATUS("course_staff_status", "课号教务状态"),
+    COURSE_STAFF_STATUS_ACTIVE("ACTIVE", "有效"),
+    COURSE_STAFF_STATUS_INACTIVE("INACTIVE", "无效"),
+
+    ENROLL_STATUS("enroll_status", "选课状态"),
+    ENROLL_STATUS_ENROLLED("ENROLLED", "已选"),
+    ENROLL_STATUS_DROPPED("DROPPED", "已退"),
     ;
 
     private final String code;

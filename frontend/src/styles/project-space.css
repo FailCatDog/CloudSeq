@@ -1829,6 +1829,25 @@
   color: #6b7280;
 }
 
+.ps-board-state {
+  padding: 48px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.ps-board-state--error {
+  color: #dc2626;
+}
+
+.ps-board-overview {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #4b5563;
+}
+
 .wb-page-content--project {
   display: flex;
   flex-direction: column;

@@ -5,6 +5,7 @@ import cn.guet.soft_manage.biz.team.dto.TeamMemberAddRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMembersResponseDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamTopicSubmitRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TopicApprovalReviewRequestDTO;
+import cn.guet.soft_manage.biz.team.dto.TopicApprovalSummaryDTO;
 import cn.guet.soft_manage.biz.team.entity.Team;
 import cn.guet.soft_manage.biz.team.entity.TeamMember;
 import cn.guet.soft_manage.biz.team.entity.TopicApproval;
@@ -58,6 +59,12 @@ public class TeamController {
     public Response<Void> reviewTopic(@Valid @RequestBody TopicApprovalReviewRequestDTO request) {
         teamService.reviewTopic(request);
         return Response.success();
+    }
+
+    @GetMapping("/topic-approvals")
+    public Response<List<TopicApprovalSummaryDTO>> listTeacherTopicApprovals(
+            @RequestParam(required = false) String approvalStatus) {
+        return Response.success(teamService.listTeacherTopicApprovals(approvalStatus));
     }
 
     @GetMapping("/{teamId}/topic-approvals")
