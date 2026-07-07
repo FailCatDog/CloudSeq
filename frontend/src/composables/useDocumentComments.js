@@ -4,7 +4,7 @@ import {
   deleteDocumentCommentApi,
   listDocumentCommentsApi,
 } from '@/api/documentComment'
-import { sortDocumentComments } from '@/views/workspace/project/script/projectDocComment.js'
+import { sortDocumentComments } from '@/views/student/project/script/projectDocComment.js'
 
 export function useDocumentComments(getNodeId, getReady = () => true) {
   const comments = ref([])

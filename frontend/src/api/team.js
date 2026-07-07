@@ -53,6 +53,20 @@ export const listTeamTopicApprovalsApi = (teamId) => {
   return request(`${API_PREFIX}/${teamId}/topic-approvals`)
 }
 
+export const listTeacherTopicApprovalsApi = (params = {}) => {
+  const search = new URLSearchParams()
+  if (params.approvalStatus) search.set('approvalStatus', params.approvalStatus)
+  const query = search.toString()
+  return request(query ? `${API_PREFIX}/topic-approvals?${query}` : `${API_PREFIX}/topic-approvals`)
+}
+
+export const reviewTopicApprovalApi = (data) => {
+  return request(`${API_PREFIX}/topic/review`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
 export const getCurrentTeamApi = () => {
   return request(`${API_PREFIX}/current`)
 }

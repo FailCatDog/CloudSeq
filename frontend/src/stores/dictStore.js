@@ -11,6 +11,8 @@ export const DICT_KEY_CODES = [
   CacheCode.WEEKLY_REPORT_STATUS,
   CacheCode.USER_ROLE,
   CacheCode.WORKSPACE_NODE_TYPE,
+  CacheCode.COURSE_STATUS,
+  CacheCode.TERM_SEASON,
 ]
 
 const normalizeValueCode = (value) => (value == null ? '' : String(value))
