@@ -1,104 +1,99 @@
 <template>
-  <form class="tch-course-form" @submit.prevent="handleSubmit">
-    <div v-if="mode === 'create'" class="tch-form-field">
-      <label for="course-code">课号 <span class="tch-form-required">*</span></label>
-      <input
-        id="course-code"
-        v-model.trim="form.courseCode"
-        type="text"
-        maxlength="32"
-        placeholder="如 PM2026-01"
-        required
-      >
-    </div>
+  <n-form class="console-drawer-body" @submit.prevent="handleSubmit">
+    <n-form-item v-if="mode === 'create'" label="课号" required>
+      <n-input v-model:value="form.courseCode" maxlength="32" placeholder="如 PM2026-01" />
+    </n-form-item>
 
-    <div class="tch-form-field">
-      <label for="course-name">课程名称 <span class="tch-form-required">*</span></label>
-      <input
-        id="course-name"
-        v-model.trim="form.courseName"
-        type="text"
+    <n-form-item v-if="mode === 'view'" label="课号">
+      <n-input :value="course?.courseCode || ''" readonly />
+    </n-form-item>
+
+    <n-form-item label="课程名称" :required="!readonly">
+      <n-input
+        v-model:value="form.courseName"
         maxlength="128"
         placeholder="如：软件项目管理"
-        required
-      >
-    </div>
+        :readonly="readonly"
+      />
+    </n-form-item>
 
-    <div v-if="mode === 'create'" class="tch-form-row">
-      <div class="tch-form-field">
-        <label for="course-year">学年 <span class="tch-form-required">*</span></label>
-        <input
-          id="course-year"
-          v-model.number="form.termYear"
-          type="number"
-          min="2000"
-          max="2100"
-          required
-        >
-      </div>
-      <div class="tch-form-field">
-        <label for="course-season">学期 <span class="tch-form-required">*</span></label>
-        <select id="course-season" v-model="form.termSeason" required :disabled="!dictLoaded">
-          <option value="" disabled>{{ dictLoaded ? '请选择' : '加载中…' }}</option>
-          <option v-for="item in termSeasonOptions" :key="item.value" :value="item.value">
-            {{ item.label }}
-          </option>
-        </select>
-      </div>
-    </div>
+    <n-grid v-if="mode === 'create'" :cols="2" :x-gap="12">
+      <n-form-item-gi label="学年" required>
+        <n-input-number v-model:value="form.termYear" :min="2000" :max="2100" style="width: 100%" />
+      </n-form-item-gi>
+      <n-form-item-gi label="学期" required>
+        <n-select
+          v-model:value="form.termSeason"
+          :options="termSeasonOptions"
+          :disabled="!dictLoaded"
+          placeholder="请选择"
+        />
+      </n-form-item-gi>
+    </n-grid>
 
-    <div v-if="mode === 'edit'" class="tch-form-field">
-      <label for="course-status">状态</label>
-      <select id="course-status" v-model="form.status" :disabled="!dictLoaded">
-        <option v-for="item in courseStatusOptions" :key="item.value" :value="item.value">
-          {{ item.label }}
-        </option>
-      </select>
-    </div>
+    <n-grid v-if="mode === 'view'" :cols="2" :x-gap="12">
+      <n-form-item-gi label="学年">
+        <n-input :value="String(course?.termYear ?? '')" readonly />
+      </n-form-item-gi>
+      <n-form-item-gi label="学期">
+        <n-input :value="termSeasonLabel" readonly />
+      </n-form-item-gi>
+    </n-grid>
 
-    <div class="tch-form-field">
-      <label for="course-deadline">选题截止</label>
-      <input id="course-deadline" v-model="form.topicDeadline" type="datetime-local">
-    </div>
+    <n-form-item v-if="mode === 'edit' || mode === 'view'" label="状态">
+      <n-select
+        v-model:value="form.status"
+        :options="courseStatusOptions"
+        :disabled="readonly || !dictLoaded"
+      />
+    </n-form-item>
 
-    <div class="tch-form-row">
-      <div class="tch-form-field">
-        <label for="course-min-size">最小组人数</label>
-        <input id="course-min-size" v-model.number="form.minTeamSize" type="number" min="1" max="20">
-      </div>
-      <div class="tch-form-field">
-        <label for="course-max-size">最大组人数</label>
-        <input id="course-max-size" v-model.number="form.maxTeamSize" type="number" min="1" max="20">
-      </div>
-    </div>
+    <n-form-item label="选题截止">
+      <n-date-picker
+        v-model:value="topicDeadlineTs"
+        type="datetime"
+        clearable
+        style="width: 100%"
+        :disabled="readonly"
+      />
+    </n-form-item>
 
-    <label class="tch-form-check">
-      <input v-model="weeklyRequiredChecked" type="checkbox">
-      <span>强制提交周报</span>
-    </label>
+    <n-grid :cols="2" :x-gap="12">
+      <n-form-item-gi label="最小组人数">
+        <n-input-number v-model:value="form.minTeamSize" :min="1" :max="20" style="width: 100%" :disabled="readonly" />
+      </n-form-item-gi>
+      <n-form-item-gi label="最大组人数">
+        <n-input-number v-model:value="form.maxTeamSize" :min="1" :max="20" style="width: 100%" :disabled="readonly" />
+      </n-form-item-gi>
+    </n-grid>
 
-    <div class="tch-form-field">
-      <label for="course-desc">课号说明</label>
-      <textarea
-        id="course-desc"
-        v-model="form.description"
-        rows="4"
+    <n-form-item label=" ">
+      <n-checkbox v-model:checked="weeklyRequiredChecked" :disabled="readonly">强制提交周报</n-checkbox>
+    </n-form-item>
+
+    <n-form-item label="课号说明">
+      <n-input
+        v-model:value="form.description"
+        type="textarea"
+        :rows="4"
         maxlength="2000"
         placeholder="可选，向学生展示的教学说明"
+        :readonly="readonly"
       />
-    </div>
+    </n-form-item>
 
-    <p v-if="errorMessage" class="tch-form-error">{{ errorMessage }}</p>
+    <n-alert v-if="errorMessage" type="error" :bordered="false">{{ errorMessage }}</n-alert>
 
-    <div class="tch-detail-actions">
-      <button type="button" class="wb-btn-schedule wb-btn-schedule--outline tch-detail-action-btn" @click="emit('cancel')">
-        取消
-      </button>
-      <button type="submit" class="wb-btn-schedule tch-detail-action-btn" :disabled="submitting">
-        {{ submitting ? '保存中…' : mode === 'create' ? '创建课号' : '保存修改' }}
-      </button>
-    </div>
-  </form>
+    <n-space v-if="readonly" justify="end">
+      <n-button @click="emit('cancel')">关闭</n-button>
+    </n-space>
+    <n-space v-else justify="end">
+      <n-button @click="emit('cancel')">取消</n-button>
+      <n-button type="primary" attr-type="submit" :loading="submitting">
+        {{ mode === 'create' ? '创建课号' : '保存修改' }}
+      </n-button>
+    </n-space>
+  </n-form>
 </template>
 
 <script setup>
@@ -106,7 +101,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { createCourseApi, updateCourseApi } from '@/api/course'
 import { CacheCode } from '@/constants/cacheCode'
 import { useDict } from '@/composables/useDict'
-import { toApiDateTime, toDatetimeLocal } from '@/utils/courseFormat'
+import { toApiDateTime } from '@/utils/courseFormat'
 
 const props = defineProps({
   mode: {
@@ -121,8 +116,16 @@ const props = defineProps({
 
 const emit = defineEmits(['saved', 'cancel'])
 
+const readonly = computed(() => props.mode === 'view')
+
 const { options: courseStatusOptions, loaded: dictLoaded } = useDict(CacheCode.COURSE_STATUS)
-const { options: termSeasonOptions } = useDict(CacheCode.TERM_SEASON)
+const { options: termSeasonOptions, label: termSeasonDictLabel } = useDict(CacheCode.TERM_SEASON)
+
+const termSeasonLabel = computed(() => {
+  const season = props.course?.termSeason
+  if (!season) return '—'
+  return termSeasonDictLabel(season) || season
+})
 
 const pickDefaultValue = (options, current) => {
   if (!options.length) return current || ''
@@ -131,12 +134,13 @@ const pickDefaultValue = (options, current) => {
 }
 
 const syncDictDefaults = () => {
-  if (props.mode === 'edit') return
+  if (props.mode === 'edit' || props.mode === 'view') return
   form.termSeason = pickDefaultValue(termSeasonOptions.value, form.termSeason)
 }
 
 const submitting = ref(false)
 const errorMessage = ref('')
+const topicDeadlineTs = ref(null)
 
 const defaultForm = () => ({
   courseCode: '',
@@ -145,7 +149,6 @@ const defaultForm = () => ({
   termSeason: '',
   description: '',
   status: '',
-  topicDeadline: '',
   minTeamSize: 2,
   maxTeamSize: 5,
   weeklyRequired: 1,
@@ -160,13 +163,27 @@ const weeklyRequiredChecked = computed({
   },
 })
 
+const parseDateTimeToTs = (value) => {
+  if (!value) return null
+  const normalized = String(value).replace(' ', 'T')
+  const date = new Date(normalized)
+  return Number.isNaN(date.getTime()) ? null : date.getTime()
+}
+
+const formatTsToDatetimeLocal = (ts) => {
+  const d = new Date(ts)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 const resetForm = () => {
   Object.assign(form, defaultForm())
-  if (props.mode === 'edit' && props.course) {
+  topicDeadlineTs.value = null
+  if ((props.mode === 'edit' || props.mode === 'view') && props.course) {
     form.courseName = props.course.courseName || ''
     form.description = props.course.description || ''
     form.status = props.course.status || pickDefaultValue(courseStatusOptions.value, '')
-    form.topicDeadline = toDatetimeLocal(props.course.topicDeadline)
+    topicDeadlineTs.value = parseDateTimeToTs(props.course.topicDeadline)
     form.minTeamSize = props.course.minTeamSize ?? 2
     form.maxTeamSize = props.course.maxTeamSize ?? 5
     form.weeklyRequired = props.course.weeklyRequired ?? 1
@@ -185,6 +202,8 @@ watch([termSeasonOptions, () => dictLoaded.value], () => {
 })
 
 const handleSubmit = async () => {
+  if (readonly.value) return
+
   errorMessage.value = ''
 
   if (!form.courseName.trim()) {
@@ -195,6 +214,10 @@ const handleSubmit = async () => {
     errorMessage.value = '最小组人数不能大于最大组人数'
     return
   }
+
+  const topicDeadline = topicDeadlineTs.value
+    ? toApiDateTime(formatTsToDatetimeLocal(topicDeadlineTs.value))
+    : null
 
   submitting.value = true
   try {
@@ -214,7 +237,7 @@ const handleSubmit = async () => {
         termYear: form.termYear,
         termSeason: form.termSeason,
         description: form.description?.trim() || null,
-        topicDeadline: toApiDateTime(form.topicDeadline),
+        topicDeadline,
         minTeamSize: form.minTeamSize,
         maxTeamSize: form.maxTeamSize,
         weeklyRequired: form.weeklyRequired,
@@ -227,7 +250,7 @@ const handleSubmit = async () => {
       courseName: form.courseName.trim(),
       description: form.description?.trim() || null,
       status: form.status,
-      topicDeadline: toApiDateTime(form.topicDeadline),
+      topicDeadline,
       minTeamSize: form.minTeamSize,
       maxTeamSize: form.maxTeamSize,
       weeklyRequired: form.weeklyRequired,

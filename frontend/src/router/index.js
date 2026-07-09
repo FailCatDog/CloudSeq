@@ -15,11 +15,13 @@ import TeachingApprovals from '../views/teacher/approvals/index.vue'
 import TeachingTeams from '../views/teacher/teams/index.vue'
 import TeachingReports from '../views/teacher/reports/index.vue'
 import TeachingCourses from '../views/teacher/courses/index.vue'
+import TeachingStudents from '../views/teacher/students/index.vue'
 import AdminLayout from '../views/admin/index.vue'
 import AdminDashboard from '../views/admin/dashboard/index.vue'
 import MessagesView from '../views/common/messages/index.vue'
 import AuthView from '../views/common/auth/index.vue'
 import ProfileView from '../views/common/profile/index.vue'
+import PrepareView from '../views/student/prepare/index.vue'
 
 const routes = [
   {
@@ -68,6 +70,7 @@ const routes = [
           { path: '', redirect: '/teaching/dashboard' },
           { path: 'dashboard', component: TeachingDashboard, meta: { title: '教学工作台' } },
           { path: 'courses', component: TeachingCourses, meta: { title: '课号管理' } },
+          { path: 'students', component: TeachingStudents, meta: { title: '学生管理' } },
           { path: 'approvals', component: TeachingApprovals, meta: { title: '选题审批' } },
           { path: 'teams', component: TeachingTeams, meta: { title: '小组总览' } },
           { path: 'reports', component: TeachingReports, meta: { title: '周报审阅' } },
@@ -83,17 +86,18 @@ const routes = [
         ],
       },
       { path: 'messages', component: MessagesView, meta: { title: '消息' } },
+      { path: 'prepare', component: PrepareView, meta: { title: '课程准备' } },
       {
         path: 'profile',
         children: [
           { path: '', component: ProfileView, meta: { title: '个人中心' } },
           {
             path: 'team',
-            redirect: (to) => ({ path: '/profile', query: { ...to.query, tab: 'team' } }),
+            redirect: () => ({ path: '/prepare' }),
           },
           {
             path: 'security',
-            redirect: (to) => ({ path: '/profile', query: { ...to.query, tab: 'security' } }),
+            redirect: () => ({ path: '/profile' }),
           },
         ],
       },
@@ -121,7 +125,6 @@ router.afterEach((to) => {
   let title = to.meta.title
   if (to.path === '/profile') {
     if (to.query.tab === 'team') title = '我的小组'
-    else if (to.query.tab === 'security') title = '安全设置'
     else title = '个人中心'
   }
   document.title = buildPageTitle(title)

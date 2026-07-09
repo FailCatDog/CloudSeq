@@ -2,6 +2,7 @@ package cn.guet.soft_manage.biz.user.controller;
 
 import cn.guet.soft_manage.biz.user.dto.LoginRequestDTO;
 import cn.guet.soft_manage.biz.user.dto.LoginResponseDTO;
+import cn.guet.soft_manage.biz.user.dto.ProfileStatusAggregate;
 import cn.guet.soft_manage.biz.user.dto.RegisterRequestDTO;
 import cn.guet.soft_manage.biz.user.entity.User;
 import cn.guet.soft_manage.biz.user.param.UserParam;
@@ -43,5 +44,10 @@ public class UserController {
     public Response<Void> updateProfile(@Valid @RequestBody UserParam request) {
         userService.updateProfile(request);
         return Response.success();
+    }
+
+    @GetMapping("/profile/status")
+    public Response<ProfileStatusAggregate> profileStatus() {
+        return Response.success(userService.getProfileStatus());
     }
 }

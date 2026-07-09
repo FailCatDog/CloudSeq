@@ -1,141 +1,83 @@
 <template>
-  <div class="tch-page">
-    <div class="tch-filter-bar">
-      <div class="tch-filter-form">
-        <div class="tch-filter-row">
-          <div class="tch-search">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              v-model="searchQuery"
-              type="search"
-              placeholder="搜索组名、选题标题…"
-              @keydown.enter.prevent="handleSearch"
-            />
-          </div>
-          <label class="tch-filter-select-wrap">
-            <span class="tch-filter-select-label">选题状态</span>
-            <select v-model="activeStatus" class="tch-filter-select" aria-label="审批状态">
-              <option v-for="option in statusOptions" :key="option.id" :value="option.id">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
+  <div class="console-page">
+    <div class="console-filter">
+      <div class="console-filter__fields">
+        <div class="console-filter__field console-filter__field--wide">
+          <span class="console-filter__label">关键字</span>
+          <n-input
+            v-model:value="searchQuery"
+            clearable
+            placeholder="输入组名、选题标题关键字"
+            @keydown.enter.prevent="handleSearch"
+          />
         </div>
-        <div class="tch-search-actions">
-          <button
-            type="button"
-            class="wb-btn-schedule wb-btn-schedule--sm tch-filter-search"
-            :disabled="loading"
-            @click="handleSearch"
-          >
-            搜索
-          </button>
-          <button
-            type="button"
-            class="tch-filter-reset"
-            :disabled="loading"
-            @click="handleReset"
-          >
-            重置
-          </button>
+        <div class="console-filter__field">
+          <span class="console-filter__label">课号</span>
+          <n-input
+            v-model:value="courseCodeQuery"
+            clearable
+            placeholder="输入课号关键字"
+            @keydown.enter.prevent="handleSearch"
+          />
         </div>
+        <div class="console-filter__field">
+          <span class="console-filter__label">选题状态</span>
+          <n-select
+            v-model:value="activeStatus"
+            :options="statusOptions"
+            label-field="label"
+            value-field="id"
+          />
+        </div>
+      </div>
+      <div class="console-filter__actions">
+        <n-button type="primary" :loading="loading" @click="handleSearch">搜索</n-button>
+        <n-button quaternary :disabled="loading" @click="handleReset">重置</n-button>
       </div>
     </div>
 
-    <p v-if="pageError" class="tch-page-error">{{ pageError }}</p>
+    <n-alert v-if="pageError" type="error" :bordered="false">{{ pageError }}</n-alert>
 
-    <div class="tch-table-surface">
-      <div class="tch-table-wrap tch-table-wrap--flush">
-        <table class="tch-table">
-          <thead>
-            <tr>
-              <th class="tch-table-col-index">序号</th>
-              <th>课号</th>
-              <th>组名</th>
-              <th>选题标题</th>
-              <th>组长</th>
-              <th>成员</th>
-              <th>提交时间</th>
-              <th>状态</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="loading">
-              <td colspan="9" class="tch-table-empty">加载中…</td>
-            </tr>
-            <tr v-for="(item, index) in filteredApprovals" v-else :key="item.id">
-              <td class="tch-table-col-index">{{ index + 1 }}</td>
-              <td>{{ item.courseCode }}</td>
-              <td><strong>{{ item.teamLabel }}</strong></td>
-              <td>{{ item.topicTitle }}</td>
-              <td>{{ item.leaderName }}</td>
-              <td>{{ item.memberCount }}</td>
-              <td>{{ item.submittedAt }}</td>
-              <td>
-                <span class="tch-tag" :class="approvalStatusTagClass(item.status)">
-                  {{ approvalStatusLabel(item.status) }}
-                </span>
-              </td>
-              <td>
-                <button type="button" class="tch-table-link tch-table-link--btn" @click="openDetail(item.id)">
-                  详情
-                </button>
-              </td>
-            </tr>
-            <tr v-if="!loading && !filteredApprovals.length">
-              <td colspan="9" class="tch-table-empty">没有匹配的审批记录</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <n-card class="console-table-card" :bordered="false">
+      <n-data-table
+        :columns="columns"
+        :data="filteredApprovals"
+        :loading="loading"
+        :bordered="false"
+        :single-line="false"
+        :row-key="(row) => row.id"
+        size="medium"
+      />
+    </n-card>
 
-    <Teleport to="body">
-      <div
-        v-if="detailOpen"
-        class="tch-drawer-backdrop"
-        @click.self="closeDetail"
-      >
-        <aside class="tch-drawer" role="dialog" aria-modal="true" aria-labelledby="approval-detail-title">
-          <header class="tch-drawer-header">
-            <h3 id="approval-detail-title">选题详情</h3>
-            <button type="button" class="tch-drawer-close" aria-label="关闭" @click="closeDetail">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </header>
-          <div class="tch-drawer-body">
-            <p v-if="actionError" class="tch-page-error">{{ actionError }}</p>
-            <ApprovalDetailPanel
-              :approval="selectedApproval"
-              :submitting="submitting"
-              @approve="handleApprove"
-              @reject="handleReject"
-            />
-          </div>
-        </aside>
-      </div>
-    </Teleport>
+    <n-drawer v-model:show="detailOpen" :width="480" placement="right">
+      <n-drawer-content title="选题详情" closable>
+        <n-alert v-if="actionError" type="error" :bordered="false" style="margin-bottom: 12px">
+          {{ actionError }}
+        </n-alert>
+        <ApprovalDetailPanel
+          :approval="selectedApproval"
+          :submitting="submitting"
+          @approve="handleApprove"
+          @reject="handleReject"
+        />
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, h, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { NButton, NTag } from 'naive-ui'
 import { listTeacherTopicApprovalsApi, reviewTopicApprovalApi } from '@/api/team'
+import ApprovalDetailPanel from './components/ApprovalDetailPanel.vue'
 import { CacheCode } from '@/constants/cacheCode'
 import {
   approvalStatusLabel,
-  approvalStatusTagClass,
   isApprovalPending,
   mapTopicApprovalSummary,
 } from '@/utils/approvalFormat'
-import ApprovalDetailPanel from './components/ApprovalDetailPanel.vue'
+import { approvalTagType } from '@/utils/naiveStatus'
 
 const approvals = ref([])
 const loading = ref(false)
@@ -143,8 +85,10 @@ const submitting = ref(false)
 const pageError = ref('')
 const actionError = ref('')
 const searchQuery = ref('')
+const courseCodeQuery = ref('')
 const activeStatus = ref('all')
 const appliedKeyword = ref('')
+const appliedCourseCode = ref('')
 const appliedStatus = ref('all')
 const detailOpen = ref(false)
 const selectedId = ref(null)
@@ -164,18 +108,21 @@ const statusOptions = [
 
 const filteredApprovals = computed(() => {
   const keyword = appliedKeyword.value.toLowerCase()
+  const courseKeyword = appliedCourseCode.value.toLowerCase()
   return approvals.value.filter((item) => {
     const statusMatch =
       appliedStatus.value === 'all' ||
       (appliedStatus.value === 'pending' && isApprovalPending(item.status)) ||
       item.status === appliedStatus.value
     if (!statusMatch) return false
+    if (courseKeyword && !String(item.courseCode || '').toLowerCase().includes(courseKeyword)) {
+      return false
+    }
     if (!keyword) return true
     return (
       item.teamLabel.toLowerCase().includes(keyword) ||
       item.topicTitle.toLowerCase().includes(keyword) ||
-      item.leaderName.toLowerCase().includes(keyword) ||
-      String(item.courseCode || '').toLowerCase().includes(keyword)
+      item.leaderName.toLowerCase().includes(keyword)
     )
   })
 })
@@ -183,6 +130,48 @@ const filteredApprovals = computed(() => {
 const selectedApproval = computed(() => {
   return approvals.value.find((item) => item.id === selectedId.value) || null
 })
+
+const columns = computed(() => [
+  {
+    title: '序号',
+    key: 'index',
+    width: 64,
+    render: (_, index) => index + 1,
+  },
+  { title: '课号', key: 'courseCode', width: 120 },
+  {
+    title: '组名',
+    key: 'teamLabel',
+    width: 120,
+    render: (row) => h('strong', null, row.teamLabel),
+  },
+  { title: '选题标题', key: 'topicTitle', ellipsis: { tooltip: true } },
+  { title: '组长', key: 'leaderName', width: 100 },
+  { title: '成员', key: 'memberCount', width: 72 },
+  { title: '提交时间', key: 'submittedAt', width: 140 },
+  {
+    title: '状态',
+    key: 'status',
+    width: 100,
+    render: (row) =>
+      h(
+        NTag,
+        { type: approvalTagType(row.status), round: true, size: 'small' },
+        { default: () => approvalStatusLabel(row.status) },
+      ),
+  },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 88,
+    render: (row) =>
+      h(
+        NButton,
+        { text: true, type: 'primary', onClick: () => openDetail(row.id) },
+        { default: () => '详情' },
+      ),
+  },
+])
 
 const loadApprovals = async (approvalStatus) => {
   loading.value = true
@@ -205,6 +194,7 @@ onMounted(() => {
 
 const handleSearch = async () => {
   appliedKeyword.value = searchQuery.value.trim()
+  appliedCourseCode.value = courseCodeQuery.value.trim()
   appliedStatus.value = activeStatus.value
   actionError.value = ''
   closeDetail()
@@ -213,8 +203,10 @@ const handleSearch = async () => {
 
 const handleReset = async () => {
   searchQuery.value = ''
+  courseCodeQuery.value = ''
   activeStatus.value = 'all'
   appliedKeyword.value = ''
+  appliedCourseCode.value = ''
   appliedStatus.value = 'all'
   actionError.value = ''
   closeDetail()
@@ -272,18 +264,8 @@ const handleReject = async ({ id, reason }) => {
   }
 }
 
-const onKeydown = (event) => {
-  if (event.key === 'Escape') {
-    closeDetail()
-  }
-}
-
 watch(detailOpen, (open) => {
-  document.body.style.overflow = open ? 'hidden' : ''
-  if (open) {
-    window.addEventListener('keydown', onKeydown)
-  } else {
-    window.removeEventListener('keydown', onKeydown)
+  if (!open) {
     actionError.value = ''
   }
 })
@@ -295,7 +277,6 @@ watch(filteredApprovals, (list) => {
 })
 
 onBeforeUnmount(() => {
-  document.body.style.overflow = ''
-  window.removeEventListener('keydown', onKeydown)
+  detailOpen.value = false
 })
 </script>

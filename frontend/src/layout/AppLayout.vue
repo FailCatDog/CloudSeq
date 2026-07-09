@@ -58,8 +58,6 @@
         <h1 class="wb-topbar-title">{{ pageTitle }}</h1>
 
         <div class="wb-topbar-actions">
-          <CourseSelectDropdown v-if="isTeacherUser" />
-
           <button v-if="!isTeacherUser" type="button" class="wb-focus-mode-btn" @click="openComingSoon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -78,11 +76,14 @@
               <RouterLink to="/profile" class="wb-user-menu-item" role="menuitem" @click="showUserMenu = false">
                 个人中心
               </RouterLink>
-              <RouterLink to="/profile?tab=team" class="wb-user-menu-item" role="menuitem" @click="showUserMenu = false">
-                我的小组
-              </RouterLink>
-              <RouterLink to="/profile?tab=security" class="wb-user-menu-item" role="menuitem" @click="showUserMenu = false">
-                安全设置
+              <RouterLink
+                v-if="!isTeacherUser"
+                to="/prepare"
+                class="wb-user-menu-item"
+                role="menuitem"
+                @click="showUserMenu = false"
+              >
+                课程准备
               </RouterLink>
               <button type="button" class="wb-user-menu-item" role="menuitem" @click="logout">
                 退出登录
@@ -103,7 +104,6 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import BrandLogo from '@/components/BrandLogo.vue'
-import CourseSelectDropdown from '@/components/CourseSelectDropdown.vue'
 import { BRAND_NAME } from '@/constants/brand'
 import { STUDENT_NAV, TEACHER_NAV } from '@/constants/roleNav'
 import { clearCollabTokenCache } from '@/utils/collabTokenCache'
@@ -136,12 +136,12 @@ const pageTitleMap = {
   '/teaching/approvals': '选题审批',
   '/teaching/teams': '小组总览',
   '/teaching/reports': '周报审阅',
+  '/prepare': '课程准备',
   '/profile': '个人中心',
 }
 
 const profileTabTitleMap = {
   team: '我的小组',
-  security: '安全设置',
 }
 
 const showShell = computed(() => route.path !== '/auth')
@@ -150,7 +150,11 @@ const isDashboardRoute = computed(() => {
 })
 const isProjectRoute = computed(() => route.path.startsWith('/workspace/project'))
 
-const isProfileRoute = computed(() => route.path === '/profile' || route.path.startsWith('/profile/'))
+const isProfileRoute = computed(() =>
+  route.path === '/profile'
+  || route.path.startsWith('/profile/')
+  || route.path === '/prepare',
+)
 
 const pageContentClass = computed(() => ({
   'wb-page-content--inner': !isDashboardRoute.value && !isProjectRoute.value && !isProfileRoute.value,
@@ -203,6 +207,9 @@ const isNavActive = (to) => {
   }
   if (to === '/profile') {
     return route.path === '/profile' || route.path.startsWith('/profile/')
+  }
+  if (to === '/prepare') {
+    return route.path === '/prepare'
   }
   return route.path === to || route.path.startsWith(`${to}/`)
 }

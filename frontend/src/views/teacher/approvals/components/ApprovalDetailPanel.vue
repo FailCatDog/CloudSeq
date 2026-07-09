@@ -1,71 +1,62 @@
 <template>
-  <div v-if="approval" class="tch-approval-detail">
-    <span class="tch-tag" :class="approvalStatusTagClass(approval.status)">
+  <div v-if="approval" class="console-drawer-body">
+    <n-tag :type="approvalTagType(approval.status)" round size="small">
       {{ approvalStatusLabel(approval.status) }}
-    </span>
-    <h4>{{ approval.topicTitle }}</h4>
-    <p class="tch-detail-desc">{{ approval.topicDesc || '暂无说明' }}</p>
+    </n-tag>
+    <h4 class="console-detail-title">{{ approval.topicTitle }}</h4>
+    <p class="console-detail-desc">{{ approval.topicDesc || '暂无说明' }}</p>
 
-    <dl class="tch-detail-meta">
-      <div>
-        <dt>所属小组</dt>
-        <dd>{{ approval.teamLabel }}（{{ approval.memberCount }} 人）</dd>
-      </div>
-      <div>
-        <dt>组长</dt>
-        <dd>{{ approval.leaderName }} · {{ approval.leaderNo }}</dd>
-      </div>
-      <div>
-        <dt>提交时间</dt>
-        <dd>{{ approval.submittedAtFull }}</dd>
-      </div>
-      <div>
-        <dt>成员名单</dt>
-        <dd>{{ approval.members }}</dd>
-      </div>
-      <div v-if="approval.rejectReason">
-        <dt>驳回理由</dt>
-        <dd>{{ approval.rejectReason }}</dd>
-      </div>
-    </dl>
+    <n-descriptions :column="1" label-placement="left" size="small">
+      <n-descriptions-item label="所属小组">
+        {{ approval.teamLabel }}（{{ approval.memberCount }} 人）
+      </n-descriptions-item>
+      <n-descriptions-item label="组长">
+        {{ approval.leaderName }} · {{ approval.leaderNo }}
+      </n-descriptions-item>
+      <n-descriptions-item label="提交时间">
+        {{ approval.submittedAtFull }}
+      </n-descriptions-item>
+      <n-descriptions-item label="成员名单">
+        {{ approval.members }}
+      </n-descriptions-item>
+      <n-descriptions-item v-if="approval.rejectReason" label="驳回理由">
+        {{ approval.rejectReason }}
+      </n-descriptions-item>
+    </n-descriptions>
 
     <template v-if="isApprovalPending(approval.status)">
-      <div class="tch-detail-actions">
-        <button
-          type="button"
-          class="wb-btn-schedule tch-detail-action-btn"
-          :disabled="submitting"
-          @click="emitApprove"
-        >
+      <n-space style="margin-top: 20px" :size="12">
+        <n-button type="primary" :loading="submitting" @click="emitApprove">
           {{ submitting ? '处理中…' : '通过审批' }}
-        </button>
-        <button
-          type="button"
-          class="wb-btn-schedule wb-btn-schedule--outline wb-btn-schedule--danger tch-detail-action-btn"
-          :disabled="submitting"
-          @click="showRejectReason = !showRejectReason"
-        >
+        </n-button>
+        <n-button type="error" ghost :disabled="submitting" @click="showRejectReason = !showRejectReason">
           驳回
-        </button>
-      </div>
-      <textarea
+        </n-button>
+      </n-space>
+      <n-input
         v-if="showRejectReason"
-        v-model="rejectReason"
-        class="tch-reject-reason"
+        v-model:value="rejectReason"
+        type="textarea"
         :disabled="submitting"
         placeholder="驳回理由（驳回时必填，将展示给学生组）…"
+        :rows="4"
+        style="margin-top: 12px"
       />
-      <button
+      <n-button
         v-if="showRejectReason"
-        type="button"
-        class="wb-btn-schedule wb-btn-schedule--sm tch-reject-submit"
-        :disabled="submitting || !rejectReason.trim()"
+        type="error"
+        block
+        style="margin-top: 10px"
+        :loading="submitting"
+        :disabled="!rejectReason.trim()"
         @click="emitReject"
       >
         {{ submitting ? '处理中…' : '确认驳回' }}
-      </button>
+      </n-button>
     </template>
-    <p v-else class="tch-detail-readonly">该选题已处理，无需再次审批。</p>
+    <n-text v-else depth="3" style="display: block; margin-top: 20px">
+      该选题已处理，无需再次审批。
+    </n-text>
   </div>
 </template>
 
@@ -73,9 +64,9 @@
 import { ref, watch } from 'vue'
 import {
   approvalStatusLabel,
-  approvalStatusTagClass,
   isApprovalPending,
 } from '@/utils/approvalFormat'
+import { approvalTagType } from '@/utils/naiveStatus'
 
 const props = defineProps({
   approval: {
@@ -115,18 +106,3 @@ const emitReject = () => {
   rejectReason.value = ''
 }
 </script>
-
-<style scoped>
-.tch-approval-detail h4 {
-  margin: 12px 0 8px;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.tch-reject-submit {
-  margin-top: 10px;
-  width: 100%;
-  justify-content: center;
-}
-</style>

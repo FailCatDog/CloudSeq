@@ -287,6 +287,16 @@ public class CourseServiceImpl implements CourseService {
     courseEnrollmentDao.updateById(enrollment);
   }
 
+  @Override
+  @Transactional(rollbackFor = Exception.class)
+  public void deleteCourse(Long courseId) {
+    requireCourse(courseId);
+    int rows = courseDao.deleteById(courseId);
+    if (rows == 0) {
+      throw new BusinessException(BizResponseCode.COURSE_NOT_FOUND);
+    }
+  }
+
   private Course requireCourse(Long courseId) {
     Course course = courseDao.selectById(courseId);
     if (course == null) {

@@ -16,7 +16,7 @@
           </RouterLink>
           <RouterLink
             v-else
-            to="/profile?tab=team"
+            to="/prepare"
             class="wb-btn-schedule"
           >
             {{ hasTeam ? '查看选题' : '去组队选题' }}
@@ -87,7 +87,7 @@
             >
               查看数据看板 →
             </RouterLink>
-            <RouterLink v-else to="/profile?tab=team" class="wb-featured-link">去选题 →</RouterLink>
+            <RouterLink v-else to="/prepare" class="wb-featured-link">去选题 →</RouterLink>
           </div>
         </article>
 
@@ -151,13 +151,13 @@
             <p v-if="loading" class="wb-featured-desc">正在加载…</p>
             <template v-else-if="!hasTeam">
               <p class="wb-featured-desc">尚未加入小组，请先创建或加入小组。</p>
-              <RouterLink to="/profile?tab=team" class="wb-featured-link">去组队 →</RouterLink>
+              <RouterLink to="/prepare" class="wb-featured-link">去组队 →</RouterLink>
             </template>
             <template v-else-if="hasTopic">
               <p class="wb-featured-topic-name">{{ team.topicTitle }}</p>
               <p class="wb-featured-desc">{{ team.topicDesc || '暂无选题说明。' }}</p>
               <RouterLink
-                :to="canGoWorkspace ? '/workspace/project/board' : '/profile?tab=team'"
+                :to="canGoWorkspace ? '/workspace/project/board' : '/prepare'"
                 class="wb-featured-link"
                 @click="canGoWorkspace && trackRecent('board')"
               >
@@ -166,7 +166,7 @@
             </template>
             <template v-else>
               <p class="wb-featured-desc">填写选题标题与说明，提交后等待教师审批。</p>
-              <RouterLink to="/profile?tab=team" class="wb-featured-link">提交选题 →</RouterLink>
+              <RouterLink to="/prepare" class="wb-featured-link">提交选题 →</RouterLink>
             </template>
           </div>
         </article>
@@ -242,7 +242,6 @@ const ICONS = {
   sheet: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`,
   team: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
   profile: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-  security: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
 }
 
 const APP_DEFINITIONS = [
@@ -251,12 +250,11 @@ const APP_DEFINITIONS = [
   { id: 'weekly', label: '周报', to: '/workspace/project/weekly', color: 'green', category: 'project', requiresWorkspace: true, icon: ICONS.weekly },
   { id: 'doc', label: '文档协作', to: '/workspace/project/board', color: 'orange', category: 'collab', requiresWorkspace: true, icon: ICONS.doc },
   { id: 'sheet', label: '表格协作', to: '/workspace/project/board', color: 'cyan', category: 'collab', requiresWorkspace: true, icon: ICONS.sheet },
-  { id: 'team', label: '我的小组', to: '/profile?tab=team', color: 'pink', category: 'personal', requiresWorkspace: false, icon: ICONS.team },
+  { id: 'prepare', label: '课程准备', to: '/prepare', color: 'pink', category: 'personal', requiresWorkspace: false, icon: ICONS.team },
   { id: 'profile', label: '个人中心', to: '/profile', color: 'slate', category: 'personal', requiresWorkspace: false, icon: ICONS.profile },
-  { id: 'security', label: '安全设置', to: '/profile?tab=security', color: 'slate', category: 'personal', requiresWorkspace: false, icon: ICONS.security },
 ]
 
-const QUICK_APP_IDS = ['board', 'gantt', 'weekly', 'doc', 'sheet', 'team']
+const QUICK_APP_IDS = ['board', 'gantt', 'weekly', 'doc', 'sheet', 'prepare']
 
 const catalogTabs = [
   { id: 'recent', label: '最近使用' },
@@ -421,7 +419,7 @@ const trackRecent = (appId) => {
 const handleAppClick = (app, event) => {
   if (app.locked) {
     event.preventDefault()
-    router.push('/profile?tab=team')
+    router.push('/prepare')
     return
   }
   trackRecent(app.id)

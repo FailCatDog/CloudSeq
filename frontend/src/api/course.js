@@ -2,6 +2,12 @@ import { request } from './request'
 
 const API_PREFIX = '/api/course'
 
+export const deleteCourseApi = (courseId) => {
+  return request(`${API_PREFIX}/${courseId}`, {
+    method: 'DELETE',
+  })
+}
+
 export const createCourseApi = (data) => {
   return request(API_PREFIX, {
     method: 'POST',

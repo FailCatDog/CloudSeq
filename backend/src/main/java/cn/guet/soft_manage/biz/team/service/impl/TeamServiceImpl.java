@@ -4,11 +4,13 @@ import cn.guet.soft_manage.biz.team.dao.TeamDao;
 import cn.guet.soft_manage.biz.team.dao.TeamMemberDao;
 import cn.guet.soft_manage.biz.team.dao.TopicApprovalDao;
 import cn.guet.soft_manage.biz.course.dao.CourseDao;
+import cn.guet.soft_manage.biz.course.dao.CourseStaffDao;
 import cn.guet.soft_manage.biz.user.dao.UserDao;
 import cn.guet.soft_manage.biz.team.dto.TeamCreateRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMemberAddRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMemberInfoDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMembersResponseDTO;
+import cn.guet.soft_manage.biz.team.dto.TeamOverviewSummaryDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamTopicSubmitRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TopicApprovalReviewRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TopicApprovalSummaryDTO;
@@ -16,8 +18,13 @@ import cn.guet.soft_manage.biz.team.entity.Team;
 import cn.guet.soft_manage.biz.team.entity.TeamMember;
 import cn.guet.soft_manage.biz.team.entity.TopicApproval;
 import cn.guet.soft_manage.biz.course.entity.Course;
+import cn.guet.soft_manage.biz.course.entity.CourseStaff;
 import cn.guet.soft_manage.biz.user.entity.User;
 import cn.guet.soft_manage.biz.team.service.TeamService;
+import cn.guet.soft_manage.biz.workspace.dao.WeeklyReportDao;
+import cn.guet.soft_manage.biz.workspace.dao.WorkspaceDao;
+import cn.guet.soft_manage.biz.workspace.entity.WeeklyReport;
+import cn.guet.soft_manage.biz.workspace.entity.Workspace;
 import cn.guet.soft_manage.biz.workspace.service.WorkspaceService;
 import cn.guet.soft_manage.frame.auth.UserContext;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
@@ -32,6 +39,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +70,15 @@ public class TeamServiceImpl implements TeamService {
 
     @Resource
     private CourseDao courseDao;
+
+    @Resource
+    private CourseStaffDao courseStaffDao;
+
+    @Resource
+    private WorkspaceDao workspaceDao;
+
+    @Resource
+    private WeeklyReportDao weeklyReportDao;
 
     @Resource
     private WorkspaceService workspaceService;
@@ -375,6 +392,127 @@ public class TeamServiceImpl implements TeamService {
                 .members(String.join("、", memberNames))
                 .submitDate(approval.getSubmitDate())
                 .build();
+    }
+
+    @Override
+    public List<TeamOverviewSummaryDTO> listTeacherTeamOverview(String teamStatus) {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            return Collections.emptyList();
+        }
+
+        List<Long> courseIds = findCourseIdsByTeacher(userId);
+        if (courseIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        LambdaQueryWrapper<Team> wrapper = new LambdaQueryWrapper<Team>()
+                .in(Team::getCourseId, courseIds)
+                .orderByDesc(Team::getCreateDate);
+        if (StringUtils.hasText(teamStatus)) {
+            wrapper.eq(Team::getStatus, teamStatus.trim());
+        }
+
+        List<Team> teams = teamDao.selectList(wrapper);
+        if (teams.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> teamIds = teams.stream().map(Team::getId).filter(Objects::nonNull).toList();
+
+        Map<Long, Course> courseMap = courseDao.selectBatchIds(
+                        teams.stream().map(Team::getCourseId).filter(Objects::nonNull).distinct().toList()).stream()
+                .collect(Collectors.toMap(Course::getId, Function.identity(), (left, right) -> left));
+
+        List<TeamMember> activeMembers = teamMemberDao.selectList(new LambdaQueryWrapper<TeamMember>()
+                .in(TeamMember::getTeamId, teamIds)
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
+        Map<Long, Long> memberCountByTeam = activeMembers.stream()
+                .collect(Collectors.groupingBy(TeamMember::getTeamId, Collectors.counting()));
+
+        Set<Long> leaderIds = teams.stream()
+                .map(Team::getLeaderUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<Long, User> leaderMap = leaderIds.isEmpty()
+                ? Collections.emptyMap()
+                : userDao.selectBatchIds(new ArrayList<>(leaderIds)).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity(), (left, right) -> left));
+
+        List<Workspace> workspaces = workspaceDao.selectList(new LambdaQueryWrapper<Workspace>()
+                .in(Workspace::getTeamId, teamIds));
+        Map<Long, Workspace> workspaceByTeam = workspaces.stream()
+                .collect(Collectors.toMap(Workspace::getTeamId, Function.identity(), (left, right) -> left));
+
+        List<Long> workspaceIds = workspaces.stream().map(Workspace::getId).filter(Objects::nonNull).toList();
+        Map<Long, List<WeeklyReport>> reportsByWorkspace = workspaceIds.isEmpty()
+                ? Collections.emptyMap()
+                : weeklyReportDao.selectList(new LambdaQueryWrapper<WeeklyReport>()
+                        .in(WeeklyReport::getWorkspaceId, workspaceIds)
+                        .eq(WeeklyReport::getReportStatus, CacheCode.WEEKLY_REPORT_STATUS_SUBMITTED.getCode())).stream()
+                .collect(Collectors.groupingBy(WeeklyReport::getWorkspaceId));
+
+        return teams.stream()
+                .map(team -> toTeamOverviewSummary(
+                        team,
+                        courseMap.get(team.getCourseId()),
+                        leaderMap.get(team.getLeaderUserId()),
+                        memberCountByTeam.getOrDefault(team.getId(), 0L).intValue(),
+                        workspaceByTeam.get(team.getId()),
+                        reportsByWorkspace))
+                .toList();
+    }
+
+    private TeamOverviewSummaryDTO toTeamOverviewSummary(
+            Team team,
+            Course course,
+            User leader,
+            int memberCount,
+            Workspace workspace,
+            Map<Long, List<WeeklyReport>> reportsByWorkspace) {
+        Integer lastReportYear = null;
+        Integer lastReportWeek = null;
+
+        if (workspace != null) {
+            WeeklyReport latestReport = reportsByWorkspace.getOrDefault(workspace.getId(), Collections.emptyList()).stream()
+                    .max(Comparator.comparing(WeeklyReport::getReportYear, Comparator.nullsFirst(Integer::compareTo))
+                            .thenComparing(WeeklyReport::getReportWeek, Comparator.nullsFirst(Integer::compareTo)))
+                    .orElse(null);
+            if (latestReport != null) {
+                lastReportYear = latestReport.getReportYear();
+                lastReportWeek = latestReport.getReportWeek();
+            }
+        }
+
+        return TeamOverviewSummaryDTO.builder()
+                .id(team.getId())
+                .courseId(team.getCourseId())
+                .courseCode(course != null ? course.getCourseCode() : null)
+                .teamLabel(StringUtils.hasText(team.getTeamName()) ? team.getTeamName() : "未命名小组")
+                .topicTitle(team.getTopicTitle())
+                .status(team.getStatus())
+                .leaderName(resolveDisplayName(leader, team.getLeaderUserId()))
+                .memberCount(memberCount)
+                .lastReportYear(lastReportYear)
+                .lastReportWeek(lastReportWeek)
+                .build();
+    }
+
+    private List<Long> findCourseIdsByTeacher(Long teacherId) {
+        Set<Long> courseIds = new LinkedHashSet<>();
+
+        courseDao.selectList(new LambdaQueryWrapper<Course>()
+                        .eq(Course::getPrimaryTeacherId, teacherId)
+                        .select(Course::getId))
+                .forEach(course -> courseIds.add(course.getId()));
+
+        courseStaffDao.selectList(new LambdaQueryWrapper<CourseStaff>()
+                        .eq(CourseStaff::getUserId, teacherId)
+                        .eq(CourseStaff::getStaffStatus, CacheCode.COURSE_STAFF_STATUS_ACTIVE.getCode())
+                        .select(CourseStaff::getCourseId))
+                .forEach(staff -> courseIds.add(staff.getCourseId()));
+
+        return new ArrayList<>(courseIds);
     }
 
     @Override

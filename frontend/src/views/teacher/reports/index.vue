@@ -1,132 +1,150 @@
 <template>
-  <div class="tch-page">
-    <div class="tch-filter-bar">
-      <div class="tch-filter-tabs" role="tablist" aria-label="提交状态">
-        <button
-          v-for="tab in submitTabs"
-          :key="tab.id"
-          type="button"
-          role="tab"
-          class="tch-filter-tab"
-          :class="{ active: activeSubmitFilter === tab.id }"
-          :aria-selected="activeSubmitFilter === tab.id"
-          @click="activeSubmitFilter = tab.id"
-        >
-          {{ tab.label }}
-        </button>
+  <div class="console-page">
+    <div class="console-filter">
+      <div class="console-filter__fields">
+        <div class="console-filter__field console-filter__field--wide">
+          <span class="console-filter__label">课号</span>
+          <n-select
+            v-model:value="selectedCourseId"
+            :options="courseOptions"
+            :loading="coursesLoading"
+            clearable
+            placeholder="请选择课号"
+          />
+        </div>
+        <div class="console-filter__field">
+          <span class="console-filter__label">周次</span>
+          <n-select
+            v-model:value="selectedWeekValue"
+            :options="weekOptions"
+            :disabled="!searched || loading || !weekOptions.length"
+            clearable
+            :placeholder="weekOptions.length ? '请选择周次' : '暂无已提交周报'"
+            @update:value="handleWeekChange"
+          />
+        </div>
       </div>
-      <div class="tch-filter-tabs tch-filter-tabs--end" role="tablist" aria-label="周次">
-        <button
-          v-for="week in MOCK_REPORT_WEEKS"
-          :key="week"
-          type="button"
-          role="tab"
-          class="tch-filter-tab"
-          :class="{ active: activeWeek === week }"
-          :aria-selected="activeWeek === week"
-          @click="selectWeek(week)"
-        >
-          第 {{ week }} 周
-        </button>
+      <div class="console-filter__actions">
+        <n-button type="primary" :loading="loading" :disabled="!selectedCourseId" @click="handleSearch">
+          搜索
+        </n-button>
+        <n-button quaternary :disabled="loading" @click="handleReset">重置</n-button>
       </div>
     </div>
 
-    <div class="tch-report-layout">
-      <nav class="wb-card tch-tree" aria-label="周报目录">
-        <div v-for="group in reportTree" :key="group.id" class="tch-tree-group">
-          <button
-            type="button"
-            class="tch-tree-group-title"
-            :class="{ active: expandedGroupId === group.id }"
-            @click="toggleGroup(group.id)"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline :points="expandedGroupId === group.id ? '6 9 12 15 18 9' : '9 18 15 12 9 6'" />
-            </svg>
-            {{ group.teamLabel }} · {{ group.topicTitle }}
-          </button>
-          <template v-if="expandedGroupId === group.id">
-            <button
-              v-for="report in groupReports(group)"
-              :key="report.id"
-              type="button"
-              class="tch-tree-item"
-              :class="{ active: selectedReportId === report.id }"
-              @click="selectReport(report.id, group.id)"
-            >
-              {{ report.memberName }} · 第 {{ report.week }} 周
-            </button>
-            <p v-if="!groupReports(group).length" class="tch-tree-empty">该周暂无已提交周报</p>
-          </template>
-        </div>
-      </nav>
+    <n-alert v-if="pageError" type="error" :bordered="false">{{ pageError }}</n-alert>
 
-      <article v-if="selectedReport && selectedGroup" class="wb-card tch-report-content">
-        <header class="tch-report-header">
+    <div class="console-report-layout">
+      <n-card class="console-report-tree" :bordered="false">
+        <n-spin :show="loading">
+          <n-empty v-if="!searched" description="请选择课号并点击搜索" />
+          <n-empty v-else-if="!reportTree.length" description="该课号下暂无小组" />
+          <n-collapse v-else accordion :expanded-names="expandedGroupId" @update:expanded-names="handleGroupExpand">
+            <n-collapse-item
+              v-for="group in reportTree"
+              :key="group.id"
+              :title="`${group.teamLabel} · ${group.topicTitle}`"
+              :name="group.id"
+            >
+              <n-empty v-if="!selectedWeekValue" size="small" description="请先选择周次" />
+              <n-empty v-else-if="!groupReports(group).length" size="small" description="该周暂无已提交周报" />
+              <n-space v-else vertical :size="4">
+                <n-button
+                  v-for="report in groupReports(group)"
+                  :key="report.id"
+                  quaternary
+                  block
+                  :type="selectedReportId === report.id ? 'primary' : 'default'"
+                  style="justify-content: flex-start"
+                  @click="selectReport(report.id, group.id)"
+                >
+                  {{ report.memberName }} · 第 {{ report.reportWeek }} 周
+                </n-button>
+              </n-space>
+            </n-collapse-item>
+          </n-collapse>
+        </n-spin>
+      </n-card>
+
+      <n-card
+        v-if="selectedReport && selectedGroup"
+        class="console-report-content"
+        :bordered="false"
+      >
+        <header class="console-report-header">
           <div>
-            <h4>{{ selectedReport.memberName }} · 第 {{ selectedReport.week }} 周周报</h4>
-            <p class="tch-report-meta">
-              {{ selectedGroup.teamLabel }} · 提交于 {{ selectedReport.submittedAt }}
+            <h4>{{ selectedReport.memberName }} · 第 {{ selectedReport.reportWeek }} 周周报</h4>
+            <p class="console-report-meta">
+              {{ selectedGroup.teamLabel }} · {{ selectedGroup.topicTitle }} · 提交于 {{ selectedReport.submitDate }}
             </p>
           </div>
-          <span class="tch-tag tch-tag--success">已提交</span>
+          <n-tag type="success" round size="small">已提交</n-tag>
         </header>
 
-        <div class="tch-report-body">
+        <div class="console-report-body">
           <h5>本周完成</h5>
-          <p>{{ selectedReport.sections.done }}</p>
+          <p>{{ selectedReport.weeklyProgress }}</p>
 
           <h5>下周计划</h5>
-          <p>{{ selectedReport.sections.plan }}</p>
+          <p>{{ selectedReport.nextPlan }}</p>
 
           <h5>问题与风险</h5>
-          <p>{{ selectedReport.sections.risk }}</p>
+          <p>{{ selectedReport.problems }}</p>
         </div>
 
-        <footer class="tch-report-footer">
-          <button type="button" class="wb-btn-schedule wb-btn-schedule--outline wb-btn-schedule--sm" disabled title="二期功能">
-            添加评语（二期）
-          </button>
-          <RouterLink to="/teaching/teams" class="wb-btn-schedule wb-btn-schedule--outline wb-btn-schedule--sm">
-            查看该组项目空间
+        <footer class="console-report-footer">
+          <n-button disabled title="二期功能">添加评语（二期）</n-button>
+          <RouterLink to="/teaching/teams">
+            <n-button quaternary>查看该组项目空间</n-button>
           </RouterLink>
         </footer>
-      </article>
+      </n-card>
 
-      <article v-else class="wb-card tch-report-content tch-report-content--empty">
-        <p>从左侧选择小组与成员周报查看详情</p>
-      </article>
+      <n-card v-else class="console-report-content console-report-content--empty" :bordered="false">
+        <n-empty
+          :description="
+            !searched
+              ? '请选择课号并搜索后查看周报'
+              : !selectedWeekValue
+                ? '请选择周次后展开小组查看周报'
+                : '从左侧选择成员周报查看详情'
+          "
+        />
+      </n-card>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { MOCK_REPORT_TREE, MOCK_REPORT_WEEKS } from '../mockTeachingData'
+import { getTeacherWeeklyReviewApi } from '@/api/weekly'
+import { loadCourseStore, useCourseStore } from '@/stores/courseStore'
+import { formatCourseSelectLabel } from '@/utils/courseFormat'
+import { mapTeacherWeeklyReview, parseWeekOptionValue } from '@/utils/weeklyFormat'
 
-const reportTree = ref(
-  MOCK_REPORT_TREE.map((group) => ({ ...group, reports: [...group.reports] })),
+const { courses, loading: coursesLoading } = useCourseStore()
+
+const reportTree = ref([])
+const weekOptions = ref([])
+const loading = ref(false)
+const pageError = ref('')
+const searched = ref(false)
+const selectedCourseId = ref(null)
+const selectedWeekValue = ref(null)
+const expandedGroupId = ref(null)
+const selectedReportId = ref(null)
+
+const courseOptions = computed(() =>
+  courses.value.map((course) => ({
+    label: formatCourseSelectLabel(course),
+    value: course.id,
+  })),
 )
 
-const activeSubmitFilter = ref('submitted')
-const activeWeek = ref(12)
-const expandedGroupId = ref('team-1')
-const selectedReportId = ref('r-1-12-zl')
-
-const submitTabs = [
-  { id: 'submitted', label: '已提交' },
-  { id: 'unsubmitted', label: '未提交' },
-  { id: 'all', label: '全部' },
-]
-
 const groupReports = (group) => {
-  return group.reports.filter((report) => {
-    if (report.week !== activeWeek.value) return false
-    if (activeSubmitFilter.value === 'submitted') return report.status === 'submitted'
-    if (activeSubmitFilter.value === 'unsubmitted') return report.status !== 'submitted'
-    return true
-  })
+  if (!selectedWeekValue.value) return []
+  return group.reports
 }
 
 const selectedReport = computed(() => {
@@ -141,14 +159,98 @@ const selectedGroup = computed(() => {
   return reportTree.value.find((group) => group.id === expandedGroupId.value) || null
 })
 
-const toggleGroup = (groupId) => {
-  if (expandedGroupId.value === groupId) {
+const loadReviewData = async ({ keepWeek = false } = {}) => {
+  if (!selectedCourseId.value) {
+    pageError.value = '请选择课号'
+    return
+  }
+
+  loading.value = true
+  pageError.value = ''
+
+  const weekParams = keepWeek ? parseWeekOptionValue(selectedWeekValue.value) : { reportYear: null, reportWeek: null }
+  if (!keepWeek) {
+    selectedWeekValue.value = null
+    selectedReportId.value = null
     expandedGroupId.value = null
+  }
+
+  try {
+    const data = await getTeacherWeeklyReviewApi({
+      courseId: selectedCourseId.value,
+      ...weekParams,
+    })
+    const mapped = mapTeacherWeeklyReview(data)
+    weekOptions.value = mapped.weekOptions.map((item) => ({
+      label: item.label,
+      value: item.value,
+    }))
+    reportTree.value = mapped.teams
+    searched.value = true
+
+    if (keepWeek && selectedWeekValue.value) {
+      const stillValid = weekOptions.value.some((item) => item.value === selectedWeekValue.value)
+      if (!stillValid) {
+        selectedWeekValue.value = null
+        selectedReportId.value = null
+      }
+    }
+
+    if (expandedGroupId.value && !reportTree.value.some((item) => item.id === expandedGroupId.value)) {
+      expandedGroupId.value = reportTree.value[0]?.id ?? null
+      selectedReportId.value = null
+    }
+  } catch (error) {
+    reportTree.value = []
+    weekOptions.value = []
+    pageError.value = error?.message || '加载周报审阅数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  try {
+    await loadCourseStore()
+  } catch {
+    // 静默失败
+  }
+})
+
+const handleSearch = async () => {
+  await loadReviewData({ keepWeek: false })
+}
+
+const handleWeekChange = async () => {
+  if (!searched.value) return
+  selectedReportId.value = null
+  await loadReviewData({ keepWeek: true })
+  const group = reportTree.value.find((item) => item.id === expandedGroupId.value)
+  if (group) {
+    const reports = groupReports(group)
+    selectedReportId.value = reports[0]?.id ?? null
+  }
+}
+
+const handleReset = () => {
+  selectedCourseId.value = null
+  selectedWeekValue.value = null
+  reportTree.value = []
+  weekOptions.value = []
+  expandedGroupId.value = null
+  selectedReportId.value = null
+  searched.value = false
+  pageError.value = ''
+}
+
+const handleGroupExpand = (name) => {
+  expandedGroupId.value = name ?? null
+  if (!name) {
     selectedReportId.value = null
     return
   }
-  expandedGroupId.value = groupId
-  const reports = groupReports(reportTree.value.find((g) => g.id === groupId))
+  const group = reportTree.value.find((item) => item.id === name)
+  const reports = groupReports(group)
   selectedReportId.value = reports[0]?.id ?? null
 }
 
@@ -156,20 +258,4 @@ const selectReport = (reportId, groupId) => {
   selectedReportId.value = reportId
   expandedGroupId.value = groupId
 }
-
-const selectWeek = (week) => {
-  activeWeek.value = week
-}
-
-watch([activeWeek, activeSubmitFilter], () => {
-  const group = reportTree.value.find((item) => item.id === expandedGroupId.value)
-  if (!group) {
-    selectedReportId.value = null
-    return
-  }
-  const reports = groupReports(group)
-  if (!reports.some((item) => item.id === selectedReportId.value)) {
-    selectedReportId.value = reports[0]?.id ?? null
-  }
-})
 </script>

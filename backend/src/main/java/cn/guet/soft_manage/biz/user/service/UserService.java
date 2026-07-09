@@ -2,6 +2,7 @@ package cn.guet.soft_manage.biz.user.service;
 
 import cn.guet.soft_manage.biz.user.dto.LoginRequestDTO;
 import cn.guet.soft_manage.biz.user.dto.LoginResponseDTO;
+import cn.guet.soft_manage.biz.user.dto.ProfileStatusAggregate;
 import cn.guet.soft_manage.biz.user.dto.RegisterRequestDTO;
 import cn.guet.soft_manage.biz.user.entity.User;
 import cn.guet.soft_manage.biz.user.param.UserParam;
@@ -38,4 +39,9 @@ public interface UserService {
      * @param request 资料参数
      */
     void updateProfile(UserParam request);
+
+    /**
+     * 当前用户个人状态聚合（里程碑 + 课号/小组/审批/工作区快照）
+     */
+    ProfileStatusAggregate getProfileStatus();
 }

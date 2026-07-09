@@ -10,6 +10,7 @@ import cn.guet.soft_manage.biz.course.service.CourseService;
 import cn.guet.soft_manage.frame.common.Response;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +38,12 @@ public class CourseController {
   public Response<CourseDetailDTO> update(@PathVariable Long id,
       @Valid @RequestBody CourseUpdateRequestDTO request) {
     return Response.success(courseService.updateCourse(id, request));
+  }
+
+  @DeleteMapping("/{id}")
+  public Response<Void> delete(@PathVariable Long id) {
+    courseService.deleteCourse(id);
+    return Response.success();
   }
 
   @GetMapping("/mine")

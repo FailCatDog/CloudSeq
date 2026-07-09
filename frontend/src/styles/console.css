@@ -1,0 +1,188 @@
+/* 教师端 / 管理端 — Naive UI 页面布局辅助 */
+.console-root {
+  width: 100%;
+}
+
+.console-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.console-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.console-filter__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.console-filter__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 180px;
+  flex: 0 0 180px;
+}
+
+.console-filter__field--wide {
+  width: 280px;
+  flex: 1 1 280px;
+  max-width: 320px;
+}
+
+.console-filter__field .n-input,
+.console-filter__field .n-select {
+  width: 100%;
+}
+
+.console-filter__field .n-input-wrapper,
+.console-filter__field .n-base-selection {
+  width: 100% !important;
+}
+
+.console-filter__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wb-text-muted);
+}
+
+.console-filter__actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.console-filter__actions .n-button {
+  min-width: 72px;
+}
+
+.console-table-card {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--wb-card-shadow);
+}
+
+.console-table-card .n-data-table {
+  --n-border-radius: 20px;
+}
+
+/* 表格去掉列分割线 */
+.console-root .n-data-table .n-data-table-th,
+.console-root .n-data-table .n-data-table-td {
+  border-right: none !important;
+  border-inline-end: none !important;
+}
+
+.console-drawer-body {
+  padding: 4px 0 24px;
+}
+
+.console-detail-title {
+  margin: 12px 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--wb-text-primary);
+}
+
+.console-detail-desc {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--wb-text-secondary);
+}
+
+.console-report-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 520px;
+}
+
+.console-report-tree {
+  padding: 8px;
+}
+
+.console-report-content {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+}
+
+.console-report-content--empty {
+  align-items: center;
+  justify-content: center;
+  color: var(--wb-text-secondary);
+  font-size: 14px;
+}
+
+.console-report-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--wb-search-border);
+}
+
+.console-report-header h4 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.console-report-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--wb-text-muted);
+}
+
+.console-report-body {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--wb-text-secondary);
+}
+
+.console-report-body h5 {
+  margin: 20px 0 8px;
+  font-size: 14px;
+  color: var(--wb-text-primary);
+}
+
+.console-report-body h5:first-child {
+  margin-top: 0;
+}
+
+.console-report-body p {
+  margin: 0 0 12px;
+}
+
+.console-report-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--wb-search-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 1100px) {
+  .console-report-layout {
+    grid-template-columns: 1fr;
+  }
+}

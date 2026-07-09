@@ -26,4 +26,6 @@ public interface CourseService {
     List<CourseEnrollmentDTO> listEnrollments(Long courseId);
 
     void dropEnrollment(Long courseId, Long userId);
+
+    void deleteCourse(Long courseId);
 }

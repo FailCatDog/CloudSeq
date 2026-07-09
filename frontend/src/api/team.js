@@ -60,6 +60,13 @@ export const listTeacherTopicApprovalsApi = (params = {}) => {
   return request(query ? `${API_PREFIX}/topic-approvals?${query}` : `${API_PREFIX}/topic-approvals`)
 }
 
+export const listTeacherTeamOverviewApi = (params = {}) => {
+  const search = new URLSearchParams()
+  if (params.teamStatus) search.set('teamStatus', params.teamStatus)
+  const query = search.toString()
+  return request(query ? `${API_PREFIX}/overview?${query}` : `${API_PREFIX}/overview`)
+}
+
 export const reviewTopicApprovalApi = (data) => {
   return request(`${API_PREFIX}/topic/review`, {
     method: 'POST',

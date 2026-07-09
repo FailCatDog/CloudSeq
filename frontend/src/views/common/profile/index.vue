@@ -1,136 +1,181 @@
 <template>
-  <section class="profile-shell">
+  <section class="profile-page">
     <GuestNotice v-if="!hasProfileData && !loading" />
 
     <template v-else>
-      <div class="profile-hero wb-card">
-        <div class="profile-hero-body">
-          <div class="profile-avatar" aria-hidden="true">{{ avatarText }}</div>
-          <div class="profile-summary">
-            <p class="section-label">个人中心</p>
-            <h3>{{ displayName }}</h3>
-            <p class="profile-subtitle">{{ titleText }}</p>
-            <div class="profile-tags">
-              <span class="profile-tag profile-tag--primary">{{ statusText }}</span>
-              <span class="profile-tag">{{ profileSource?.username || '未获取' }}</span>
-              <span class="profile-tag profile-tag--muted">最近登录 {{ lastLoginText }}</span>
-            </div>
+      <!-- 上：基础信息展示 -->
+      <header class="profile-top wb-card">
+        <div class="profile-top__avatar" aria-hidden="true">
+          <img v-if="profileSource?.avatarUrl" :src="profileSource.avatarUrl" alt="" />
+          <span v-else>{{ avatarText }}</span>
+        </div>
+        <div class="profile-top__main">
+          <h2>{{ displayName }}</h2>
+          <p class="profile-top__bio">{{ titleText }}</p>
+          <div class="profile-top__meta">
+            <span>{{ roleLabel }}</span>
+            <span>{{ profileSource?.username || '-' }}</span>
+            <span v-if="profileSource?.studentNo">学号 {{ profileSource.studentNo }}</span>
+            <span v-if="profileSource?.lastLoginAt">最近登录 {{ profileSource.lastLoginAt }}</span>
           </div>
         </div>
+        <RouterLink v-if="isStudent" to="/prepare" class="profile-top__link">课程准备 →</RouterLink>
+      </header>
 
-        <div class="profile-hero-actions">
-          <button type="button" class="profile-btn profile-btn--ghost" :disabled="loading" @click="loadProfile">
-            刷新资料
+      <p v-if="errorMessage" class="profile-msg profile-msg--error">{{ errorMessage }}</p>
+
+      <!-- 下：侧栏 + 内容 -->
+      <div class="profile-bottom wb-card">
+        <nav class="profile-nav" aria-label="个人中心分区">
+          <button
+            v-for="item in navItems"
+            :key="item.id"
+            type="button"
+            class="profile-nav__item"
+            :class="{ active: activeSection === item.id }"
+            @click="setSection(item.id)"
+          >
+            {{ item.label }}
           </button>
-          <button type="button" class="profile-btn profile-btn--primary">编辑资料</button>
-        </div>
+        </nav>
 
-        <div class="profile-hero-accent" aria-hidden="true">
-          <div class="profile-accent-orb profile-accent-orb--1" />
-          <div class="profile-accent-orb profile-accent-orb--2" />
-          <div class="profile-accent-orb profile-accent-orb--3" />
+        <div class="profile-content">
+          <!-- 编辑信息 -->
+          <form v-if="activeSection === 'info'" class="profile-form" @submit.prevent="handleSave">
+            <label class="profile-field">
+              <span>真实姓名</span>
+              <input v-model.trim="form.realName" type="text" placeholder="请输入真实姓名" />
+            </label>
+            <label class="profile-field">
+              <span>昵称</span>
+              <input v-model.trim="form.nickName" type="text" placeholder="请输入昵称" />
+            </label>
+            <label class="profile-field">
+              <span>个人简介</span>
+              <textarea v-model.trim="form.bio" rows="3" placeholder="一句话介绍自己" />
+            </label>
+            <label class="profile-field">
+              <span>头像链接</span>
+              <input v-model.trim="form.avatarUrl" type="url" placeholder="https://..." />
+            </label>
+
+            <div class="profile-form__actions">
+              <button type="submit" class="profile-btn profile-btn--primary" :disabled="saving">
+                {{ saving ? '保存中…' : '保存' }}
+              </button>
+            </div>
+            <p v-if="infoMessage" class="profile-msg" :class="infoMessageType">{{ infoMessage }}</p>
+          </form>
+
+          <!-- 我的小组 -->
+          <div v-else-if="activeSection === 'team'" class="profile-form profile-form--wide">
+            <template v-if="teamLoading">
+              <p class="profile-hint">正在加载小组信息…</p>
+            </template>
+            <template v-else-if="!hasTeam">
+              <p class="profile-hint">你还没有加入小组。</p>
+              <RouterLink to="/prepare" class="profile-btn profile-btn--ghost">去课程准备</RouterLink>
+            </template>
+            <template v-else>
+              <label class="profile-field profile-field--readonly">
+                <span>小组名称</span>
+                <div class="profile-value">{{ teamInfo.teamName || '-' }}</div>
+              </label>
+              <label class="profile-field profile-field--readonly">
+                <span>小组状态</span>
+                <div class="profile-value">{{ teamInfo.status || '-' }}</div>
+              </label>
+              <label class="profile-field profile-field--readonly">
+                <span>当前选题</span>
+                <div class="profile-value">{{ teamInfo.topicTitle || '暂无选题' }}</div>
+              </label>
+              <label class="profile-field profile-field--readonly">
+                <span>选题说明</span>
+                <div class="profile-value">{{ teamInfo.topicDesc || '-' }}</div>
+              </label>
+              <label class="profile-field profile-field--readonly">
+                <span>成员数量</span>
+                <div class="profile-value">{{ members.length }} 人</div>
+              </label>
+              <label class="profile-field profile-field--readonly">
+                <span>创建时间</span>
+                <div class="profile-value">{{ teamInfo.createDate || '-' }}</div>
+              </label>
+
+              <div v-if="members.length" class="profile-members">
+                <p class="profile-members__title">成员列表</p>
+                <div class="profile-table-wrap">
+                  <table class="profile-table">
+                    <thead>
+                      <tr>
+                        <th>名称</th>
+                        <th>学号</th>
+                        <th>加入时间</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="member in members" :key="member.id">
+                        <td>
+                          <span>{{ member.name }}</span>
+                          <span v-if="member.isLeader" class="profile-table__tag">组长</span>
+                        </td>
+                        <td>{{ member.studentNo }}</td>
+                        <td>{{ member.joinDate }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
-
-      <nav class="profile-tabs wb-card" aria-label="个人中心导航">
-        <button
-          v-for="tab in profileTabs"
-          :key="tab.id"
-          type="button"
-          class="profile-tab"
-          :class="{ active: activeTab === tab.id }"
-          :aria-selected="activeTab === tab.id"
-          @click="setActiveTab(tab.id)"
-        >
-          {{ tab.label }}
-        </button>
-      </nav>
-
-      <AppScrollArea tag="div" class="profile-body" axis="y" flex hover-reveal>
-      <div v-if="activeTab === 'overview'" class="profile-tab-panel">
-        <div class="profile-layout">
-          <section class="profile-panel wb-card">
-            <div class="panel-head">
-              <div>
-                <p class="section-label">资料概览</p>
-                <h4>基础信息</h4>
-              </div>
-              <button type="button" class="profile-btn profile-btn--text">编辑</button>
-            </div>
-
-            <dl class="info-grid">
-              <div v-for="item in profileFields" :key="item.label" class="info-item">
-                <dt>{{ item.label }}</dt>
-                <dd>{{ item.value }}</dd>
-              </div>
-            </dl>
-          </section>
-
-          <section class="profile-panel wb-card profile-panel--aside">
-            <div class="panel-head">
-              <div>
-                <p class="section-label">工作区</p>
-                <h4>快捷跳转</h4>
-              </div>
-            </div>
-
-            <RouterLink to="/workspace/project/board" class="shortcut-item shortcut-item--solo">
-              <span class="shortcut-icon shortcut-icon--workspace" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                </svg>
-              </span>
-              <span class="shortcut-copy">
-                <strong>返回项目空间</strong>
-                <small>继续查看任务和进度</small>
-              </span>
-              <span class="shortcut-arrow" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </span>
-            </RouterLink>
-          </section>
-        </div>
-      </div>
-
-      <KeepAlive>
-        <ProfileTeamPanel v-if="activeTab === 'team'" class="profile-tab-panel" />
-      </KeepAlive>
-      <ProfileSecurityPanel v-if="activeTab === 'security'" class="profile-tab-panel" />
-      </AppScrollArea>
     </template>
   </section>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import AppScrollArea from '@/components/AppScrollArea.vue'
 import GuestNotice from '@/components/GuestNotice.vue'
-import ProfileSecurityPanel from '@/views/common/profile/components/ProfileSecurityPanel.vue'
-import ProfileTeamPanel from '@/views/common/profile/components/ProfileTeamPanel.vue'
-import { getProfileApi } from '@/api/account'
+import { getProfileApi, updateProfileApi } from '@/api/account'
+import { getCurrentTeamApi, listTeamMembersApi, parseTeamMembersResponse } from '@/api/team'
+import { CacheCode } from '@/constants/cacheCode'
+import { useDict } from '@/composables/useDict'
+import { isTeacherRole } from '@/utils/roleHome'
 
 const route = useRoute()
 const router = useRouter()
-
-const profileTabs = [
-  { id: 'overview', label: '资料概览' },
-  { id: 'team', label: '我的小组' },
-  { id: 'security', label: '安全设置' },
-]
+const teamStatusDict = useDict(CacheCode.TEAM_STATUS)
 
 const profile = ref(null)
 const loading = ref(false)
+const saving = ref(false)
+const teamLoading = ref(false)
 const errorMessage = ref('')
+const infoMessage = ref('')
+const infoMessageType = ref('')
+const hasTeam = ref(false)
+
+const form = reactive({
+  realName: '',
+  nickName: '',
+  bio: '',
+  avatarUrl: '',
+})
+
+const teamInfo = ref({
+  teamName: '',
+  status: '',
+  topicTitle: '',
+  topicDesc: '',
+  createDate: '',
+})
+const members = ref([])
 
 const getStorageUser = () => {
   const raw = localStorage.getItem('user') || sessionStorage.getItem('user')
-  if (!raw) {
-    return null
-  }
-
+  if (!raw) return null
   try {
     return JSON.parse(raw)
   } catch {
@@ -142,6 +187,7 @@ const storageUser = getStorageUser()
 const profileSource = computed(() => profile.value || storageUser || null)
 const hasProfileData = computed(() => Boolean(profileSource.value))
 const userId = computed(() => profileSource.value?.id || null)
+const isStudent = computed(() => !isTeacherRole(profileSource.value?.role))
 
 const displayName = computed(() => profileSource.value?.realName || profileSource.value?.nickName || '未获取')
 const titleText = computed(() => profileSource.value?.bio || '暂无个人简介')
@@ -149,49 +195,90 @@ const avatarText = computed(() => {
   const name = displayName.value
   return name && name !== '未获取' ? name.slice(0, 2) : '我'
 })
-const roleText = computed(() => profileSource.value?.role || '未获取')
-const statusText = computed(() => (profileSource.value?.isActive === 1 ? '正常' : profileSource.value?.isActive === 0 ? '停用' : '未获取'))
-const lastLoginText = computed(() => profileSource.value?.lastLoginAt || '未获取')
 
-const profileFields = computed(() => [
-  { label: '姓名', value: profileSource.value?.realName || profileSource.value?.nickName || '未获取' },
-  { label: '账号', value: profileSource.value?.username || '未获取' },
-  { label: '岗位', value: roleText.value },
-  { label: '学号', value: profileSource.value?.studentNo || '未获取' },
-  { label: '简介', value: profileSource.value?.bio || '暂无个人简介' },
-  { label: '账号状态', value: statusText.value },
-])
+const roleLabel = computed(() => {
+  if (profileSource.value?.role === CacheCode.USER_ROLE_TEACHER) return '教师'
+  if (profileSource.value?.role === CacheCode.USER_ROLE_STUDENT) return '学生'
+  return '用户'
+})
 
-const resolveTab = (tab) => (tab === 'team' || tab === 'security' ? tab : 'overview')
+const formatDate = (value) => {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
 
-const activeTab = computed(() => resolveTab(route.query.tab))
+const navItems = computed(() => {
+  const items = [{ id: 'info', label: '编辑信息' }]
+  if (isStudent.value) items.push({ id: 'team', label: '我的小组' })
+  return items
+})
 
-const setActiveTab = (tabId) => {
-  const nextQuery = tabId === 'overview' ? {} : { tab: tabId }
-  if (activeTab.value === tabId && JSON.stringify(route.query) === JSON.stringify(nextQuery)) return
+const resolveSection = (tab) => (tab === 'team' && isStudent.value ? 'team' : 'info')
+const activeSection = computed(() => resolveSection(route.query.tab))
+
+const setSection = (sectionId) => {
+  const nextQuery = sectionId === 'info' ? {} : { tab: sectionId }
+  if (activeSection.value === sectionId && JSON.stringify(route.query) === JSON.stringify(nextQuery)) return
   router.replace({ path: '/profile', query: nextQuery })
 }
+
+const syncForm = () => {
+  form.realName = profileSource.value?.realName || ''
+  form.nickName = profileSource.value?.nickName || ''
+  form.bio = profileSource.value?.bio || ''
+  form.avatarUrl = profileSource.value?.avatarUrl || ''
+}
+
+watch(
+  () => profileSource.value,
+  () => syncForm(),
+  { immediate: true },
+)
 
 watch(
   () => route.query.tab,
   (tab) => {
-    if (tab && tab !== 'team' && tab !== 'security') {
-      router.replace({ path: '/profile' })
+    if (tab === 'status' || tab === 'overview') {
+      router.replace('/prepare')
+      return
+    }
+    if (tab === 'security') {
+      router.replace({ path: '/profile', query: {} })
+      return
+    }
+    if (tab === 'team' && !isStudent.value) {
+      router.replace({ path: '/profile', query: {} })
     }
   },
+  { immediate: true },
 )
+
+const persistLocalUser = (patch) => {
+  for (const key of ['localStorage', 'sessionStorage']) {
+    const storage = window[key]
+    const raw = storage.getItem('user')
+    if (!raw) continue
+    try {
+      const user = JSON.parse(raw)
+      storage.setItem('user', JSON.stringify({ ...user, ...patch }))
+    } catch {
+      // ignore
+    }
+  }
+}
 
 const loadProfile = async () => {
   if (!userId.value) {
     errorMessage.value = '未获取到用户信息，请重新登录后再试。'
     return
   }
-
   loading.value = true
   errorMessage.value = ''
-
   try {
     profile.value = await getProfileApi(userId.value)
+    syncForm()
   } catch (error) {
     errorMessage.value = error?.message || '个人信息加载失败'
   } finally {
@@ -199,352 +286,345 @@ const loadProfile = async () => {
   }
 }
 
-onMounted(() => {
-  loadProfile()
+const loadTeam = async () => {
+  if (!isStudent.value) return
+  teamLoading.value = true
+  try {
+    const team = await getCurrentTeamApi()
+    if (!team?.id) {
+      hasTeam.value = false
+      members.value = []
+      return
+    }
+    hasTeam.value = true
+    teamInfo.value = {
+      teamName: team.teamName || '',
+      status: teamStatusDict.label(team.status, team.status || '-'),
+      topicTitle: team.topicTitle || '',
+      topicDesc: team.topicDesc || '',
+      createDate: team.createDate || '-',
+    }
+    const memberResponse = await listTeamMembersApi(team.id)
+    const { memberList } = parseTeamMembersResponse(memberResponse)
+    members.value = memberList.map((item) => ({
+      id: item.teamMemberId ?? item.userId,
+      name: item.name || item.username || `用户 ${item.userId}`,
+      studentNo: item.studentNo || '-',
+      joinDate: formatDate(item.joinDate),
+      isLeader: item.isLeader === 1,
+    }))
+  } catch {
+    hasTeam.value = false
+    members.value = []
+  } finally {
+    teamLoading.value = false
+  }
+}
+
+const handleSave = async () => {
+  saving.value = true
+  infoMessage.value = ''
+  try {
+    await updateProfileApi({
+      realName: form.realName,
+      nickName: form.nickName,
+      bio: form.bio,
+      avatarUrl: form.avatarUrl,
+    })
+    persistLocalUser({
+      realName: form.realName,
+      nickName: form.nickName,
+      bio: form.bio,
+      avatarUrl: form.avatarUrl,
+    })
+    await loadProfile()
+    infoMessage.value = '资料已保存。'
+    infoMessageType.value = 'success'
+  } catch (error) {
+    infoMessage.value = error?.message || '保存失败，请稍后重试。'
+    infoMessageType.value = 'error'
+  } finally {
+    saving.value = false
+  }
+}
+
+onMounted(async () => {
+  await loadProfile()
+  await loadTeam()
 })
 </script>
 
 <style scoped>
-.profile-shell {
+.profile-page {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  gap: 14px;
   width: 100%;
   min-width: 0;
-  gap: 20px;
 }
 
-.profile-body {
-  flex: 1;
-  min-height: 0;
-  background: var(--wb-bg-page);
-}
-
-.profile-hero {
-  position: relative;
+.profile-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 32px 36px;
-  overflow: hidden;
+  gap: 16px;
+  padding: 20px 24px;
   flex-shrink: 0;
 }
 
-.profile-hero-body {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  min-width: 0;
-  z-index: 1;
-}
-
-.profile-avatar {
+.profile-top__avatar {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 80px;
-  height: 80px;
-  border-radius: 22px;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  overflow: hidden;
   color: #ffffff;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: 0.04em;
   background: linear-gradient(135deg, var(--wb-purple) 0%, var(--wb-purple-light) 100%);
-  box-shadow: 0 12px 28px rgba(139, 92, 246, 0.28);
 }
 
-.profile-summary {
+.profile-top__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-top__main {
+  flex: 1;
   min-width: 0;
 }
 
-.profile-summary h3,
-.profile-panel h4 {
+.profile-top__main h2 {
   margin: 0;
   color: var(--wb-text-primary);
-  letter-spacing: -0.3px;
-}
-
-.profile-summary h3 {
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.2;
 }
 
-.profile-subtitle {
-  margin: 8px 0 0;
+.profile-top__bio {
+  margin: 4px 0 0;
   color: var(--wb-text-secondary);
-  font-size: 14px;
-  line-height: 1.55;
-  max-width: 48ch;
-}
-
-.profile-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.profile-tag {
-  padding: 5px 12px;
-  border-radius: var(--wb-radius-pill);
-  color: var(--wb-tag-backend-text);
-  background: var(--wb-tag-backend-bg);
-  font-size: 11.5px;
-  font-weight: 600;
-}
-
-.profile-tag--primary {
-  color: var(--wb-purple);
-  background: var(--wb-purple-soft);
-}
-
-.profile-tag--muted {
-  color: var(--wb-text-secondary);
-  background: var(--wb-search-bg);
-}
-
-.profile-hero-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  z-index: 1;
-}
-
-.profile-hero-accent {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 220px;
-  height: 100%;
-  pointer-events: none;
-}
-
-.profile-accent-orb {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.profile-accent-orb--1 {
-  width: 100px;
-  height: 100px;
-  top: -20px;
-  right: 24px;
-  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), rgba(167, 139, 250, 0.35));
-}
-
-.profile-accent-orb--2 {
-  width: 64px;
-  height: 64px;
-  bottom: 16px;
-  right: 80px;
-  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.5), rgba(139, 92, 246, 0.3));
-}
-
-.profile-accent-orb--3 {
-  width: 36px;
-  height: 36px;
-  top: 40px;
-  right: 120px;
-  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.6), rgba(196, 181, 253, 0.25));
-}
-
-.profile-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
-  flex-shrink: 0;
-}
-
-.profile-tab {
-  height: 40px;
-  padding: 0 18px;
-  border: none;
-  border-radius: var(--wb-radius-pill);
-  background: transparent;
-  color: var(--wb-text-secondary);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.profile-tab:hover {
-  color: var(--wb-purple);
-  background: var(--wb-purple-soft);
-}
-
-.profile-tab.active {
-  color: var(--wb-purple);
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.12);
-}
-
-.profile-tab-panel {
-  display: grid;
-  gap: 20px;
-}
-
-.profile-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.85fr);
-  gap: 20px;
-  align-items: stretch;
-}
-
-.profile-panel {
-  padding: 26px 28px;
-}
-
-.profile-layout > .profile-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.panel-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 22px;
-}
-
-.profile-panel h4 {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.section-label {
-  margin: 0 0 6px;
-  color: var(--wb-text-muted);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0;
-}
-
-.info-item {
-  padding: 16px 18px;
-  border-radius: 14px;
-  border: 1px solid var(--wb-search-border);
-  background: #fafafc;
-  transition: border-color 0.18s ease, background 0.18s ease;
-}
-
-.info-item:hover {
-  border-color: var(--wb-purple-border);
-  background: var(--wb-purple-soft);
-}
-
-.info-item dt {
-  color: var(--wb-text-muted);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  line-height: 1.4;
-}
-
-.info-item dd {
-  margin: 8px 0 0;
-  color: var(--wb-text-primary);
-  font-size: 14.5px;
-  font-weight: 600;
-  line-height: 1.45;
-  word-break: break-word;
-}
-
-.shortcut-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid transparent;
-  text-decoration: none;
-  color: var(--wb-text-primary);
-  background: #fafafc;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-}
-
-.shortcut-item--solo {
-  width: 100%;
-}
-
-.shortcut-item:hover {
-  background: var(--wb-purple-soft);
-  border-color: rgba(196, 181, 253, 0.5);
-  transform: translateX(2px);
-}
-
-.shortcut-icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  color: var(--wb-purple);
-  background: var(--wb-purple-soft);
-}
-
-.shortcut-icon--workspace {
-  color: var(--wb-icon-dark);
-  background: var(--wb-search-bg);
-}
-
-.shortcut-copy {
-  flex: 1;
-  min-width: 0;
-}
-
-.shortcut-copy strong {
-  display: block;
-  margin-bottom: 3px;
-  font-size: 13.5px;
-  font-weight: 600;
-}
-
-.shortcut-copy small {
-  display: block;
-  color: var(--wb-text-secondary);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
-.shortcut-arrow {
-  flex-shrink: 0;
+.profile-top__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 10px;
   color: var(--wb-text-muted);
-  transition: color 0.18s ease, transform 0.18s ease;
+  font-size: 12px;
 }
 
-.shortcut-item:hover .shortcut-arrow {
+.profile-top__link {
+  flex-shrink: 0;
   color: var(--wb-purple);
-  transform: translateX(2px);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.profile-top__link:hover {
+  text-decoration: underline;
+}
+
+.profile-bottom {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.profile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 12px;
+  border-right: 1px solid var(--wb-search-border);
+}
+
+.profile-nav__item {
+  height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--wb-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.profile-nav__item:hover {
+  color: var(--wb-purple);
+  background: var(--wb-purple-soft);
+}
+
+.profile-nav__item.active {
+  color: var(--wb-purple);
+  background: var(--wb-purple-soft);
+}
+
+.profile-content {
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 480px;
+}
+
+.profile-form--wide {
+  max-width: 100%;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-field span {
+  color: var(--wb-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.profile-field input,
+.profile-field textarea {
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid var(--wb-search-border);
+  border-radius: 10px;
+  background: var(--wb-card-bg);
+  color: var(--wb-text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.profile-field input {
+  height: 38px;
+}
+
+.profile-field textarea {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  resize: vertical;
+}
+
+.profile-field input:focus,
+.profile-field textarea:focus {
+  border-color: var(--wb-purple-border);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.profile-field--readonly .profile-value {
+  min-height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  background: var(--wb-search-bg);
+  color: var(--wb-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.profile-form__actions {
+  padding-top: 4px;
+}
+
+.profile-hint {
+  margin: 0;
+  color: var(--wb-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.profile-members {
+  margin-top: 8px;
+  max-width: 100%;
+}
+
+.profile-members__title {
+  margin: 0 0 10px;
+  color: var(--wb-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.profile-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--wb-search-border);
+  border-radius: 10px;
+}
+
+.profile-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.profile-table th,
+.profile-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--wb-search-border);
+}
+
+.profile-table th {
+  color: var(--wb-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--wb-search-bg);
+}
+
+.profile-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.profile-table td {
+  color: var(--wb-text-primary);
+}
+
+.profile-table__tag {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: var(--wb-radius-pill);
+  color: var(--wb-purple);
+  background: var(--wb-purple-soft);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .profile-btn {
-  height: 38px;
-  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
   border-radius: var(--wb-radius-pill);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: opacity 0.18s ease, background 0.18s ease;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
 }
 
 .profile-btn:disabled {
@@ -558,69 +638,53 @@ onMounted(() => {
   background: var(--wb-btn-dark);
 }
 
-.profile-btn--primary:hover:not(:disabled) {
-  opacity: 0.88;
-}
-
 .profile-btn--ghost {
   color: var(--wb-purple);
   border: 1.5px solid var(--wb-purple-border);
   background: transparent;
+  width: fit-content;
 }
 
-.profile-btn--ghost:hover:not(:disabled) {
-  background: var(--wb-purple-soft);
+.profile-msg {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-.profile-btn--text {
-  height: auto;
-  padding: 6px 12px;
-  color: var(--wb-purple);
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+.profile-msg--error {
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #b42318;
+  background: #fef3f2;
 }
 
-.profile-btn--text:hover {
-  background: var(--wb-purple-soft);
+.profile-msg.success {
+  color: #166534;
 }
 
-@media (max-width: 1100px) {
-  .info-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.profile-msg.error {
+  color: #b42318;
 }
 
-@media (max-width: 960px) {
-  .profile-hero {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 24px;
+@media (max-width: 640px) {
+  .profile-top {
+    flex-wrap: wrap;
   }
 
-  .profile-hero-body {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .profile-hero-actions {
-    width: 100%;
-  }
-
-  .profile-hero-actions .profile-btn {
-    flex: 1;
-  }
-
-  .profile-layout,
-  .info-grid {
+  .profile-bottom {
     grid-template-columns: 1fr;
   }
 
-  .profile-hero-accent {
-    width: 140px;
-    opacity: 0.7;
+  .profile-nav {
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid var(--wb-search-border);
+    padding: 10px 12px;
+  }
+
+  .profile-nav__item {
+    flex: 1;
+    text-align: center;
   }
 }
 </style>

@@ -10,8 +10,12 @@ export const formatTermLabel = (termYear, termSeason) => {
 export const formatCourseSelectLabel = (course) => {
   if (!course) return '选择课号'
   const term = formatTermLabel(course.termYear, course.termSeason)
-  const name = course.courseName || course.courseCode || '未命名课号'
-  return `${term} · ${name}`
+  const code = course.courseCode?.trim()
+  const name = course.courseName?.trim()
+  if (code && name) return `${term} · ${code} · ${name}`
+  if (code) return `${term} · ${code}`
+  if (name) return `${term} · ${name}`
+  return `${term} · 未命名课号`
 }
 
 /** datetime-local → API `yyyy-MM-dd HH:mm:ss` */

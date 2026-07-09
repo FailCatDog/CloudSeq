@@ -13,6 +13,7 @@ export const SHARED_ROUTE_PREFIXES = ['/profile/']
 /** 学生端固定路由（含项目空间子页与重定向路径） */
 export const STUDENT_ROUTE_EXACT = unique([
   ...navPaths(STUDENT_NAV),
+  '/prepare',
   '/workspace/dashboard',
   '/workspace/project/board',
   '/workspace/project/gantt',

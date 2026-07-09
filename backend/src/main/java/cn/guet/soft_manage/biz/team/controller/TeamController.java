@@ -3,6 +3,7 @@ package cn.guet.soft_manage.biz.team.controller;
 import cn.guet.soft_manage.biz.team.dto.TeamCreateRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMemberAddRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMembersResponseDTO;
+import cn.guet.soft_manage.biz.team.dto.TeamOverviewSummaryDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamTopicSubmitRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TopicApprovalReviewRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TopicApprovalSummaryDTO;
@@ -65,6 +66,12 @@ public class TeamController {
     public Response<List<TopicApprovalSummaryDTO>> listTeacherTopicApprovals(
             @RequestParam(required = false) String approvalStatus) {
         return Response.success(teamService.listTeacherTopicApprovals(approvalStatus));
+    }
+
+    @GetMapping("/overview")
+    public Response<List<TeamOverviewSummaryDTO>> listTeacherTeamOverview(
+            @RequestParam(required = false) String teamStatus) {
+        return Response.success(teamService.listTeacherTeamOverview(teamStatus));
     }
 
     @GetMapping("/{teamId}/topic-approvals")

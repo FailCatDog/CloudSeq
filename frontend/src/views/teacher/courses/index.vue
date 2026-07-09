@@ -1,142 +1,102 @@
 <template>
-  <div class="tch-page">
-    <div class="tch-filter-bar">
-      <div class="tch-search">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input v-model="searchQuery" type="search" placeholder="搜索课号、课程名…" />
+  <div class="console-page">
+    <div class="console-filter">
+      <div class="console-filter__fields">
+        <div class="console-filter__field console-filter__field--wide">
+          <span class="console-filter__label">关键字</span>
+          <n-input
+            v-model:value="searchQuery"
+            clearable
+            placeholder="搜索课号、课程名…"
+            @keydown.enter.prevent="handleSearch"
+          />
+        </div>
+        <div class="console-filter__field">
+          <span class="console-filter__label">课号状态</span>
+          <n-select
+            v-model:value="activeStatus"
+            :options="statusOptions"
+            label-field="label"
+            value-field="id"
+          />
+        </div>
       </div>
-      <div class="tch-filter-tabs" role="tablist" aria-label="课号状态">
-        <button
-          v-for="tab in statusTabs"
-          :key="tab.id"
-          type="button"
-          role="tab"
-          class="tch-filter-tab"
-          :class="{ active: activeStatus === tab.id }"
-          :aria-selected="activeStatus === tab.id"
-          @click="activeStatus = tab.id"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
-      <div class="tch-filter-tabs tch-filter-tabs--end">
-        <button type="button" class="wb-btn-schedule wb-btn-schedule--sm" @click="openCreate">
-          新建课号
-        </button>
-      </div>
-    </div>
-
-    <p v-if="pageError" class="tch-page-error">{{ pageError }}</p>
-
-    <div class="tch-table-surface">
-      <div class="tch-table-wrap tch-table-wrap--flush">
-        <table class="tch-table">
-          <thead>
-            <tr>
-              <th>课号</th>
-              <th>课程名称</th>
-              <th>学期</th>
-              <th>状态</th>
-              <th>选题截止</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="loading">
-              <td colspan="6" class="tch-table-empty">加载中…</td>
-            </tr>
-            <tr v-for="item in filteredCourses" v-else :key="item.id">
-              <td><strong>{{ item.courseCode }}</strong></td>
-              <td>{{ item.courseName }}</td>
-              <td>{{ formatTermLabel(item.termYear, item.termSeason) }}</td>
-              <td>
-                <span class="tch-tag" :class="courseStatusTagClass(item.status)">
-                  {{ courseStatusLabel(item.status) }}
-                </span>
-              </td>
-              <td>{{ formatDateTime(item.topicDeadline) }}</td>
-              <td class="tch-table-actions">
-                <button type="button" class="tch-table-link tch-table-link--btn" @click="openEdit(item)">
-                  编辑
-                </button>
-              </td>
-            </tr>
-            <tr v-if="!loading && !filteredCourses.length">
-              <td colspan="6" class="tch-table-empty">
-                {{ courses.length ? '没有匹配的课号' : '暂无课号，点击「新建课号」创建' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="console-filter__actions">
+        <n-button type="primary" :loading="loading" @click="handleSearch">搜索</n-button>
+        <n-button quaternary :disabled="loading" @click="handleReset">重置</n-button>
+        <n-button type="primary" secondary @click="openCreate">新建课号</n-button>
       </div>
     </div>
 
-    <Teleport to="body">
-      <div v-if="formOpen" class="tch-drawer-backdrop" @click.self="closeForm">
-        <aside class="tch-drawer tch-drawer--wide" role="dialog" aria-modal="true" :aria-labelledby="formTitleId">
-          <header class="tch-drawer-header">
-            <h3 :id="formTitleId">{{ formMode === 'create' ? '新建课号' : '编辑课号' }}</h3>
-            <button type="button" class="tch-drawer-close" aria-label="关闭" @click="closeForm">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </header>
-          <div class="tch-drawer-body">
-            <CourseFormPanel
-              :mode="formMode"
-              :course="editingCourse"
-              @saved="handleSaved"
-              @cancel="closeForm"
-            />
-          </div>
-        </aside>
-      </div>
-    </Teleport>
+    <n-alert v-if="pageError" type="error" :bordered="false">{{ pageError }}</n-alert>
+
+    <n-card class="console-table-card" :bordered="false">
+      <n-data-table
+        :columns="columns"
+        :data="filteredCourses"
+        :loading="loading"
+        :bordered="false"
+        :single-line="false"
+        :row-key="(row) => row.id"
+        size="medium"
+      />
+    </n-card>
+
+    <n-drawer v-model:show="formOpen" :width="560" placement="right">
+      <n-drawer-content :title="formTitle" closable>
+        <CourseFormPanel
+          :mode="formMode"
+          :course="editingCourse"
+          @saved="handleSaved"
+          @cancel="closeForm"
+        />
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { getCourseByIdApi } from '@/api/course'
+import { computed, h, onMounted, ref } from 'vue'
+import { NButton, NSpace, NTag } from 'naive-ui'
+import { deleteCourseApi, getCourseByIdApi } from '@/api/course'
+import { useConsoleConfirm } from '@/composables/useConsoleConfirm'
 import { useDict } from '@/composables/useDict'
 import { CacheCode } from '@/constants/cacheCode'
 import { refreshCourseStore, useCourseStore } from '@/stores/courseStore'
-import { courseStatusTagClass, formatTermLabel } from '@/utils/courseFormat'
+import { formatTermLabel } from '@/utils/courseFormat'
+import { courseTagType } from '@/utils/naiveStatus'
 import CourseFormPanel from './components/CourseFormPanel.vue'
 
 const { courses, loading } = useCourseStore()
 const { label: courseStatusLabel } = useDict(CacheCode.COURSE_STATUS)
+const { confirm } = useConsoleConfirm()
 
 const searchQuery = ref('')
 const activeStatus = ref('all')
+const appliedKeyword = ref('')
+const appliedStatus = ref('all')
 const pageError = ref('')
 const formOpen = ref(false)
 const formMode = ref('create')
 const editingCourse = ref(null)
 
-const formTitleId = 'course-form-title'
-
-const statusTabs = computed(() => {
-  const draft = courses.value.filter((item) => item.status === CacheCode.COURSE_STATUS_DRAFT).length
-  const active = courses.value.filter((item) => item.status === CacheCode.COURSE_STATUS_ACTIVE).length
-  const archived = courses.value.filter((item) => item.status === CacheCode.COURSE_STATUS_ARCHIVED).length
-  return [
-    { id: 'all', label: `全部（${courses.value.length}）` },
-    { id: CacheCode.COURSE_STATUS_ACTIVE, label: `进行中（${active}）` },
-    { id: CacheCode.COURSE_STATUS_DRAFT, label: `草稿（${draft}）` },
-    { id: CacheCode.COURSE_STATUS_ARCHIVED, label: `已归档（${archived}）` },
-  ]
+const formTitle = computed(() => {
+  if (formMode.value === 'create') return '新建课号'
+  if (formMode.value === 'view') return '课号详情'
+  return '编辑课号'
 })
 
+const statusOptions = computed(() => [
+  { id: 'all', label: '全部状态' },
+  { id: CacheCode.COURSE_STATUS_ACTIVE, label: courseStatusLabel(CacheCode.COURSE_STATUS_ACTIVE) },
+  { id: CacheCode.COURSE_STATUS_DRAFT, label: courseStatusLabel(CacheCode.COURSE_STATUS_DRAFT) },
+  { id: CacheCode.COURSE_STATUS_ARCHIVED, label: courseStatusLabel(CacheCode.COURSE_STATUS_ARCHIVED) },
+])
+
 const filteredCourses = computed(() => {
-  const keyword = searchQuery.value.trim().toLowerCase()
+  const keyword = appliedKeyword.value.toLowerCase()
   return courses.value.filter((item) => {
-    const statusMatch = activeStatus.value === 'all' || item.status === activeStatus.value
+    const statusMatch = appliedStatus.value === 'all' || item.status === appliedStatus.value
     if (!statusMatch) return false
     if (!keyword) return true
     return (
@@ -151,6 +111,61 @@ const formatDateTime = (value) => {
   return String(value).replace('T', ' ').slice(0, 16)
 }
 
+const columns = computed(() => [
+  { title: '序号', key: 'index', width: 64, render: (_, index) => index + 1 },
+  {
+    title: '课号',
+    key: 'courseCode',
+    width: 120,
+    render: (row) => h('strong', null, row.courseCode),
+  },
+  { title: '课程名称', key: 'courseName', ellipsis: { tooltip: true } },
+  {
+    title: '学期',
+    key: 'term',
+    width: 140,
+    render: (row) => formatTermLabel(row.termYear, row.termSeason),
+  },
+  {
+    title: '状态',
+    key: 'status',
+    width: 100,
+    render: (row) =>
+      h(
+        NTag,
+        { type: courseTagType(row.status), round: true, size: 'small' },
+        { default: () => courseStatusLabel(row.status) },
+      ),
+  },
+  {
+    title: '选题截止',
+    key: 'topicDeadline',
+    width: 150,
+    render: (row) => formatDateTime(row.topicDeadline),
+  },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 180,
+    render: (row) =>
+      h(
+        NSpace,
+        { size: 8 },
+        {
+          default: () => [
+            h(NButton, { text: true, type: 'primary', onClick: () => openDetail(row) }, { default: () => '详情' }),
+            h(NButton, { text: true, type: 'primary', onClick: () => openEdit(row) }, { default: () => '编辑' }),
+            h(
+              NButton,
+              { text: true, type: 'error', onClick: () => handleDelete(row) },
+              { default: () => '删除' },
+            ),
+          ],
+        },
+      ),
+  },
+])
+
 const loadPage = async () => {
   pageError.value = ''
   try {
@@ -161,8 +176,26 @@ const loadPage = async () => {
 }
 
 onMounted(() => {
-  loadPage()
+  handleSearch()
 })
+
+const handleSearch = async () => {
+  appliedKeyword.value = searchQuery.value.trim()
+  appliedStatus.value = activeStatus.value
+  pageError.value = ''
+  closeForm()
+  await loadPage()
+}
+
+const handleReset = async () => {
+  searchQuery.value = ''
+  activeStatus.value = 'all'
+  appliedKeyword.value = ''
+  appliedStatus.value = 'all'
+  pageError.value = ''
+  closeForm()
+  await loadPage()
+}
 
 const openCreate = () => {
   formMode.value = 'create'
@@ -170,8 +203,8 @@ const openCreate = () => {
   formOpen.value = true
 }
 
-const openEdit = async (course) => {
-  formMode.value = 'edit'
+const openCourseForm = async (course, mode) => {
+  formMode.value = mode
   pageError.value = ''
   try {
     editingCourse.value = await getCourseByIdApi(course.id)
@@ -181,6 +214,9 @@ const openEdit = async (course) => {
   }
 }
 
+const openDetail = (course) => openCourseForm(course, 'view')
+const openEdit = (course) => openCourseForm(course, 'edit')
+
 const closeForm = () => {
   formOpen.value = false
   editingCourse.value = null
@@ -189,5 +225,23 @@ const closeForm = () => {
 const handleSaved = async () => {
   closeForm()
   await loadPage()
+}
+
+const handleDelete = async (course) => {
+  const confirmed = await confirm({
+    title: '确认删除',
+    message: `确定删除课号「${course.courseCode}」吗？删除后不可恢复。`,
+    danger: true,
+    confirmLabel: '删除',
+  })
+  if (!confirmed) return
+
+  pageError.value = ''
+  try {
+    await deleteCourseApi(course.id)
+    await loadPage()
+  } catch (error) {
+    pageError.value = error?.message || '删除课号失败'
+  }
 }
 </script>

@@ -1,5 +1,6 @@
 package cn.guet.soft_manage.biz.workspace.controller;
 
+import cn.guet.soft_manage.biz.workspace.dto.TeacherWeeklyReviewResponseDTO;
 import cn.guet.soft_manage.biz.workspace.entity.WeeklyReport;
 import cn.guet.soft_manage.biz.workspace.service.WeeklyReportService;
 import cn.guet.soft_manage.frame.common.Response;
@@ -39,6 +40,14 @@ public class WeeklyReportController {
     public Response<Void> delete(@PathVariable Long id) {
         weeklyReportService.delete(id);
         return Response.success();
+    }
+
+    @GetMapping("/teacher/review")
+    public Response<TeacherWeeklyReviewResponseDTO> teacherReview(
+            @RequestParam Long courseId,
+            @RequestParam(required = false) Integer reportYear,
+            @RequestParam(required = false) Integer reportWeek) {
+        return Response.success(weeklyReportService.getTeacherWeeklyReview(courseId, reportYear, reportWeek));
     }
 
     @GetMapping("/{id}")

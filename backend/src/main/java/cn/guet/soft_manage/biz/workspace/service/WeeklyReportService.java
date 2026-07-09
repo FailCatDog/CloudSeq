@@ -1,5 +1,6 @@
 package cn.guet.soft_manage.biz.workspace.service;
 
+import cn.guet.soft_manage.biz.workspace.dto.TeacherWeeklyReviewResponseDTO;
 import cn.guet.soft_manage.biz.workspace.entity.WeeklyReport;
 
 import java.util.List;
@@ -60,4 +61,13 @@ public interface WeeklyReportService {
      * @return 周报列表
      */
     List<WeeklyReport> listMine(Long workspaceId);
+
+    /**
+     * 教师端周报审阅
+     * @param courseId 课号 ID
+     * @param reportYear 报告年份，可为空
+     * @param reportWeek 报告周次，可为空
+     * @return 审阅数据
+     */
+    TeacherWeeklyReviewResponseDTO getTeacherWeeklyReview(Long courseId, Integer reportYear, Integer reportWeek);
 }

@@ -3,6 +3,7 @@ package cn.guet.soft_manage.biz.team.service;
 import cn.guet.soft_manage.biz.team.dto.TeamCreateRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMemberAddRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMembersResponseDTO;
+import cn.guet.soft_manage.biz.team.dto.TeamOverviewSummaryDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamTopicSubmitRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TopicApprovalReviewRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TopicApprovalSummaryDTO;
@@ -73,6 +74,13 @@ public interface TeamService {
      * @return 审批列表
      */
     List<TopicApprovalSummaryDTO> listTeacherTopicApprovals(String approvalStatus);
+
+    /**
+     * 教师端小组总览
+     * @param teamStatus 小组状态筛选，可为空
+     * @return 小组列表
+     */
+    List<TeamOverviewSummaryDTO> listTeacherTeamOverview(String teamStatus);
 
     /**
      * 获取当前用户所在小组
