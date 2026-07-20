@@ -3,6 +3,12 @@ spring:
     name: flowseque
   profiles:
     active: dev
+  jackson:
+    time-zone: Asia/Shanghai
+
+logging:
+  pattern:
+    dateformat: yyyy-MM-dd HH:mm:ss.SSS
   servlet:
     multipart:
       max-file-size: 10MB
@@ -37,4 +43,8 @@ document:
   asset:
     max-size-bytes: 10485760
 
+export:
+  max-document-chars: 100000
+  max-sheet-cells: 50000
+  max-embedded-image-bytes: 20971520
 

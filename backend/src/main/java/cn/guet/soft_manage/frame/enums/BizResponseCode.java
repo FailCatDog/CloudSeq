@@ -108,6 +108,11 @@ public enum BizResponseCode {
     FILE_TYPE_NOT_ALLOWED(60004, "不支持的文件类型"),
     FILE_EMPTY(60005, "上传文件不能为空"),
 
+    EXPORT_FORMAT_INVALID(50045, "导出格式无效或不支持该节点类型"),
+    EXPORT_CONTENT_TOO_LARGE(50046, "内容超过导出上限，请拆分后重试"),
+    EXPORT_IMAGES_TOO_LARGE(50047, "内嵌图片总大小超过导出上限"),
+    EXPORT_RENDER_FAILED(50048, "导出文件生成失败"),
+
     APPROVAL_NOT_FOUND(70000, "审批记录不存在");
 
     private final int code;
