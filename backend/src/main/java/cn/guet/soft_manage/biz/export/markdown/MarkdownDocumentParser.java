@@ -32,7 +32,6 @@ public final class MarkdownDocumentParser {
         options.set(Parser.EXTENSIONS, List.of(TablesExtension.create()));
         return Parser.builder(options).build();
     }
-    private static final TextCollectingVisitor TEXT = new TextCollectingVisitor();
 
     private MarkdownDocumentParser() {
     }
@@ -151,6 +150,7 @@ public final class MarkdownDocumentParser {
     }
 
     private static String collectText(Node node) {
-        return TEXT.collectAndGetText(node).trim();
+        // TextCollectingVisitor is mutable; allocate per call for thread safety.
+        return new TextCollectingVisitor().collectAndGetText(node).trim();
     }
 }

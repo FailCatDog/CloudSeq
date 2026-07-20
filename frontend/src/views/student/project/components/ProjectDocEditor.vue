@@ -591,10 +591,10 @@ onBeforeUnmount(async () => {
               </div>
 
               <p v-if="collabError" class="ps-doc-editor-notice ps-doc-editor-notice--error">{{ collabError }}</p>
-              <p v-else-if="exportMessage" class="ps-doc-editor-notice ps-doc-editor-notice--error">{{ exportMessage }}</p>
               <p v-else-if="uploadMessage" class="ps-doc-editor-notice ps-doc-editor-notice--error">{{ uploadMessage }}</p>
               <p v-else-if="uploadingImage" class="ps-doc-editor-notice">图片上传中…</p>
               <p v-else-if="exporting" class="ps-doc-editor-notice">正在导出…</p>
+              <p v-if="exportMessage" class="ps-doc-editor-notice ps-doc-editor-notice--error">{{ exportMessage }}</p>
             </div>
 
             <div class="ps-doc-editor-body-row">
