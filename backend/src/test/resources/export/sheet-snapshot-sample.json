@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "activeSheetId": "sheet_demo_a1",
+  "sheets": [
+    {
+      "id": "sheet_demo_a1",
+      "name": "销售明细",
+      "order": 0,
+      "rowOrder": [
+        "r_V1StGXR8_Z5j",
+        "r_9bQdYxLm3Kp2",
+        "r_Hk7pQm2nWx4R"
+      ],
+      "colOrder": [
+        "c_Aa11Bb22Cc33",
+        "c_Dd44Ee55Ff66",
+        "c_Gg77Hh88Ii99"
+      ],
+      "cells": {
+        "r_V1StGXR8_Z5j:c_Aa11Bb22Cc33": {
+          "v": "产品",
+          "m": "产品"
+        },
+        "r_V1StGXR8_Z5j:c_Dd44Ee55Ff66": {
+          "v": "数量",
+          "m": "数量"
+        },
+        "r_V1StGXR8_Z5j:c_Gg77Hh88Ii99": {
+          "v": "金额",
+          "m": "金额"
+        },
+        "r_9bQdYxLm3Kp2:c_Aa11Bb22Cc33": {
+          "v": "Widget",
+          "m": "Widget"
+        },
+        "r_9bQdYxLm3Kp2:c_Dd44Ee55Ff66": {
+          "v": 12,
+          "m": "12",
+          "ct": { "fa": "0", "t": "n" }
+        },
+        "r_9bQdYxLm3Kp2:c_Gg77Hh88Ii99": {
+          "v": 1200.5,
+          "m": "1,200.50",
+          "ct": { "fa": "#,##0.00", "t": "n" }
+        },
+        "r_Hk7pQm2nWx4R:c_Aa11Bb22Cc33": {
+          "v": "Gadget",
+          "m": "Gadget"
+        },
+        "r_Hk7pQm2nWx4R:c_Dd44Ee55Ff66": {
+          "v": 3,
+          "m": "3",
+          "ct": { "fa": "0", "t": "n" }
+        },
+        "r_Hk7pQm2nWx4R:c_Gg77Hh88Ii99": {
+          "v": 99,
+          "m": "99.00",
+          "ct": { "fa": "#,##0.00", "t": "n" }
+        }
+      },
+      "config": {
+        "merges": {},
+        "rowHeight": {},
+        "colWidth": {},
+        "rowHidden": {},
+        "colHidden": {},
+        "borders": [],
+        "filters": []
+      }
+    },
+    {
+      "id": "sheet_demo_b2",
+      "name": "",
+      "order": 1,
+      "rowOrder": [
+        "r_BlankRowId01",
+        "r_BlankRowId02"
+      ],
+      "colOrder": [
+        "c_BlankColId01",
+        "c_BlankColId02"
+      ],
+      "cells": {
+        "r_BlankRowId01:c_BlankColId01": {
+          "v": "备注",
+          "m": "备注"
+        },
+        "r_BlankRowId02:c_BlankColId02": {
+          "v": true,
+          "m": "TRUE"
+        }
+      },
+      "config": {
+        "merges": {},
+        "rowHeight": {},
+        "colWidth": {},
+        "rowHidden": {},
+        "colHidden": {},
+        "borders": [],
+        "filters": []
+      }
+    }
+  ]
+}
