@@ -106,6 +106,35 @@ class DocxNodeExporterTest {
     }
 
     @Test
+    void unsupportedWebpImageBecomesPlaceholder() throws Exception {
+        byte[] fakeWebp = new byte[]{'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'E', 'B', 'P'};
+        ExportAssetResolver resolver = (ws, url) -> ResolvedExportAsset.builder()
+            .bytes(fakeWebp)
+            .contentType("image/webp")
+            .fileName("photo.webp")
+            .build();
+        DocxNodeExporter exporter = new DocxNodeExporter(new ExportProperties(), resolver);
+        ExportContext ctx = ExportContext.builder()
+            .nodeId(1L).workspaceId(1L).nodeType("DOCUMENT")
+            .title("webp")
+            .contentMd("![w](/api/assets/2)")
+            .assetResolver(resolver)
+            .build();
+
+        ExportArtifact art = exporter.export(ctx);
+
+        assertEquals('P', art.getBytes()[0]);
+        assertEquals('K', art.getBytes()[1]);
+        try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(art.getBytes()))) {
+            assertTrue(doc.getAllPictures().isEmpty());
+            String text = doc.getParagraphs().stream()
+                .map(p -> p.getText())
+                .reduce("", String::concat);
+            assertTrue(text.contains("[图片不可用]"));
+        }
+    }
+
+    @Test
     void rejectsOversizedContent() {
         ExportProperties props = new ExportProperties();
         props.setMaxDocumentChars(5);

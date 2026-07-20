@@ -135,11 +135,9 @@ public class DocxNodeExporter implements NodeExporter {
         long embeddedBytes
     ) throws Exception {
         ResolvedExportAsset asset = resolver == null ? null : resolver.resolve(workspaceId, block.getUrl());
-        if (asset == null || asset.getBytes() == null || asset.getBytes().length == 0) {
-            XWPFParagraph paragraph = document.createParagraph();
-            XWPFRun run = paragraph.createRun();
-            run.setItalic(true);
-            run.setText(MISSING_IMAGE_PLACEHOLDER);
+        Integer pictureType = asset == null ? null : pictureType(asset.getContentType());
+        if (asset == null || asset.getBytes() == null || asset.getBytes().length == 0 || pictureType == null) {
+            appendMissingImagePlaceholder(document);
             return embeddedBytes;
         }
 
@@ -150,7 +148,6 @@ public class DocxNodeExporter implements NodeExporter {
 
         XWPFParagraph paragraph = document.createParagraph();
         XWPFRun run = paragraph.createRun();
-        int pictureType = pictureType(asset.getContentType());
         String fileName = asset.getFileName() != null && !asset.getFileName().isBlank()
             ? asset.getFileName()
             : "image";
@@ -159,20 +156,33 @@ public class DocxNodeExporter implements NodeExporter {
                 in,
                 pictureType,
                 fileName,
-                Units.toEMU(DEFAULT_IMAGE_WIDTH_PX),
-                Units.toEMU(DEFAULT_IMAGE_HEIGHT_PX)
+                Units.pixelToEMU(DEFAULT_IMAGE_WIDTH_PX),
+                Units.pixelToEMU(DEFAULT_IMAGE_HEIGHT_PX)
             );
         }
         return next;
     }
 
-    private static int pictureType(String contentType) {
+    private static void appendMissingImagePlaceholder(XWPFDocument document) {
+        XWPFParagraph paragraph = document.createParagraph();
+        XWPFRun run = paragraph.createRun();
+        run.setItalic(true);
+        run.setText(MISSING_IMAGE_PLACEHOLDER);
+    }
+
+    /**
+     * Maps MIME type to a POI picture type, or {@code null} when unsupported (e.g. WebP).
+     */
+    private static Integer pictureType(String contentType) {
         if (contentType == null) {
-            return XWPFDocument.PICTURE_TYPE_PNG;
+            return null;
         }
         String ct = contentType.toLowerCase();
         if (ct.contains("jpeg") || ct.contains("jpg")) {
             return XWPFDocument.PICTURE_TYPE_JPEG;
+        }
+        if (ct.contains("png")) {
+            return XWPFDocument.PICTURE_TYPE_PNG;
         }
         if (ct.contains("gif")) {
             return XWPFDocument.PICTURE_TYPE_GIF;
@@ -180,7 +190,13 @@ public class DocxNodeExporter implements NodeExporter {
         if (ct.contains("bmp")) {
             return XWPFDocument.PICTURE_TYPE_BMP;
         }
-        return XWPFDocument.PICTURE_TYPE_PNG;
+        if (ct.contains("emf")) {
+            return XWPFDocument.PICTURE_TYPE_EMF;
+        }
+        if (ct.contains("wmf")) {
+            return XWPFDocument.PICTURE_TYPE_WMF;
+        }
+        return null;
     }
 
     private static String nullToEmpty(String value) {
