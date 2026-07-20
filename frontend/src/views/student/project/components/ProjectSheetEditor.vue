@@ -7,6 +7,7 @@ import { invalidateCollabToken } from '@/utils/collabTokenCache'
 import { formatDocUpdateLabel } from '@/utils/formatDocUpdate'
 import { NODE_TITLE_MAX_LENGTH } from '@/constants/fieldLimits'
 import { ensureSpeedSheetUi, loadSpeedSheetComponent } from '@/plugins/speedSheet'
+import { downloadNodeExportApi } from '@/api/export'
 
 const sheetDocNeedsInit = (doc) => {
   const sheets = doc.getMap('sheets')
@@ -60,6 +61,8 @@ const ydoc = shallowRef(null)
 const collabReady = ref(false)
 const collabError = ref('')
 const sheetUiError = ref('')
+const exportMessage = ref('')
+const exporting = ref(false)
 const lastEditedLabel = ref('')
 
 let provider = null
@@ -174,6 +177,19 @@ const handleTitleInput = (event) => {
   emit('update:title', event.target.value)
 }
 
+const handleExportExcel = async () => {
+  if (exporting.value) return
+  exporting.value = true
+  exportMessage.value = ''
+  try {
+    await downloadNodeExportApi(props.sheetId, 'xlsx')
+  } catch (error) {
+    exportMessage.value = error?.message || '导出失败'
+  } finally {
+    exporting.value = false
+  }
+}
+
 const initSheetUi = async () => {
   sheetUiError.value = ''
   try {
@@ -224,7 +240,16 @@ onBeforeUnmount(() => {
       >
       <div class="ps-sheet-editor-meta">
         <span v-if="lastEditedLabel">{{ lastEditedLabel }}</span>
-        <span v-if="sheetUiError" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ sheetUiError }}</span>
+        <button
+          type="button"
+          class="ps-sheet-export-btn"
+          :disabled="exporting"
+          @click="handleExportExcel"
+        >
+          {{ exporting ? '导出中…' : '导出 Excel' }}
+        </button>
+        <span v-if="exportMessage" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ exportMessage }}</span>
+        <span v-else-if="sheetUiError" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ sheetUiError }}</span>
         <span v-else-if="collabError" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ collabError }}</span>
       </div>
     </header>

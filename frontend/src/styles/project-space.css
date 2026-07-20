@@ -1002,6 +1002,87 @@
   white-space: nowrap;
 }
 
+.ps-doc-article-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.ps-doc-export {
+  position: relative;
+}
+
+.ps-doc-export-btn,
+.ps-sheet-export-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.ps-doc-export-btn:hover:not(:disabled),
+.ps-sheet-export-btn:hover:not(:disabled),
+.ps-doc-export-btn[aria-expanded='true'] {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.ps-doc-export-btn:disabled,
+.ps-sheet-export-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ps-doc-export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 112px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.ps-doc-export-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ps-doc-export-menu-item:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.ps-doc-export-menu-item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .ps-doc-editor-body-row {
   display: flex;
   align-items: flex-start;

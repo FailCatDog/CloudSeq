@@ -12,10 +12,11 @@ import { ProjectDocTableCell, ProjectDocTableHeader } from '../script/projectDoc
 import ProjectDocTableControls from './ProjectDocTableControls.vue'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import * as Y from 'yjs'
-import { computed, onBeforeUnmount, ref, shallowRef, watch, nextTick } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch, nextTick } from 'vue'
 import { buildCollabUser, hashCollabColor, renderCollabCaret, renderCollabSelection } from '@/utils/collabCaret'
 import { formatDocUpdateLabel } from '@/utils/formatDocUpdate'
 import { invalidateCollabToken } from '@/utils/collabTokenCache'
+import { downloadNodeExportApi } from '@/api/export'
 import ProjectDocBlockGutter from './ProjectDocBlockGutter.vue'
 import ProjectDocCommentGutter from './ProjectDocCommentGutter.vue'
 import ProjectDocOutline from './ProjectDocOutline.vue'
@@ -49,6 +50,10 @@ const collabReady = ref(false)
 const collabError = ref('')
 const uploadMessage = ref('')
 const uploadingImage = ref(false)
+const exportMessage = ref('')
+const exporting = ref(false)
+const exportMenuOpen = ref(false)
+const exportMenuRef = ref(null)
 const onlineUsers = ref([])
 const lastEditedLabel = ref('')
 const activeCommentId = ref(null)
@@ -196,6 +201,39 @@ const teardownCollab = () => {
   collabError.value = ''
   uploadMessage.value = ''
   uploadingImage.value = false
+  exportMessage.value = ''
+  exporting.value = false
+  exportMenuOpen.value = false
+}
+
+const toggleExportMenu = () => {
+  exportMenuOpen.value = !exportMenuOpen.value
+}
+
+const closeExportMenu = () => {
+  exportMenuOpen.value = false
+}
+
+const handleExportMenuOutside = (event) => {
+  if (!exportMenuOpen.value) return
+  const root = exportMenuRef.value
+  if (root && !root.contains(event.target)) {
+    closeExportMenu()
+  }
+}
+
+const handleExport = async (format) => {
+  if (exporting.value) return
+  closeExportMenu()
+  exporting.value = true
+  exportMessage.value = ''
+  try {
+    await downloadNodeExportApi(props.docId, format)
+  } catch (error) {
+    exportMessage.value = error?.message || '导出失败'
+  } finally {
+    exporting.value = false
+  }
 }
 
 const setupCollab = () => {
@@ -460,7 +498,12 @@ watch(
 
 defineExpose({ getSnapshot })
 
+onMounted(() => {
+  document.addEventListener('click', handleExportMenuOutside)
+})
+
 onBeforeUnmount(async () => {
+  document.removeEventListener('click', handleExportMenuOutside)
   collabReady.value = false
   await nextTick()
   if (editor.value && props.canWrite && provider) {
@@ -506,12 +549,52 @@ onBeforeUnmount(async () => {
                     <span v-else>{{ user.name.slice(0, 1).toUpperCase() }}</span>
                   </div>
                 </div>
-                <span class="ps-doc-article-updated">{{ lastEditedLabel }}</span>
+                <div class="ps-doc-article-meta-actions">
+                  <span class="ps-doc-article-updated">{{ lastEditedLabel }}</span>
+                  <div ref="exportMenuRef" class="ps-doc-export">
+                    <button
+                      type="button"
+                      class="ps-doc-export-btn"
+                      :aria-expanded="exportMenuOpen"
+                      :disabled="exporting"
+                      @click.stop="toggleExportMenu"
+                    >
+                      {{ exporting ? '导出中…' : '导出' }}
+                    </button>
+                    <div
+                      v-if="exportMenuOpen"
+                      class="ps-doc-export-menu"
+                      role="menu"
+                      aria-label="导出格式"
+                    >
+                      <button
+                        type="button"
+                        class="ps-doc-export-menu-item"
+                        role="menuitem"
+                        :disabled="exporting"
+                        @click="handleExport('docx')"
+                      >
+                        Word
+                      </button>
+                      <button
+                        type="button"
+                        class="ps-doc-export-menu-item"
+                        role="menuitem"
+                        :disabled="exporting"
+                        @click="handleExport('pdf')"
+                      >
+                        PDF
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <p v-if="collabError" class="ps-doc-editor-notice ps-doc-editor-notice--error">{{ collabError }}</p>
+              <p v-else-if="exportMessage" class="ps-doc-editor-notice ps-doc-editor-notice--error">{{ exportMessage }}</p>
               <p v-else-if="uploadMessage" class="ps-doc-editor-notice ps-doc-editor-notice--error">{{ uploadMessage }}</p>
               <p v-else-if="uploadingImage" class="ps-doc-editor-notice">图片上传中…</p>
+              <p v-else-if="exporting" class="ps-doc-editor-notice">正在导出…</p>
             </div>
 
             <div class="ps-doc-editor-body-row">
