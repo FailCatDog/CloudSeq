@@ -41,7 +41,9 @@ build/
 /collab-server/package-lock.json
 /frontend/node_modules/
 /frontend/dist/
-/docs/
+/docs/*
+!/docs/superpowers/
+!/docs/superpowers/**/
 /scripts/
 /.idea/
 /frontend/.idea/
