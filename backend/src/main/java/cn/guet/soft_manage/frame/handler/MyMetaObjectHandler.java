@@ -12,22 +12,33 @@ import java.time.LocalDateTime;
  * @CreateTime: 2026-05-16
  * @Description: MyBatis-Plus 自动填充处理器
  *
- * 说明：当前先使用占位用户ID 0L，后续登录接入后改为从 JWT/登录上下文获取。
+ * 登录态取当前用户；注册等无 Token 场景回退系统用户 1，避免 create_user 写入 null
+ * （MP 显式 INSERT 字段时不会走列 DEFAULT）。
  */
 @Component
 public class MyMetaObjectHandler implements MetaObjectHandler {
 
+    /** 与表结构 DEFAULT 1、种子账号 admin 对齐 */
+    private static final Long SYSTEM_USER_ID = 1L;
+
     @Override
     public void insertFill(MetaObject metaObject) {
-        this.strictInsertFill(metaObject, "createUser", Long.class, UserContext.getUserId());
+        Long operatorId = resolveOperatorId();
+        this.strictInsertFill(metaObject, "createUser", Long.class, operatorId);
         this.strictInsertFill(metaObject, "createDate", LocalDateTime.class, LocalDateTime.now());
-        this.strictInsertFill(metaObject, "updateUser", Long.class, UserContext.getUserId());
+        this.strictInsertFill(metaObject, "updateUser", Long.class, operatorId);
         this.strictInsertFill(metaObject, "updateDate", LocalDateTime.class, LocalDateTime.now());
     }
 
     @Override
     public void updateFill(MetaObject metaObject) {
-        this.strictUpdateFill(metaObject, "updateUser", Long.class, UserContext.getUserId());
+        Long operatorId = resolveOperatorId();
+        this.strictUpdateFill(metaObject, "updateUser", Long.class, operatorId);
         this.strictUpdateFill(metaObject, "updateDate", LocalDateTime.class, LocalDateTime.now());
+    }
+
+    private Long resolveOperatorId() {
+        Long userId = UserContext.getUserId();
+        return userId != null ? userId : SYSTEM_USER_ID;
     }
 }

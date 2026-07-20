@@ -2,6 +2,7 @@ package cn.guet.soft_manage.biz.course.controller;
 
 import cn.guet.soft_manage.biz.course.dto.request.CourseCreateRequestDTO;
 import cn.guet.soft_manage.biz.course.dto.request.CourseEnrollmentCreateRequestDTO;
+import cn.guet.soft_manage.biz.course.dto.request.CourseJoinByCodeRequestDTO;
 import cn.guet.soft_manage.biz.course.dto.request.CourseUpdateRequestDTO;
 import cn.guet.soft_manage.biz.course.dto.response.CourseDetailDTO;
 import cn.guet.soft_manage.biz.course.dto.response.CourseEnrollmentDTO;
@@ -49,6 +50,11 @@ public class CourseController {
   @GetMapping("/mine")
   public Response<List<CourseSummaryDTO>> listMine() {
     return Response.success(courseService.listMyCourses());
+  }
+
+  @PostMapping("/join")
+  public Response<CourseEnrollmentDTO> joinByCode(@Valid @RequestBody CourseJoinByCodeRequestDTO request) {
+    return Response.success(courseService.joinByCourseCode(request));
   }
 
   @GetMapping("/{id}")

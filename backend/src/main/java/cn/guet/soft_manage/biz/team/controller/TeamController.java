@@ -1,6 +1,7 @@
 package cn.guet.soft_manage.biz.team.controller;
 
 import cn.guet.soft_manage.biz.team.dto.TeamCreateRequestDTO;
+import cn.guet.soft_manage.biz.team.dto.TeamJoinableSummaryDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMemberAddRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMembersResponseDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamOverviewSummaryDTO;
@@ -38,6 +39,16 @@ public class TeamController {
     @PostMapping("/member")
     public Response<TeamMember> addMember(@Valid @RequestBody TeamMemberAddRequestDTO request) {
         return Response.success(teamService.addMember(request));
+    }
+
+    @PostMapping("/{teamId}/join")
+    public Response<TeamMember> join(@PathVariable Long teamId) {
+        return Response.success(teamService.joinTeam(teamId));
+    }
+
+    @GetMapping("/course-teams")
+    public Response<List<TeamJoinableSummaryDTO>> listCourseTeams() {
+        return Response.success(teamService.listJoinableTeamsForCurrentStudent());
     }
 
     @DeleteMapping("/member")

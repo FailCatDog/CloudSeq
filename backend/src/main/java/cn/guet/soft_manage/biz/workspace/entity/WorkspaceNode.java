@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_workspace_node")
+@TableName("fs_workspace_node")
 public class WorkspaceNode {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)

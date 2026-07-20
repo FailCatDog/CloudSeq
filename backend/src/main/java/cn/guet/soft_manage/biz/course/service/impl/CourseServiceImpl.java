@@ -5,6 +5,7 @@ import cn.guet.soft_manage.biz.course.dao.CourseEnrollmentDao;
 import cn.guet.soft_manage.biz.course.dao.CourseStaffDao;
 import cn.guet.soft_manage.biz.course.dto.request.CourseCreateRequestDTO;
 import cn.guet.soft_manage.biz.course.dto.request.CourseEnrollmentCreateRequestDTO;
+import cn.guet.soft_manage.biz.course.dto.request.CourseJoinByCodeRequestDTO;
 import cn.guet.soft_manage.biz.course.dto.request.CourseUpdateRequestDTO;
 import cn.guet.soft_manage.biz.course.dto.response.CourseDetailDTO;
 import cn.guet.soft_manage.biz.course.dto.response.CourseEnrollmentDTO;
@@ -14,6 +15,7 @@ import cn.guet.soft_manage.biz.course.entity.Course;
 import cn.guet.soft_manage.biz.course.entity.CourseEnrollment;
 import cn.guet.soft_manage.biz.course.entity.CourseStaff;
 import cn.guet.soft_manage.biz.course.service.CourseService;
+import cn.guet.soft_manage.biz.rbac.service.IDataScopeService;
 import cn.guet.soft_manage.biz.user.dao.UserDao;
 import cn.guet.soft_manage.biz.user.entity.User;
 import cn.guet.soft_manage.frame.auth.UserContext;
@@ -28,13 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -56,6 +55,9 @@ public class CourseServiceImpl implements CourseService {
 
   @Resource
   private UserDao userDao;
+
+  @Resource
+  private IDataScopeService dataScopeService;
 
   @Override
   @Transactional(rollbackFor = Exception.class)
@@ -106,6 +108,7 @@ public class CourseServiceImpl implements CourseService {
   @Override
   @Transactional(rollbackFor = Exception.class)
   public CourseDetailDTO updateCourse(Long courseId, CourseUpdateRequestDTO request) {
+    requireAccessibleCourse(courseId);
     Course course = requireCourse(courseId);
 
     if (request.getMinTeamSize() != null || request.getMaxTeamSize() != null) {
@@ -135,6 +138,7 @@ public class CourseServiceImpl implements CourseService {
 
   @Override
   public CourseDetailDTO getCourseById(Long courseId) {
+    requireAccessibleCourse(courseId);
     Course course = requireCourse(courseId);
     User teacher = userDao.selectById(course.getPrimaryTeacherId());
 
@@ -177,19 +181,22 @@ public class CourseServiceImpl implements CourseService {
 
   @Override
   public List<CourseSummaryDTO> listCourses(Integer termYear, String termSeason, Long teacherId) {
+    Long userId = UserContext.getUserId();
+    if (userId == null) {
+      return Collections.emptyList();
+    }
+
+    List<Long> courseIds = dataScopeService.resolveCourseIds(userId);
+    if (courseIds.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     LambdaQueryWrapper<Course> wrapper = new LambdaQueryWrapper<Course>()
+        .in(Course::getId, courseIds)
         .eq(termYear != null, Course::getTermYear, termYear)
         .eq(StringUtils.hasText(termSeason), Course::getTermSeason, termSeason)
         .orderByDesc(Course::getTermYear)
         .orderByDesc(Course::getCreateDate);
-
-    if (teacherId != null) {
-      List<Long> courseIds = findCourseIdsByTeacher(teacherId);
-      if (courseIds.isEmpty()) {
-        return Collections.emptyList();
-      }
-      wrapper.in(Course::getId, courseIds);
-    }
 
     List<Course> courses = courseDao.selectList(wrapper);
     return toSummaryList(courses);
@@ -201,7 +208,7 @@ public class CourseServiceImpl implements CourseService {
     if (userId == null) {
       return Collections.emptyList();
     }
-    List<Long> courseIds = findCourseIdsByTeacher(userId);
+    List<Long> courseIds = dataScopeService.resolveCourseIds(userId);
     if (courseIds.isEmpty()) {
       return Collections.emptyList();
     }
@@ -215,19 +222,48 @@ public class CourseServiceImpl implements CourseService {
   @Override
   @Transactional(rollbackFor = Exception.class)
   public CourseEnrollmentDTO enrollStudent(Long courseId, CourseEnrollmentCreateRequestDTO request) {
+    requireAccessibleCourse(courseId);
     requireCourse(courseId);
+    return upsertEnrollment(courseId, request.getUserId(), request.getStudentNo());
+  }
 
-    User student = userDao.selectById(request.getUserId());
+  @Override
+  @Transactional(rollbackFor = Exception.class)
+  public CourseEnrollmentDTO joinByCourseCode(CourseJoinByCodeRequestDTO request) {
+    Long userId = UserContext.getUserId();
+    if (userId == null) {
+      throw new BusinessException(BizResponseCode.UNAUTHORIZED);
+    }
+
+    String courseCode = request.getCourseCode() == null ? "" : request.getCourseCode().trim();
+    if (!StringUtils.hasText(courseCode)) {
+      throw new BusinessException(BizResponseCode.COURSE_NOT_FOUND);
+    }
+
+    Course course = courseDao.selectOne(new LambdaQueryWrapper<Course>()
+        .eq(Course::getCourseCode, courseCode));
+    if (course == null) {
+      throw new BusinessException(BizResponseCode.COURSE_NOT_FOUND);
+    }
+    if (!Objects.equals(course.getStatus(), CacheCode.COURSE_STATUS_ACTIVE.getCode())) {
+      throw new BusinessException(BizResponseCode.COURSE_NOT_OPEN);
+    }
+
+    return upsertEnrollment(course.getId(), userId, null);
+  }
+
+  private CourseEnrollmentDTO upsertEnrollment(Long courseId, Long studentUserId, String studentNoOverride) {
+    User student = userDao.selectById(studentUserId);
     if (student == null) {
       throw new BusinessException(BizResponseCode.USER_NOT_FOUND);
     }
 
     CourseEnrollment existing = courseEnrollmentDao.selectOne(new LambdaQueryWrapper<CourseEnrollment>()
         .eq(CourseEnrollment::getCourseId, courseId)
-        .eq(CourseEnrollment::getUserId, request.getUserId()));
+        .eq(CourseEnrollment::getUserId, studentUserId));
 
-    String studentNo = StringUtils.hasText(request.getStudentNo())
-        ? request.getStudentNo().trim()
+    String studentNo = StringUtils.hasText(studentNoOverride)
+        ? studentNoOverride.trim()
         : student.getStudentNo();
 
     if (existing != null) {
@@ -244,7 +280,7 @@ public class CourseServiceImpl implements CourseService {
 
     CourseEnrollment enrollment = CourseEnrollment.builder()
         .courseId(courseId)
-        .userId(request.getUserId())
+        .userId(studentUserId)
         .studentNo(studentNo)
         .enrollStatus(CacheCode.ENROLL_STATUS_ENROLLED.getCode())
         .enrollDate(LocalDateTime.now())
@@ -255,6 +291,7 @@ public class CourseServiceImpl implements CourseService {
 
   @Override
   public List<CourseEnrollmentDTO> listEnrollments(Long courseId) {
+    requireAccessibleCourse(courseId);
     requireCourse(courseId);
 
     List<CourseEnrollment> enrollments = courseEnrollmentDao.selectList(new LambdaQueryWrapper<CourseEnrollment>()
@@ -272,6 +309,7 @@ public class CourseServiceImpl implements CourseService {
   @Override
   @Transactional(rollbackFor = Exception.class)
   public void dropEnrollment(Long courseId, Long userId) {
+    requireAccessibleCourse(courseId);
     requireCourse(courseId);
 
     CourseEnrollment enrollment = courseEnrollmentDao.selectOne(new LambdaQueryWrapper<CourseEnrollment>()
@@ -290,11 +328,20 @@ public class CourseServiceImpl implements CourseService {
   @Override
   @Transactional(rollbackFor = Exception.class)
   public void deleteCourse(Long courseId) {
+    requireAccessibleCourse(courseId);
     requireCourse(courseId);
     int rows = courseDao.deleteById(courseId);
     if (rows == 0) {
       throw new BusinessException(BizResponseCode.COURSE_NOT_FOUND);
     }
+  }
+
+  private void requireAccessibleCourse(Long courseId) {
+    Long userId = UserContext.getUserId();
+    if (userId == null) {
+      throw new BusinessException(BizResponseCode.UNAUTHORIZED);
+    }
+    dataScopeService.requireCourseAccess(userId, courseId);
   }
 
   private Course requireCourse(Long courseId) {
@@ -309,23 +356,6 @@ public class CourseServiceImpl implements CourseService {
     if (minTeamSize > maxTeamSize) {
       throw new BusinessException(BizResponseCode.COURSE_TEAM_SIZE_INVALID);
     }
-  }
-
-  private List<Long> findCourseIdsByTeacher(Long teacherId) {
-    Set<Long> courseIds = new LinkedHashSet<>();
-
-    courseDao.selectList(new LambdaQueryWrapper<Course>()
-            .eq(Course::getPrimaryTeacherId, teacherId)
-            .select(Course::getId))
-        .forEach(course -> courseIds.add(course.getId()));
-
-    courseStaffDao.selectList(new LambdaQueryWrapper<CourseStaff>()
-            .eq(CourseStaff::getUserId, teacherId)
-            .eq(CourseStaff::getStaffStatus, CacheCode.COURSE_STAFF_STATUS_ACTIVE.getCode())
-            .select(CourseStaff::getCourseId))
-        .forEach(staff -> courseIds.add(staff.getCourseId()));
-
-    return new ArrayList<>(courseIds);
   }
 
   private List<CourseSummaryDTO> toSummaryList(List<Course> courses) {

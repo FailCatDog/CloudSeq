@@ -2,29 +2,29 @@ package cn.guet.soft_manage.biz.rbac.service.impl;
 
 import cn.guet.soft_manage.biz.rbac.dto.AuthContextDTO;
 import cn.guet.soft_manage.biz.rbac.entity.SysRole;
-import cn.guet.soft_manage.biz.rbac.service.AuthContextService;
-import cn.guet.soft_manage.biz.rbac.service.DataScopeService;
-import cn.guet.soft_manage.biz.rbac.service.MenuService;
-import cn.guet.soft_manage.biz.rbac.service.PermissionService;
-import cn.guet.soft_manage.biz.rbac.service.RoleService;
+import cn.guet.soft_manage.biz.rbac.service.IAuthContextService;
+import cn.guet.soft_manage.biz.rbac.service.IDataScopeService;
+import cn.guet.soft_manage.biz.rbac.service.IMenuService;
+import cn.guet.soft_manage.biz.rbac.service.IPermissionService;
+import cn.guet.soft_manage.biz.rbac.service.IRoleService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
-public class AuthContextServiceImpl implements AuthContextService {
+public class AuthContextServiceImpl implements IAuthContextService {
 
     @Resource
-    private PermissionService permissionService;
+    private IPermissionService permissionService;
 
     @Resource
-    private MenuService menuService;
+    private IMenuService menuService;
 
     @Resource
-    private RoleService roleService;
+    private IRoleService roleService;
 
     @Resource
-    private DataScopeService dataScopeService;
+    private IDataScopeService dataScopeService;
 
     @Override
     public AuthContextDTO build(Long userId) {

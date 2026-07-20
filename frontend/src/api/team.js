@@ -16,6 +16,18 @@ export const addTeamMemberApi = (data) => {
   })
 }
 
+/** 当前学生加入指定小组 */
+export const joinTeamApi = (teamId) => {
+  return request(`${API_PREFIX}/${teamId}/join`, {
+    method: 'POST',
+  })
+}
+
+/** 当前学生同课号下可加入的小组 */
+export const listCourseTeamsApi = () => {
+  return request(`${API_PREFIX}/course-teams`)
+}
+
 export const removeTeamMemberApi = (teamId, userId) => {
   const params = new URLSearchParams({
     teamId: String(teamId),

@@ -2,6 +2,7 @@ package cn.guet.soft_manage.biz.course.service;
 
 import cn.guet.soft_manage.biz.course.dto.request.CourseCreateRequestDTO;
 import cn.guet.soft_manage.biz.course.dto.request.CourseEnrollmentCreateRequestDTO;
+import cn.guet.soft_manage.biz.course.dto.request.CourseJoinByCodeRequestDTO;
 import cn.guet.soft_manage.biz.course.dto.request.CourseUpdateRequestDTO;
 import cn.guet.soft_manage.biz.course.dto.response.CourseDetailDTO;
 import cn.guet.soft_manage.biz.course.dto.response.CourseEnrollmentDTO;
@@ -22,6 +23,9 @@ public interface CourseService {
     List<CourseSummaryDTO> listMyCourses();
 
     CourseEnrollmentDTO enrollStudent(Long courseId, CourseEnrollmentCreateRequestDTO request);
+
+    /** 学生凭课号自行加入（不依赖已有课号数据范围） */
+    CourseEnrollmentDTO joinByCourseCode(CourseJoinByCodeRequestDTO request);
 
     List<CourseEnrollmentDTO> listEnrollments(Long courseId);
 

@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_plan_task")
+@TableName("fs_plan_task")
 public class PlanTask {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)

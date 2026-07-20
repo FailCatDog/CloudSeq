@@ -1,5 +1,6 @@
 package cn.guet.soft_manage.biz.user.service;
 
+import cn.guet.soft_manage.biz.rbac.dto.AuthContextDTO;
 import cn.guet.soft_manage.biz.user.dto.LoginRequestDTO;
 import cn.guet.soft_manage.biz.user.dto.LoginResponseDTO;
 import cn.guet.soft_manage.biz.user.dto.ProfileStatusAggregate;
@@ -44,4 +45,9 @@ public interface UserService {
      * 当前用户个人状态聚合（里程碑 + 课号/小组/审批/工作区快照）
      */
     ProfileStatusAggregate getProfileStatus();
+
+    /**
+     * 当前用户授权上下文（权限码 + 菜单树 + 首页 + 数据范围）
+     */
+    AuthContextDTO getAuthContext();
 }

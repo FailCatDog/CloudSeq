@@ -28,6 +28,11 @@ public enum BizResponseCode {
     PARAM_ERROR(10001, "请求参数错误"),
     REQUEST_BODY_INVALID(10002, "请求体格式错误"),
     DICT_KEY_NOT_FOUND(10003, "字典类型不存在"),
+    DICT_KEY_EXISTS(10004, "字典类型编码已存在"),
+    DICT_KEY_STALE(10005, "字典类型已被修改，请刷新后重试"),
+    DICT_VALUE_NOT_FOUND(10006, "字典项不存在"),
+    DICT_VALUE_EXISTS(10007, "字典项编码已存在"),
+    DICT_VALUE_STALE(10008, "字典项已被修改，请刷新后重试"),
 
     UNAUTHORIZED(20000, "未登录"),
     TOKEN_EXPIRED(20001, "登录已过期，请重新登录"),
@@ -36,6 +41,13 @@ public enum BizResponseCode {
 
     FORBIDDEN(30000, "无权限访问"),
     TEACHER_READ_ONLY(30001, "教师账号仅可查看文档"),
+    ADMIN_REQUIRED(30002, "需要管理员权限"),
+    ROLE_NOT_FOUND(30003, "角色不存在"),
+    ROLE_KEY_EXISTS(30004, "角色标识已存在"),
+    MENU_NOT_FOUND(30005, "菜单不存在"),
+    MENU_HAS_CHILDREN(30006, "存在子菜单，无法删除"),
+    MENU_STALE(30007, "菜单已被修改，请刷新后重试"),
+    ROLE_STALE(30008, "角色已被修改，请刷新后重试"),
 
     USER_NOT_FOUND(40000, "用户不存在"),
     USERNAME_EXISTS(40001, "用户名已存在"),
@@ -69,6 +81,9 @@ public enum BizResponseCode {
     TEAM_MEMBER_NOT_FOUND(50023, "成员不存在"),
     TEAM_LEADER_CANNOT_QUIT(50024, "组长不能直接退出，请先转让组长"),
     NOT_IN_TEAM(50025, "您尚未加入小组"),
+    TEAM_FULL(50042, "小组人数已满"),
+    TEAM_NOT_JOINABLE(50043, "该小组当前不可加入"),
+    COURSE_ENROLLMENT_REQUIRED(50044, "请先加入课号"),
     DOCUMENT_CONTENT_NOT_FOUND(50026, "文档正文不存在"),
     DOCUMENT_STALE(50027, "文档已被他人修改，请刷新后重试"),
     DOCUMENT_VERSION_REQUIRED(50028, "版本号不能为空"),
@@ -82,6 +97,7 @@ public enum BizResponseCode {
     COURSE_CODE_EXISTS(50035, "课号已存在"),
     COURSE_TEACHER_NOT_FOUND(50036, "主讲教师不存在"),
     COURSE_TEAM_SIZE_INVALID(50039, "最小组人数不能大于最大组人数"),
+    COURSE_NOT_OPEN(50040, "课号未开放选课"),
     ENROLLMENT_ALREADY_EXISTS(50037, "该学生已选此课号"),
     ENROLLMENT_NOT_FOUND(50038, "选课记录不存在"),
 

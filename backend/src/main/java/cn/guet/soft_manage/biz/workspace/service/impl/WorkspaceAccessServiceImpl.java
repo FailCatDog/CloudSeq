@@ -1,13 +1,14 @@
 package cn.guet.soft_manage.biz.workspace.service.impl;
 
+import cn.guet.soft_manage.biz.rbac.service.IDataScopeService;
 import cn.guet.soft_manage.biz.team.dao.TeamDao;
 import cn.guet.soft_manage.biz.team.dao.TeamMemberDao;
-import cn.guet.soft_manage.biz.user.dao.UserDao;
-import cn.guet.soft_manage.biz.workspace.dao.WorkspaceDao;
-import cn.guet.soft_manage.biz.workspace.dto.WorkspaceAccessContext;
 import cn.guet.soft_manage.biz.team.entity.Team;
 import cn.guet.soft_manage.biz.team.entity.TeamMember;
+import cn.guet.soft_manage.biz.user.dao.UserDao;
 import cn.guet.soft_manage.biz.user.entity.User;
+import cn.guet.soft_manage.biz.workspace.dao.WorkspaceDao;
+import cn.guet.soft_manage.biz.workspace.dto.WorkspaceAccessContext;
 import cn.guet.soft_manage.biz.workspace.entity.Workspace;
 import cn.guet.soft_manage.biz.workspace.service.WorkspaceAccessService;
 import cn.guet.soft_manage.frame.auth.UserContext;
@@ -38,6 +39,9 @@ public class WorkspaceAccessServiceImpl implements WorkspaceAccessService {
     @Resource
     private UserDao userDao;
 
+    @Resource
+    private IDataScopeService dataScopeService;
+
     @Override
     public WorkspaceAccessContext requireCurrentAccess(Long workspaceId) {
         Long userId = UserContext.getUserId();
@@ -55,7 +59,13 @@ public class WorkspaceAccessServiceImpl implements WorkspaceAccessService {
             throw new BusinessException(BizResponseCode.USER_NOT_FOUND);
         }
 
-        if (Objects.equals(user.getRole(), CacheCode.USER_ROLE_TEACHER.getCode())) {
+        Team team = teamDao.selectById(workspace.getTeamId());
+        if (team == null) {
+            throw new BusinessException(BizResponseCode.FORBIDDEN);
+        }
+
+        if (dataScopeService.isStaffDataScope(userId)) {
+            dataScopeService.requireCourseAccess(userId, team.getCourseId());
             return WorkspaceAccessContext.builder()
                     .userId(userId)
                     .workspaceId(workspace.getId())
@@ -70,11 +80,6 @@ public class WorkspaceAccessServiceImpl implements WorkspaceAccessService {
                 .eq(TeamMember::getTeamId, workspace.getTeamId())
                 .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
         if (member == null) {
-            throw new BusinessException(BizResponseCode.FORBIDDEN);
-        }
-
-        Team team = teamDao.selectById(workspace.getTeamId());
-        if (team == null) {
             throw new BusinessException(BizResponseCode.FORBIDDEN);
         }
 

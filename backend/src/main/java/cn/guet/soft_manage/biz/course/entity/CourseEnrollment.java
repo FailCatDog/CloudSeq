@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_course_enrollment")
+@TableName("fs_course_enrollment")
 public class CourseEnrollment {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)

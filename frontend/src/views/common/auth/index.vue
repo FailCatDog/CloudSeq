@@ -202,7 +202,8 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { loginApi, registerApi } from '@/api/account'
 import BrandLogo from '@/components/BrandLogo.vue'
-import { getRoleHomePath, setRoleAccess } from '@/utils/roleHome'
+import { setPermissionContext } from '@/utils/roleHome'
+import { getHomePath } from '@/stores/permissionStore'
 import { BRAND_FULL_NAME, BRAND_NAME, BRAND_SLOGAN, BRAND_TAGLINE } from '@/constants/brand'
 import {
   NICK_NAME_MAX_LENGTH,
@@ -246,10 +247,10 @@ const submitLogin = async () => {
       const storage = loginForm.remember ? localStorage : sessionStorage
       storage.setItem(AUTH_STORAGE_KEY, data.authorization)
       storage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user || {}))
-      setRoleAccess(data?.user?.role, { remember: loginForm.remember })
+      await setPermissionContext(data, { remember: loginForm.remember })
     }
     successMessage.value = `登录成功，正在进入${BRAND_NAME}。`
-    await router.push(getRoleHomePath(data?.user?.role))
+    await router.push(data?.home || getHomePath())
   } catch (error) {
     loginError.value = error.message || '登录失败'
   } finally {

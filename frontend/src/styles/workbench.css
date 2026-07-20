@@ -62,8 +62,9 @@ body {
 
 .wb-app {
   display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* Sidebar */
@@ -261,8 +262,7 @@ body {
   padding: 0 4px;
 }
 
-.wb-sidebar-toggle,
-.wb-sidebar-add {
+.wb-sidebar-toggle {
   width: 100%;
   height: 40px;
   border-radius: 10px;
@@ -278,10 +278,74 @@ body {
   font: inherit;
 }
 
-.wb-sidebar-toggle:hover,
-.wb-sidebar-add:hover {
+.wb-sidebar-toggle:hover {
   border-color: rgba(255, 255, 255, 0.25);
   color: rgba(255, 255, 255, 0.75);
+}
+
+.wb-sidebar-user {
+  position: relative;
+  width: 100%;
+}
+
+.wb-sidebar-user-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 2px;
+}
+
+.wb-sidebar.expanded .wb-sidebar-user-info {
+  justify-content: flex-start;
+  padding: 6px 4px;
+}
+
+.wb-sidebar-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: none;
+  padding: 0;
+  background: var(--wb-purple, #6d5efc);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.wb-sidebar-user-avatar:hover,
+.wb-sidebar-user-avatar[aria-expanded='true'] {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28);
+}
+
+.wb-sidebar-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.wb-sidebar-user-name {
+  display: none;
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wb-sidebar.expanded .wb-sidebar-user-name {
+  display: block;
 }
 
 .wb-sidebar-toggle .toggle-icon-collapse {
@@ -302,8 +366,9 @@ body {
   margin-left: var(--wb-sidebar-width);
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   transition: margin-left 0.28s ease;
   min-width: 0;
 }
@@ -446,6 +511,15 @@ body {
   border: 1px solid var(--wb-search-border);
 }
 
+.wb-user-menu--sidebar {
+  top: auto;
+  bottom: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  min-width: 0;
+  width: 100%;
+}
+
 .wb-user-menu-item {
   display: block;
   width: 100%;
@@ -469,16 +543,14 @@ body {
 .wb-page-content {
   flex: 1;
   min-height: 0;
-  overflow: auto;
 }
 
 .wb-page-content--inner {
-  padding: 8px 32px 32px;
+  padding: 24px 32px 32px;
 }
 
 .wb-main--profile {
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -488,9 +560,10 @@ body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  padding: 8px 32px 32px;
+  padding: 24px 32px 32px;
 }
 
+/* Dashboard layout */
 /* Dashboard layout */
 .wb-dashboard {
   display: flex;
@@ -498,7 +571,7 @@ body {
   gap: 28px;
   width: 100%;
   box-sizing: border-box;
-  padding: 8px 32px 40px;
+  padding: 20px 32px 40px;
 }
 
 .wb-hero-row {

@@ -1,5 +1,6 @@
 package cn.guet.soft_manage.biz.user.controller;
 
+import cn.guet.soft_manage.biz.rbac.dto.AuthContextDTO;
 import cn.guet.soft_manage.biz.user.dto.LoginRequestDTO;
 import cn.guet.soft_manage.biz.user.dto.LoginResponseDTO;
 import cn.guet.soft_manage.biz.user.dto.ProfileStatusAggregate;
@@ -49,5 +50,10 @@ public class UserController {
     @GetMapping("/profile/status")
     public Response<ProfileStatusAggregate> profileStatus() {
         return Response.success(userService.getProfileStatus());
+    }
+
+    @GetMapping("/permissions")
+    public Response<AuthContextDTO> permissions() {
+        return Response.success(userService.getAuthContext());
     }
 }

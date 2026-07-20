@@ -10,6 +10,9 @@ import cn.guet.soft_manage.biz.team.dao.TopicApprovalDao;
 import cn.guet.soft_manage.biz.team.entity.Team;
 import cn.guet.soft_manage.biz.team.entity.TeamMember;
 import cn.guet.soft_manage.biz.team.entity.TopicApproval;
+import cn.guet.soft_manage.biz.rbac.dto.AuthContextDTO;
+import cn.guet.soft_manage.biz.rbac.service.IAuthContextService;
+import cn.guet.soft_manage.biz.rbac.service.IUserRoleService;
 import cn.guet.soft_manage.biz.user.dao.UserDao;
 import cn.guet.soft_manage.biz.user.dto.LoginRequestDTO;
 import cn.guet.soft_manage.biz.user.dto.LoginResponseDTO;
@@ -65,6 +68,12 @@ public class UserServiceImpl implements UserService {
     @Resource
     private WorkspaceDao workspaceDao;
 
+    @Resource
+    private IAuthContextService authContextService;
+
+    @Resource
+    private IUserRoleService userRoleService;
+
     @Override
     @Transactional
     public LoginResponseDTO login(LoginRequestDTO request) {
@@ -91,7 +100,15 @@ public class UserServiceImpl implements UserService {
                 .avatarUrl(user.getAvatarUrl())
                 .build();
         String token = JwtUtil.generateToken(loginUser);
-        return LoginResponseDTO.builder().user(user).authorization(token).build();
+        AuthContextDTO authContext = authContextService.build(user.getId(), user.getRole());
+        return LoginResponseDTO.builder()
+                .user(user)
+                .authorization(token)
+                .permissions(authContext.getPermissions())
+                .menus(authContext.getMenus())
+                .home(authContext.getHome())
+                .dataScope(authContext.getDataScope())
+                .build();
     }
 
     @Override
@@ -114,6 +131,20 @@ public class UserServiceImpl implements UserService {
         user.setCreateUser(1L);
         user.setUpdateUser(1L);
         userDao.insert(user);
+        userRoleService.assignRole(user.getId(), CacheCode.USER_ROLE_STUDENT.getCode());
+    }
+
+    @Override
+    public AuthContextDTO getAuthContext() {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException(BizResponseCode.UNAUTHORIZED);
+        }
+        User user = userDao.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(BizResponseCode.USER_NOT_FOUND);
+        }
+        return authContextService.build(userId, user.getRole());
     }
 
     @Override

@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_team_member")
+@TableName("fs_team_member")
 public class TeamMember {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)

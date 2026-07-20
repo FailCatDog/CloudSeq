@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_dict_key")
+@TableName("fs_dict_key")
 public class DictKey {
 
     @TableId(value = "dict_key_id", type = IdType.ASSIGN_ID)

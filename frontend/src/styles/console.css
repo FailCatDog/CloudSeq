@@ -12,7 +12,7 @@
 .console-filter {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-start;
   gap: 12px;
 }
@@ -20,7 +20,7 @@
 .console-filter__fields {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px;
   flex: 1 1 auto;
   min-width: 0;
@@ -40,6 +40,27 @@
   max-width: 320px;
 }
 
+.console-filter__field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  width: auto;
+  flex: 1 1 auto;
+  max-width: 420px;
+}
+
+.console-filter__field--inline .console-filter__label {
+  flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.console-filter__field--inline .n-input,
+.console-filter__field--inline .n-select {
+  flex: 1 1 auto;
+  min-width: 180px;
+}
+
 .console-filter__field .n-input,
 .console-filter__field .n-select {
   width: 100%;
@@ -51,9 +72,9 @@
 }
 
 .console-filter__label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--wb-text-muted);
+  color: #4f4f63;
 }
 
 .console-filter__actions {
@@ -65,7 +86,9 @@
 }
 
 .console-filter__actions .n-button {
+  flex: 0 0 auto;
   min-width: 72px;
+  width: auto;
 }
 
 .console-table-card {
@@ -76,6 +99,51 @@
 
 .console-table-card .n-data-table {
   --n-border-radius: 20px;
+  --n-th-text-color: #3f3f55;
+  --n-td-text-color: var(--wb-text-primary);
+}
+
+/* 筛选 / 列表 / 分页 三块白底内容框 */
+.console-panel {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--wb-card-shadow);
+}
+
+.console-panel.n-card {
+  --n-color: #fff;
+  --n-color-embedded: #fff;
+}
+
+.console-panel--table :deep(.n-card__content) {
+  padding: 0;
+}
+
+.console-panel--table .n-data-table {
+  --n-border-radius: 0;
+  --n-th-text-color: #3f3f55;
+  --n-td-text-color: var(--wb-text-primary);
+}
+
+.console-panel--pager :deep(.n-card__content) {
+  padding: 0;
+}
+
+.console-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 16px;
+  min-height: 0;
+  background: #fff;
+}
+
+.console-pagination :deep(.n-pagination) {
+  --n-item-size: 26px;
+  --n-item-font-size: 12px;
 }
 
 /* 表格去掉列分割线 */

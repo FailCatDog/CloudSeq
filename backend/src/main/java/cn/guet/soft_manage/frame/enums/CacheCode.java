@@ -38,8 +38,38 @@ public enum CacheCode {
     WEEKLY_REPORT_STATUS_SUBMITTED("SUBMITTED", "已提交"),
 
     USER_ROLE("user_role", "用户角色"),
-    USER_ROLE_TEACHER("TEACHER", "教师"),
     USER_ROLE_STUDENT("STUDENT", "学生"),
+    USER_ROLE_TEACHER("TEACHER", "教师"),
+    USER_ROLE_ADMIN("ADMIN", "管理员"),
+
+    DATA_SCOPE("data_scope", "RBAC数据范围"),
+    DATA_SCOPE_SELF("SELF", "仅本人"),
+    DATA_SCOPE_COURSE("COURSE", "关联课号"),
+    DATA_SCOPE_ALL("ALL", "全部课号"),
+
+    SYS_STATUS("sys_status", "RBAC启用状态"),
+    SYS_STATUS_ACTIVE("ACTIVE", "启用"),
+    SYS_STATUS_DISABLED("DISABLED", "禁用"),
+
+    MENU_TYPE("menu_type", "菜单类型"),
+    MENU_TYPE_DIR("M", "目录"),
+    MENU_TYPE_MENU("C", "菜单"),
+    MENU_TYPE_BUTTON("F", "按钮"),
+
+    ROUTE_MATCH("route_match", "路由匹配"),
+    ROUTE_MATCH_EXACT("EXACT", "完整路径"),
+    ROUTE_MATCH_PREFIX("PREFIX", "前缀匹配"),
+
+    MENU_VISIBLE("menu_visible", "菜单可见性"),
+    MENU_VISIBLE_SHOW("SHOW", "显示"),
+    MENU_VISIBLE_HIDE("HIDE", "隐藏"),
+
+    HTTP_METHOD("http_method", "HTTP方法"),
+    HTTP_METHOD_GET("GET", "GET"),
+    HTTP_METHOD_POST("POST", "POST"),
+    HTTP_METHOD_PUT("PUT", "PUT"),
+    HTTP_METHOD_DELETE("DELETE", "DELETE"),
+    HTTP_METHOD_PATCH("PATCH", "PATCH"),
 
     WORKSPACE_NODE_TYPE("workspace_node_type", "工作区节点类型"),
     WORKSPACE_NODE_TYPE_FOLDER("FOLDER", "文件夹"),
@@ -69,6 +99,14 @@ public enum CacheCode {
     ENROLL_STATUS("enroll_status", "选课状态"),
     ENROLL_STATUS_ENROLLED("ENROLLED", "已选"),
     ENROLL_STATUS_DROPPED("DROPPED", "已退"),
+
+    STUDENT_MILESTONE_STATUS("student_milestone_status", "学生里程碑状态"),
+    STUDENT_MILESTONE_NEED_ENROLL("NEED_ENROLL", "待加入课号"),
+    STUDENT_MILESTONE_NEED_TEAM("NEED_TEAM", "待加入小组"),
+    STUDENT_MILESTONE_NEED_TOPIC("NEED_TOPIC", "待提交选题"),
+    STUDENT_MILESTONE_TOPIC_PENDING("TOPIC_PENDING", "选题审批中"),
+    STUDENT_MILESTONE_TOPIC_REJECTED("TOPIC_REJECTED", "选题被驳回"),
+    STUDENT_MILESTONE_READY("READY", "可进入项目空间"),
     ;
 
     private final String code;

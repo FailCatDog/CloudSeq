@@ -1,12 +1,11 @@
 import { CacheCode } from '@/constants/cacheCode'
-import { ROLE_ROUTE_ACCESS } from '@/constants/roleRoutes'
 import {
-  clearRoleAccess,
-  ensureRoleAccess,
-  getRoleHomePath as getStoredHomePath,
-  isPathAllowed,
-  setRoleAccess,
-} from '@/stores/roleAccessStore'
+  clearPermissionContext,
+  ensurePermissionContext,
+  getHomePath,
+  isRouteAllowed,
+  setPermissionContext,
+} from '@/stores/permissionStore'
 
 const AUTH_STORAGE_KEY = 'authorization'
 const USER_STORAGE_KEY = 'user'
@@ -26,37 +25,34 @@ export const getUserFromStorage = () => {
 
 export const isTeacherRole = (role) => role === CacheCode.USER_ROLE_TEACHER
 
-export const getRoleHomePath = (role) =>
-  ROLE_ROUTE_ACCESS[role]?.home || ROLE_ROUTE_ACCESS[CacheCode.USER_ROLE_STUDENT].home
+export const isStaffRole = (role) =>
+  role === CacheCode.USER_ROLE_TEACHER || role === CacheCode.USER_ROLE_ADMIN
 
 export const isAuthRoute = (path) => path.startsWith('/auth') || path === '/login'
 
-const isRememberedSession = () => Boolean(localStorage.getItem(AUTH_STORAGE_KEY))
-
-export const resolveNavigationGuard = (toPath) => {
+export const resolveNavigationGuard = async (toPath) => {
   const path = toPath.split('?')[0].split('#')[0] || '/'
 
   if (isAuthRoute(path)) {
     if (!getAuthToken()) return null
-    const user = getUserFromStorage()
-    ensureRoleAccess(user?.role, { remember: isRememberedSession() })
-    return getStoredHomePath()
+    await ensurePermissionContext()
+    return getHomePath()
   }
 
   if (!getAuthToken()) return '/auth'
 
-  const user = getUserFromStorage()
-  ensureRoleAccess(user?.role, { remember: isRememberedSession() })
+  await ensurePermissionContext()
 
-  if (path === '/' || path === '') return getStoredHomePath()
-  if (!isPathAllowed(path)) return getStoredHomePath()
+  if (path === '/' || path === '') return getHomePath()
+  if (!isRouteAllowed(path)) return getHomePath()
 
   return null
 }
 
 export {
-  clearRoleAccess,
-  ensureRoleAccess,
-  isPathAllowed,
-  setRoleAccess,
+  clearPermissionContext,
+  ensurePermissionContext,
+  getHomePath,
+  isRouteAllowed,
+  setPermissionContext,
 }

@@ -1,4 +1,36 @@
-# 生产环境配置见 docs/TODO.md →「生产环境 WebSocket / 协同服务配置」
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://111.229.171.163:13306/flowseque?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: guetHgy@123
+    hikari:
+      keepalive-time: 30000
+  data:
+    redis:
+      host: 111.229.171.163
+      port: 16379
+      database: 0
+      sentinel:
+        password: guetHgy@123
+
+collab:
+  ws-url: ws://111.229.171.163/collab
+  jwt-secret: soft_manage-collab-jwt-secret-change-me
+  token-expire-seconds: 600
+  room-prefix: doc-
+  internal-secret: soft_manage-collab-internal-secret-change-me
+
+minio:
+  endpoint: http://111.229.171.163:9000
+  access-key: admin
+  secret-key: guetHgy@123
+
+dict:
+  cache:
+    redis-key: sm:dict
+    ttl-days: 7
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true

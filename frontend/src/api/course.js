@@ -50,6 +50,14 @@ export const enrollCourseStudentApi = (courseId, data) => {
   })
 }
 
+/** 学生凭课号自行加入 */
+export const joinCourseByCodeApi = (courseCode) => {
+  return request(`${API_PREFIX}/join`, {
+    method: 'POST',
+    body: JSON.stringify({ courseCode }),
+  })
+}
+
 export const dropCourseEnrollmentApi = (courseId, userId) => {
   return request(`${API_PREFIX}/${courseId}/enrollments/${userId}/drop`, {
     method: 'POST',

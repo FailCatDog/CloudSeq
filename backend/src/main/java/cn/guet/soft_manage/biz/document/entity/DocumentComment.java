@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_document_comment")
+@TableName("fs_document_comment")
 public class DocumentComment {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)

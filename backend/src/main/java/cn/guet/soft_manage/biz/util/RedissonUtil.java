@@ -1,4 +1,4 @@
-package cn.guet.soft_manage.biz.common.util;
+package cn.guet.soft_manage.biz.util;
 
 import jakarta.annotation.Resource;
 import org.redisson.api.RBucket;

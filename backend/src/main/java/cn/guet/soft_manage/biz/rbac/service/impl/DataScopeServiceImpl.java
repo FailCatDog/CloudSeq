@@ -8,9 +8,11 @@ import cn.guet.soft_manage.biz.course.entity.CourseEnrollment;
 import cn.guet.soft_manage.biz.course.entity.CourseStaff;
 import cn.guet.soft_manage.biz.rbac.dto.DataScopeResult;
 import cn.guet.soft_manage.biz.rbac.entity.SysRole;
-import cn.guet.soft_manage.biz.rbac.service.DataScopeService;
-import cn.guet.soft_manage.biz.rbac.service.RoleService;
+import cn.guet.soft_manage.biz.rbac.service.IDataScopeService;
+import cn.guet.soft_manage.biz.rbac.service.IRoleService;
+import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.enums.CacheCode;
+import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -23,10 +25,10 @@ import java.util.Objects;
 import java.util.Set;
 
 @Service
-public class DataScopeServiceImpl implements DataScopeService {
+public class DataScopeServiceImpl implements IDataScopeService {
 
     @Resource
-    private RoleService roleService;
+    private IRoleService roleService;
 
     @Resource
     private CourseDao courseDao;
@@ -88,6 +90,32 @@ public class DataScopeServiceImpl implements DataScopeService {
             return findCourseIdsByStaff(userId);
         }
         return findCourseIdsByEnrollment(userId);
+    }
+
+    @Override
+    public boolean canAccessCourse(Long userId, Long courseId) {
+        if (userId == null || courseId == null) {
+            return false;
+        }
+        DataScopeResult scope = resolve(userId);
+        if (scope.isAllCourses()) {
+            return true;
+        }
+        return scope.getCourseIds().contains(courseId);
+    }
+
+    @Override
+    public void requireCourseAccess(Long userId, Long courseId) {
+        if (!canAccessCourse(userId, courseId)) {
+            throw new BusinessException(BizResponseCode.FORBIDDEN);
+        }
+    }
+
+    @Override
+    public boolean isStaffDataScope(Long userId) {
+        String dataScope = resolveDataScope(userId);
+        return CacheCode.DATA_SCOPE_COURSE.getCode().equals(dataScope)
+                || CacheCode.DATA_SCOPE_ALL.getCode().equals(dataScope);
     }
 
     private List<Long> findCourseIdsByStaff(Long userId) {

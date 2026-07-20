@@ -43,30 +43,68 @@
 
         <div class="prepare-focus__body">
           <template v-if="currentStepId === 'enroll'">
-            <p class="prepare-hint">请联系任课教师在课号管理中将你加入本课程课号，加入后刷新本页。</p>
-            <dl v-if="status?.courseId" class="prepare-facts">
-              <div><dt>课号</dt><dd>{{ status.courseCode }}</dd></div>
-              <div><dt>课程</dt><dd>{{ status.courseName }}</dd></div>
-            </dl>
-          </template>
-
-          <template v-else-if="currentStepId === 'team'">
-            <form class="prepare-form" @submit.prevent="handleCreateTeam">
+            <form class="prepare-form" @submit.prevent="handleJoinCourse">
               <label class="prepare-field">
-                <span>小组名称</span>
+                <span>课号</span>
                 <input
-                  v-model.trim="teamForm.teamName"
+                  v-model.trim="enrollForm.courseCode"
                   type="text"
-                  placeholder="请输入小组名称"
-                  :maxlength="TEAM_NAME_MAX_LENGTH"
+                  placeholder="请输入教师提供的课号，如 PM2026-01"
+                  :maxlength="COURSE_CODE_MAX_LENGTH"
                 />
               </label>
               <div class="prepare-form-actions">
-                <button type="submit" class="prepare-btn prepare-btn--primary" :disabled="creatingTeam">
-                  {{ creatingTeam ? '创建中…' : '创建小组' }}
+                <button type="submit" class="prepare-btn prepare-btn--primary" :disabled="joiningCourse">
+                  {{ joiningCourse ? '加入中…' : '加入课号' }}
                 </button>
               </div>
             </form>
+          </template>
+
+          <template v-else-if="currentStepId === 'team'">
+            <div class="prepare-team-actions">
+              <section class="prepare-team-block">
+                <p class="prepare-team-block__title">加入已有小组</p>
+                <p v-if="loadingTeams" class="prepare-hint">正在加载同课号小组…</p>
+                <ul v-else-if="courseTeams.length" class="prepare-team-list">
+                  <li v-for="team in courseTeams" :key="team.id" class="prepare-team-item">
+                    <div class="prepare-team-item__meta">
+                      <strong>{{ team.teamName }}</strong>
+                      <span>组长 {{ team.leaderName || '—' }} · {{ team.memberCount || 0 }}/{{ team.maxTeamSize || '—' }} 人</span>
+                    </div>
+                    <button
+                      type="button"
+                      class="prepare-btn prepare-btn--primary"
+                      :disabled="joiningTeamId != null || team.full"
+                      @click="handleJoinTeam(team)"
+                    >
+                      {{ joiningTeamId === team.id ? '加入中…' : team.full ? '已满' : '加入' }}
+                    </button>
+                  </li>
+                </ul>
+                <p v-else class="prepare-hint">暂无可加入小组，可自行创建。</p>
+              </section>
+
+              <section class="prepare-team-block">
+                <p class="prepare-team-block__title">创建新小组</p>
+                <form class="prepare-form" @submit.prevent="handleCreateTeam">
+                  <label class="prepare-field">
+                    <span>小组名称</span>
+                    <input
+                      v-model.trim="teamForm.teamName"
+                      type="text"
+                      placeholder="请输入小组名称"
+                      :maxlength="TEAM_NAME_MAX_LENGTH"
+                    />
+                  </label>
+                  <div class="prepare-form-actions">
+                    <button type="submit" class="prepare-btn prepare-btn--primary" :disabled="creatingTeam">
+                      {{ creatingTeam ? '创建中…' : '创建小组' }}
+                    </button>
+                  </div>
+                </form>
+              </section>
+            </div>
           </template>
 
           <template v-else-if="currentStepId === 'topic'">
@@ -167,11 +205,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getProfileStatusApi } from '@/api/account'
+import { joinCourseByCodeApi } from '@/api/course'
 import {
   createTeamApi,
+  joinTeamApi,
+  listCourseTeamsApi,
   listTeamMembersApi,
   listTeamTopicApprovalsApi,
   parseTeamMembersResponse,
@@ -184,6 +225,8 @@ import {
   TOPIC_TITLE_MAX_LENGTH,
 } from '@/constants/fieldLimits'
 import { useDict } from '@/composables/useDict'
+
+const COURSE_CODE_MAX_LENGTH = 32
 
 const MILESTONE_ORDER = {
   [CacheCode.STUDENT_MILESTONE_NEED_ENROLL]: 0,
@@ -233,14 +276,19 @@ const memberStatusDict = useDict(CacheCode.MEMBER_STATUS)
 
 const loading = ref(false)
 const refreshing = ref(false)
+const joiningCourse = ref(false)
 const creatingTeam = ref(false)
+const joiningTeamId = ref(null)
+const loadingTeams = ref(false)
 const submittingTopic = ref(false)
 const status = ref(null)
 const members = ref([])
 const topicApprovals = ref([])
+const courseTeams = ref([])
 const formMessage = ref('')
 const formMessageType = ref('')
 
+const enrollForm = reactive({ courseCode: '' })
 const teamForm = reactive({ teamName: '' })
 const topicForm = reactive({ topicTitle: '', topicDesc: '' })
 
@@ -254,8 +302,8 @@ const milestoneLabel = computed(() => milestoneDict.label(status.value?.mileston
 
 const milestoneHint = computed(() => {
   const code = status.value?.milestoneStatus
-  if (code === CacheCode.STUDENT_MILESTONE_NEED_ENROLL) return '先加入课号，再在该课号下组队。'
-  if (code === CacheCode.STUDENT_MILESTONE_NEED_TEAM) return '创建或加入小组，准备提交课程选题。'
+  if (code === CacheCode.STUDENT_MILESTONE_NEED_ENROLL) return '输入教师提供的课号加入课程，再在该课号下组队。'
+  if (code === CacheCode.STUDENT_MILESTONE_NEED_TEAM) return '可加入同课号已有小组，或自行创建新小组。'
   if (code === CacheCode.STUDENT_MILESTONE_NEED_TOPIC) return '填写选题并提交，等待教师审批。'
   if (code === CacheCode.STUDENT_MILESTONE_TOPIC_PENDING) return '选题审批中，通过后即可进入项目空间。'
   if (code === CacheCode.STUDENT_MILESTONE_TOPIC_REJECTED) return '请根据教师反馈修改选题后重新提交。'
@@ -307,6 +355,23 @@ const loadTeamDetails = async () => {
   topicApprovals.value = approvals || []
 }
 
+const loadCourseTeams = async () => {
+  if (currentStepId.value !== 'team' || !status.value?.courseId) {
+    courseTeams.value = []
+    return
+  }
+  loadingTeams.value = true
+  try {
+    courseTeams.value = (await listCourseTeamsApi()) || []
+  } catch (error) {
+    courseTeams.value = []
+    formMessage.value = error?.message || '加载小组列表失败'
+    formMessageType.value = 'error'
+  } finally {
+    loadingTeams.value = false
+  }
+}
+
 const loadStatus = async ({ silent = false } = {}) => {
   if (!silent) loading.value = true
   else refreshing.value = true
@@ -315,6 +380,7 @@ const loadStatus = async ({ silent = false } = {}) => {
     status.value = await getProfileStatusApi()
     syncForms()
     await loadTeamDetails()
+    await loadCourseTeams()
   } catch (error) {
     formMessage.value = error?.message || '状态加载失败'
     formMessageType.value = 'error'
@@ -325,6 +391,50 @@ const loadStatus = async ({ silent = false } = {}) => {
 }
 
 const refresh = () => loadStatus({ silent: true })
+
+watch(currentStepId, () => {
+  loadCourseTeams()
+})
+
+const handleJoinCourse = async () => {
+  if (!enrollForm.courseCode) {
+    formMessage.value = '请输入课号。'
+    formMessageType.value = 'error'
+    return
+  }
+
+  joiningCourse.value = true
+  formMessage.value = ''
+  try {
+    await joinCourseByCodeApi(enrollForm.courseCode)
+    enrollForm.courseCode = ''
+    await loadStatus({ silent: true })
+    formMessage.value = '已成功加入课号。'
+    formMessageType.value = 'success'
+  } catch (error) {
+    formMessage.value = error?.message || '加入课号失败'
+    formMessageType.value = 'error'
+  } finally {
+    joiningCourse.value = false
+  }
+}
+
+const handleJoinTeam = async (team) => {
+  if (!team?.id || team.full) return
+  joiningTeamId.value = team.id
+  formMessage.value = ''
+  try {
+    await joinTeamApi(team.id)
+    await loadStatus({ silent: true })
+    formMessage.value = `已加入「${team.teamName}」。`
+    formMessageType.value = 'success'
+  } catch (error) {
+    formMessage.value = error?.message || '加入小组失败'
+    formMessageType.value = 'error'
+  } finally {
+    joiningTeamId.value = null
+  }
+}
 
 const handleCreateTeam = async () => {
   if (!teamForm.teamName) {
@@ -525,6 +635,53 @@ onMounted(() => {
   margin-top: 18px;
   padding-top: 18px;
   border-top: 1px solid var(--wb-search-border);
+}
+
+.prepare-team-actions {
+  display: grid;
+  gap: 20px;
+}
+
+.prepare-team-block__title {
+  margin: 0 0 10px;
+  color: var(--wb-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.prepare-team-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.prepare-team-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--wb-search-bg);
+  border: 1px solid var(--wb-search-border);
+}
+
+.prepare-team-item__meta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.prepare-team-item__meta strong {
+  color: var(--wb-text-primary);
+  font-size: 14px;
+}
+
+.prepare-team-item__meta span {
+  color: var(--wb-text-secondary);
+  font-size: 12px;
 }
 
 .prepare-context {

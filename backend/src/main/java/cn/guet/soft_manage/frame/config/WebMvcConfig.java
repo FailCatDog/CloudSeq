@@ -2,6 +2,7 @@ package cn.guet.soft_manage.frame.config;
 
 import cn.guet.soft_manage.frame.interceptor.CollabInternalInterceptor;
 import cn.guet.soft_manage.frame.interceptor.JwtInterceptor;
+import cn.guet.soft_manage.frame.interceptor.PermissionInterceptor;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
@@ -20,6 +21,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Resource
     private CollabInternalInterceptor collabInternalInterceptor;
+
+    @Resource
+    private PermissionInterceptor permissionInterceptor;
+
+    private static final String[] AUTH_EXCLUDE_PATTERNS = {
+            "/**/login",
+            "/**/register",
+            "/api/dict/**",
+            "/api/internal/collab/**"
+    };
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -49,10 +60,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         registry.addInterceptor(new JwtInterceptor())
                 .addPathPatterns("/**")
-                .excludePathPatterns(
-                        "/**/login",
-                        "/**/register",
-                        "/api/dict/**",
-                        "/api/internal/collab/**");
+                .excludePathPatterns(AUTH_EXCLUDE_PATTERNS);
+
+        registry.addInterceptor(permissionInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns(AUTH_EXCLUDE_PATTERNS);
     }
 }

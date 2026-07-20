@@ -3,8 +3,8 @@ package cn.guet.soft_manage.biz.rbac.service.impl;
 import cn.guet.soft_manage.biz.rbac.dao.SysUserRoleDao;
 import cn.guet.soft_manage.biz.rbac.entity.SysRole;
 import cn.guet.soft_manage.biz.rbac.entity.SysUserRole;
-import cn.guet.soft_manage.biz.rbac.service.RoleService;
-import cn.guet.soft_manage.biz.rbac.service.UserRoleService;
+import cn.guet.soft_manage.biz.rbac.service.IRoleService;
+import cn.guet.soft_manage.biz.rbac.service.IUserRoleService;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -14,13 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
-public class UserRoleServiceImpl implements UserRoleService {
+public class UserRoleServiceImpl implements IUserRoleService {
 
     @Resource
     private SysUserRoleDao sysUserRoleDao;
 
     @Resource
-    private RoleService roleService;
+    private IRoleService roleService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

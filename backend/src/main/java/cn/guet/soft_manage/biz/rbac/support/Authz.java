@@ -1,6 +1,6 @@
 package cn.guet.soft_manage.biz.rbac.support;
 
-import cn.guet.soft_manage.biz.rbac.service.PermissionService;
+import cn.guet.soft_manage.biz.rbac.service.IPermissionService;
 import cn.guet.soft_manage.frame.auth.UserContext;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
@@ -15,7 +15,7 @@ import org.springframework.util.StringUtils;
 public class Authz {
 
     @Resource
-    private PermissionService permissionService;
+    private IPermissionService permissionService;
 
     public boolean hasPermission(String perm) {
         if (!StringUtils.hasText(perm)) {

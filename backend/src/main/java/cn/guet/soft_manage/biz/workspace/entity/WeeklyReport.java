@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_weekly_report")
+@TableName("fs_weekly_report")
 public class WeeklyReport {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)

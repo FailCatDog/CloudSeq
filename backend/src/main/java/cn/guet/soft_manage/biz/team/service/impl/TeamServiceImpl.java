@@ -4,9 +4,11 @@ import cn.guet.soft_manage.biz.team.dao.TeamDao;
 import cn.guet.soft_manage.biz.team.dao.TeamMemberDao;
 import cn.guet.soft_manage.biz.team.dao.TopicApprovalDao;
 import cn.guet.soft_manage.biz.course.dao.CourseDao;
-import cn.guet.soft_manage.biz.course.dao.CourseStaffDao;
+import cn.guet.soft_manage.biz.course.dao.CourseEnrollmentDao;
+import cn.guet.soft_manage.biz.rbac.service.IDataScopeService;
 import cn.guet.soft_manage.biz.user.dao.UserDao;
 import cn.guet.soft_manage.biz.team.dto.TeamCreateRequestDTO;
+import cn.guet.soft_manage.biz.team.dto.TeamJoinableSummaryDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMemberAddRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMemberInfoDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMembersResponseDTO;
@@ -18,7 +20,7 @@ import cn.guet.soft_manage.biz.team.entity.Team;
 import cn.guet.soft_manage.biz.team.entity.TeamMember;
 import cn.guet.soft_manage.biz.team.entity.TopicApproval;
 import cn.guet.soft_manage.biz.course.entity.Course;
-import cn.guet.soft_manage.biz.course.entity.CourseStaff;
+import cn.guet.soft_manage.biz.course.entity.CourseEnrollment;
 import cn.guet.soft_manage.biz.user.entity.User;
 import cn.guet.soft_manage.biz.team.service.TeamService;
 import cn.guet.soft_manage.biz.workspace.dao.WeeklyReportDao;
@@ -72,7 +74,10 @@ public class TeamServiceImpl implements TeamService {
     private CourseDao courseDao;
 
     @Resource
-    private CourseStaffDao courseStaffDao;
+    private CourseEnrollmentDao courseEnrollmentDao;
+
+    @Resource
+    private IDataScopeService dataScopeService;
 
     @Resource
     private WorkspaceDao workspaceDao;
@@ -86,33 +91,54 @@ public class TeamServiceImpl implements TeamService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Team createTeam(TeamCreateRequestDTO request) {
-        User leader = userDao.selectById(request.getLeaderUserId());
+        Long currentUserId = UserContext.getUserId();
+        if (currentUserId == null) {
+            throw new BusinessException(BizResponseCode.UNAUTHORIZED);
+        }
+
+        Long leaderUserId = request.getLeaderUserId() != null ? request.getLeaderUserId() : currentUserId;
+        if (!Objects.equals(leaderUserId, currentUserId)) {
+            throw new BusinessException(BizResponseCode.FORBIDDEN);
+        }
+
+        User leader = userDao.selectById(leaderUserId);
         if (Objects.isNull(leader)) {
             throw new BusinessException(BizResponseCode.USER_NOT_FOUND);
         }
+
+        CourseEnrollment enrollment = requireActiveEnrollment(leaderUserId);
+
+        boolean inTeam = teamMemberDao.exists(new LambdaQueryWrapper<TeamMember>()
+                .eq(TeamMember::getUserId, leaderUserId)
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
+        if (inTeam) {
+            throw new BusinessException(BizResponseCode.TEAM_MEMBER_ALREADY_EXISTS);
+        }
+
         boolean exists = teamDao.exists(new LambdaQueryWrapper<Team>()
-                .eq(Team::getLeaderUserId, request.getLeaderUserId()));
+                .eq(Team::getLeaderUserId, leaderUserId));
         if (exists) {
             throw new BusinessException(BizResponseCode.TEAM_LEADER_ALREADY_ASSIGNED);
         }
 
         Team team = Team.builder()
-                .teamName(request.getTeamName())
-                .leaderUserId(request.getLeaderUserId())
+                .teamName(request.getTeamName().trim())
+                .courseId(enrollment.getCourseId())
+                .leaderUserId(leaderUserId)
                 .status(CacheCode.TEAM_STATUS_NORMAL.getCode())
-                .createUser(UserContext.getUserId())
-                .updateUser(UserContext.getUserId())
+                .createUser(currentUserId)
+                .updateUser(currentUserId)
                 .build();
         teamDao.insert(team);
 
         TeamMember leaderMember = TeamMember.builder()
                 .teamId(team.getId())
-                .userId(request.getLeaderUserId())
+                .userId(leaderUserId)
                 .isLeader(1)
                 .memberStatus(CacheCode.MEMBER_STATUS_ACTIVE.getCode())
                 .joinDate(LocalDateTime.now())
-                .createUser(UserContext.getUserId())
-                .updateUser(UserContext.getUserId())
+                .createUser(currentUserId)
+                .updateUser(currentUserId)
                 .build();
         teamMemberDao.insert(leaderMember);
         return team;
@@ -125,6 +151,9 @@ public class TeamServiceImpl implements TeamService {
         if (Objects.isNull(team)) {
             throw new BusinessException(BizResponseCode.TEAM_NOT_FOUND);
         }
+        assertTeamJoinable(team);
+        assertTeamHasCapacity(team);
+
         boolean inTeam = teamMemberDao.exists(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getUserId, request.getUserId())
                 .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
@@ -143,6 +172,137 @@ public class TeamServiceImpl implements TeamService {
                 .build();
         teamMemberDao.insert(member);
         return member;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public TeamMember joinTeam(Long teamId) {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException(BizResponseCode.UNAUTHORIZED);
+        }
+
+        Team team = teamDao.selectById(teamId);
+        if (team == null || team.getCourseId() == null) {
+            throw new BusinessException(BizResponseCode.TEAM_NOT_FOUND);
+        }
+
+        CourseEnrollment enrollment = requireActiveEnrollment(userId);
+        if (!Objects.equals(enrollment.getCourseId(), team.getCourseId())) {
+            throw new BusinessException(BizResponseCode.FORBIDDEN);
+        }
+
+        assertTeamJoinable(team);
+        assertTeamHasCapacity(team);
+
+        boolean inTeam = teamMemberDao.exists(new LambdaQueryWrapper<TeamMember>()
+                .eq(TeamMember::getUserId, userId)
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
+        if (inTeam) {
+            throw new BusinessException(BizResponseCode.TEAM_MEMBER_ALREADY_EXISTS);
+        }
+
+        TeamMember member = TeamMember.builder()
+                .teamId(team.getId())
+                .userId(userId)
+                .isLeader(0)
+                .memberStatus(CacheCode.MEMBER_STATUS_ACTIVE.getCode())
+                .joinDate(LocalDateTime.now())
+                .createUser(userId)
+                .updateUser(userId)
+                .build();
+        teamMemberDao.insert(member);
+        return member;
+    }
+
+    @Override
+    public List<TeamJoinableSummaryDTO> listJoinableTeamsForCurrentStudent() {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException(BizResponseCode.UNAUTHORIZED);
+        }
+
+        CourseEnrollment enrollment = requireActiveEnrollment(userId);
+        Course course = courseDao.selectById(enrollment.getCourseId());
+        int maxTeamSize = course != null && course.getMaxTeamSize() != null
+                ? course.getMaxTeamSize()
+                : 5;
+
+        List<Team> teams = teamDao.selectList(new LambdaQueryWrapper<Team>()
+                .eq(Team::getCourseId, enrollment.getCourseId())
+                .ne(Team::getStatus, CacheCode.TEAM_STATUS_UNLOCKED.getCode())
+                .orderByDesc(Team::getCreateDate)
+                .orderByAsc(Team::getId));
+        if (teams.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> teamIds = teams.stream().map(Team::getId).toList();
+        List<TeamMember> activeMembers = teamMemberDao.selectList(new LambdaQueryWrapper<TeamMember>()
+                .in(TeamMember::getTeamId, teamIds)
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
+        Map<Long, Long> memberCountByTeam = activeMembers.stream()
+                .collect(Collectors.groupingBy(TeamMember::getTeamId, Collectors.counting()));
+
+        Set<Long> leaderIds = teams.stream()
+                .map(Team::getLeaderUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<Long, User> leaderMap = leaderIds.isEmpty()
+                ? Collections.emptyMap()
+                : userDao.selectBatchIds(new ArrayList<>(leaderIds)).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity(), (a, b) -> a));
+
+        return teams.stream()
+                .map(team -> {
+                    int memberCount = memberCountByTeam.getOrDefault(team.getId(), 0L).intValue();
+                    boolean full = memberCount >= maxTeamSize;
+                    return TeamJoinableSummaryDTO.builder()
+                            .id(team.getId())
+                            .teamName(StringUtils.hasText(team.getTeamName()) ? team.getTeamName() : "未命名小组")
+                            .leaderName(resolveDisplayName(leaderMap.get(team.getLeaderUserId()), team.getLeaderUserId()))
+                            .memberCount(memberCount)
+                            .maxTeamSize(maxTeamSize)
+                            .full(full)
+                            .status(team.getStatus())
+                            .build();
+                })
+                .toList();
+    }
+
+    private CourseEnrollment requireActiveEnrollment(Long userId) {
+        CourseEnrollment enrollment = courseEnrollmentDao.selectOne(new LambdaQueryWrapper<CourseEnrollment>()
+                .eq(CourseEnrollment::getUserId, userId)
+                .eq(CourseEnrollment::getEnrollStatus, CacheCode.ENROLL_STATUS_ENROLLED.getCode())
+                .orderByDesc(CourseEnrollment::getEnrollDate)
+                .orderByDesc(CourseEnrollment::getId)
+                .last("LIMIT 1"));
+        if (enrollment == null) {
+            throw new BusinessException(BizResponseCode.COURSE_ENROLLMENT_REQUIRED);
+        }
+        return enrollment;
+    }
+
+    private void assertTeamJoinable(Team team) {
+        if (Objects.equals(team.getStatus(), CacheCode.TEAM_STATUS_UNLOCKED.getCode())) {
+            throw new BusinessException(BizResponseCode.TEAM_NOT_JOINABLE);
+        }
+    }
+
+    private void assertTeamHasCapacity(Team team) {
+        if (team.getCourseId() == null) {
+            return;
+        }
+        Course course = courseDao.selectById(team.getCourseId());
+        int maxTeamSize = course != null && course.getMaxTeamSize() != null
+                ? course.getMaxTeamSize()
+                : 5;
+        Long count = teamMemberDao.selectCount(new LambdaQueryWrapper<TeamMember>()
+                .eq(TeamMember::getTeamId, team.getId())
+                .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode()));
+        if (count != null && count >= maxTeamSize) {
+            throw new BusinessException(BizResponseCode.TEAM_FULL);
+        }
     }
 
     @Override
@@ -263,17 +423,22 @@ public class TeamServiceImpl implements TeamService {
             throw new BusinessException(BizResponseCode.APPROVAL_NOT_FOUND);
         }
 
+        Team team = teamDao.selectById(approval.getTeamId());
+        if (team == null) {
+            throw new BusinessException(BizResponseCode.TEAM_NOT_FOUND);
+        }
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException(BizResponseCode.UNAUTHORIZED);
+        }
+        dataScopeService.requireCourseAccess(userId, team.getCourseId());
+
         approval.setApprovalStatus(request.getApprovalStatus());
         approval.setRejectReason(request.getRejectReason());
         approval.setApproveUserId(UserContext.getUserId());
         approval.setApproveDate(LocalDateTime.now());
         approval.setUpdateUser(UserContext.getUserId());
         topicApprovalDao.updateById(approval);
-
-        Team team = teamDao.selectById(approval.getTeamId());
-        if (team == null) {
-            return;
-        }
 
         if (Objects.equals(request.getApprovalStatus(), CacheCode.APPROVAL_STATUS_APPROVED.getCode())) {
             team.setStatus(CacheCode.TEAM_STATUS_UNLOCKED.getCode());
@@ -296,6 +461,15 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public List<TopicApprovalSummaryDTO> listTeacherTopicApprovals(String approvalStatus) {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            return Collections.emptyList();
+        }
+        List<Long> accessibleCourseIds = dataScopeService.resolveCourseIds(userId);
+        if (accessibleCourseIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         LambdaQueryWrapper<TopicApproval> wrapper = new LambdaQueryWrapper<TopicApproval>()
                 .orderByDesc(TopicApproval::getSubmitDate);
         if (StringUtils.hasText(approvalStatus)) {
@@ -317,10 +491,15 @@ public class TeamServiceImpl implements TeamService {
         }
 
         Map<Long, Team> teamMap = teamDao.selectBatchIds(teamIds).stream()
+                .filter(team -> team.getCourseId() != null && accessibleCourseIds.contains(team.getCourseId()))
                 .collect(Collectors.toMap(Team::getId, Function.identity(), (left, right) -> left));
 
+        if (teamMap.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         List<TeamMember> activeMembers = teamMemberDao.selectList(new LambdaQueryWrapper<TeamMember>()
-                .in(TeamMember::getTeamId, teamIds)
+                .in(TeamMember::getTeamId, teamMap.keySet())
                 .eq(TeamMember::getMemberStatus, CacheCode.MEMBER_STATUS_ACTIVE.getCode())
                 .orderByDesc(TeamMember::getIsLeader)
                 .orderByAsc(TeamMember::getJoinDate)
@@ -355,6 +534,7 @@ public class TeamServiceImpl implements TeamService {
                 .collect(Collectors.toMap(Course::getId, Function.identity(), (left, right) -> left));
 
         return approvals.stream()
+                .filter(approval -> teamMap.containsKey(approval.getTeamId()))
                 .map(approval -> toApprovalSummary(
                         approval,
                         teamMap.get(approval.getTeamId()),
@@ -401,7 +581,7 @@ public class TeamServiceImpl implements TeamService {
             return Collections.emptyList();
         }
 
-        List<Long> courseIds = findCourseIdsByTeacher(userId);
+        List<Long> courseIds = dataScopeService.resolveCourseIds(userId);
         if (courseIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -496,23 +676,6 @@ public class TeamServiceImpl implements TeamService {
                 .lastReportYear(lastReportYear)
                 .lastReportWeek(lastReportWeek)
                 .build();
-    }
-
-    private List<Long> findCourseIdsByTeacher(Long teacherId) {
-        Set<Long> courseIds = new LinkedHashSet<>();
-
-        courseDao.selectList(new LambdaQueryWrapper<Course>()
-                        .eq(Course::getPrimaryTeacherId, teacherId)
-                        .select(Course::getId))
-                .forEach(course -> courseIds.add(course.getId()));
-
-        courseStaffDao.selectList(new LambdaQueryWrapper<CourseStaff>()
-                        .eq(CourseStaff::getUserId, teacherId)
-                        .eq(CourseStaff::getStaffStatus, CacheCode.COURSE_STAFF_STATUS_ACTIVE.getCode())
-                        .select(CourseStaff::getCourseId))
-                .forEach(staff -> courseIds.add(staff.getCourseId()));
-
-        return new ArrayList<>(courseIds);
     }
 
     @Override

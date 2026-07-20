@@ -1,9 +1,8 @@
 package cn.guet.soft_manage.biz.workspace.service.impl;
 
 import cn.guet.soft_manage.biz.course.dao.CourseDao;
-import cn.guet.soft_manage.biz.course.dao.CourseStaffDao;
 import cn.guet.soft_manage.biz.course.entity.Course;
-import cn.guet.soft_manage.biz.course.entity.CourseStaff;
+import cn.guet.soft_manage.biz.rbac.service.IDataScopeService;
 import cn.guet.soft_manage.biz.team.dao.TeamDao;
 import cn.guet.soft_manage.biz.team.entity.Team;
 import cn.guet.soft_manage.biz.user.dao.UserDao;
@@ -61,7 +60,7 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
     private CourseDao courseDao;
 
     @Resource
-    private CourseStaffDao courseStaffDao;
+    private IDataScopeService dataScopeService;
 
     @Resource
     private UserDao userDao;
@@ -220,7 +219,7 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
             throw new BusinessException(BizResponseCode.COURSE_NOT_FOUND);
         }
 
-        List<Long> accessibleCourseIds = findCourseIdsByTeacher(teacherId);
+        List<Long> accessibleCourseIds = dataScopeService.resolveCourseIds(teacherId);
         if (!accessibleCourseIds.contains(courseId)) {
             throw new BusinessException(BizResponseCode.FORBIDDEN);
         }
@@ -342,22 +341,5 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
             return user.getUsername().trim();
         }
         return "用户" + user.getId();
-    }
-
-    private List<Long> findCourseIdsByTeacher(Long teacherId) {
-        Set<Long> courseIds = new LinkedHashSet<>();
-
-        courseDao.selectList(new LambdaQueryWrapper<Course>()
-                        .eq(Course::getPrimaryTeacherId, teacherId)
-                        .select(Course::getId))
-                .forEach(course -> courseIds.add(course.getId()));
-
-        courseStaffDao.selectList(new LambdaQueryWrapper<CourseStaff>()
-                        .eq(CourseStaff::getUserId, teacherId)
-                        .eq(CourseStaff::getStaffStatus, CacheCode.COURSE_STAFF_STATUS_ACTIVE.getCode())
-                        .select(CourseStaff::getCourseId))
-                .forEach(staff -> courseIds.add(staff.getCourseId()));
-
-        return new ArrayList<>(courseIds);
     }
 }

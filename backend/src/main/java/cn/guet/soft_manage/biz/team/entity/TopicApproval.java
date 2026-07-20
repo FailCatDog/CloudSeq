@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("sm_topic_approval")
+@TableName("fs_topic_approval")
 public class TopicApproval {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)

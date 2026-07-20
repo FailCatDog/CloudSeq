@@ -1,6 +1,7 @@
 package cn.guet.soft_manage.biz.team.service;
 
 import cn.guet.soft_manage.biz.team.dto.TeamCreateRequestDTO;
+import cn.guet.soft_manage.biz.team.dto.TeamJoinableSummaryDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMemberAddRequestDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamMembersResponseDTO;
 import cn.guet.soft_manage.biz.team.dto.TeamOverviewSummaryDTO;
@@ -33,6 +34,16 @@ public interface TeamService {
      * @return 成员信息
      */
     TeamMember addMember(TeamMemberAddRequestDTO request);
+
+    /**
+     * 当前学生加入指定小组
+     */
+    TeamMember joinTeam(Long teamId);
+
+    /**
+     * 当前学生可加入的同课号小组列表
+     */
+    List<TeamJoinableSummaryDTO> listJoinableTeamsForCurrentStudent();
 
     /**
      * 移除小组成员

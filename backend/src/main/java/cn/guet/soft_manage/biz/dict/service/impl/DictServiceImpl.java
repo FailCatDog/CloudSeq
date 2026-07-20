@@ -6,7 +6,7 @@ import cn.guet.soft_manage.biz.dict.dto.DictValueDTO;
 import cn.guet.soft_manage.biz.dict.entity.DictKey;
 import cn.guet.soft_manage.biz.dict.entity.DictValue;
 import cn.guet.soft_manage.biz.dict.service.DictService;
-import cn.guet.soft_manage.biz.common.util.RedissonUtil;
+import cn.guet.soft_manage.biz.util.RedissonUtil;
 import cn.guet.soft_manage.frame.config.DictCacheProperties;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
@@ -20,7 +20,6 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;

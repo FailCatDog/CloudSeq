@@ -1,9 +1,8 @@
 package cn.guet.soft_manage.biz.teaching.service.impl;
 
 import cn.guet.soft_manage.biz.course.dao.CourseDao;
-import cn.guet.soft_manage.biz.course.dao.CourseStaffDao;
 import cn.guet.soft_manage.biz.course.entity.Course;
-import cn.guet.soft_manage.biz.course.entity.CourseStaff;
+import cn.guet.soft_manage.biz.rbac.service.IDataScopeService;
 import cn.guet.soft_manage.biz.teaching.dto.TeachingDashboardAtRiskTeamDTO;
 import cn.guet.soft_manage.biz.teaching.dto.TeachingDashboardCourseDTO;
 import cn.guet.soft_manage.biz.teaching.dto.TeachingDashboardPendingItemDTO;
@@ -60,9 +59,6 @@ public class TeachingDashboardServiceImpl implements TeachingDashboardService {
     private CourseDao courseDao;
 
     @Resource
-    private CourseStaffDao courseStaffDao;
-
-    @Resource
     private TeamDao teamDao;
 
     @Resource
@@ -83,6 +79,9 @@ public class TeachingDashboardServiceImpl implements TeachingDashboardService {
     @Resource
     private PlanTaskDao planTaskDao;
 
+    @Resource
+    private IDataScopeService dataScopeService;
+
     @Override
     public TeachingDashboardResponseDTO getDashboard(Long courseId) {
         Long teacherId = UserContext.getUserId();
@@ -90,7 +89,7 @@ public class TeachingDashboardServiceImpl implements TeachingDashboardService {
             throw new BusinessException(BizResponseCode.UNAUTHORIZED);
         }
 
-        List<Long> accessibleCourseIds = findCourseIdsByTeacher(teacherId);
+        List<Long> accessibleCourseIds = dataScopeService.resolveCourseIds(teacherId);
         if (accessibleCourseIds.isEmpty()) {
             return emptyDashboard();
         }
@@ -423,23 +422,6 @@ public class TeachingDashboardServiceImpl implements TeachingDashboardService {
             return user.getUsername().trim();
         }
         return "用户" + user.getId();
-    }
-
-    private List<Long> findCourseIdsByTeacher(Long teacherId) {
-        Set<Long> courseIds = new LinkedHashSet<>();
-
-        courseDao.selectList(new LambdaQueryWrapper<Course>()
-                        .eq(Course::getPrimaryTeacherId, teacherId)
-                        .select(Course::getId))
-                .forEach(course -> courseIds.add(course.getId()));
-
-        courseStaffDao.selectList(new LambdaQueryWrapper<CourseStaff>()
-                        .eq(CourseStaff::getUserId, teacherId)
-                        .eq(CourseStaff::getStaffStatus, CacheCode.COURSE_STAFF_STATUS_ACTIVE.getCode())
-                        .select(CourseStaff::getCourseId))
-                .forEach(staff -> courseIds.add(staff.getCourseId()));
-
-        return new ArrayList<>(courseIds);
     }
 
     private record RiskCandidate(Team team, String riskHint, int progressPercent, int riskScore) {

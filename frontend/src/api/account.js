@@ -24,6 +24,10 @@ export const getProfileStatusApi = () => {
   return request(`${API_PREFIX}/profile/status`)
 }
 
+export const getPermissionsApi = () => {
+  return request(`${API_PREFIX}/permissions`)
+}
+
 export const updateProfileApi = (data) => {
   return request(`${API_PREFIX}/profile`, {
     method: 'PATCH',

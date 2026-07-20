@@ -7,11 +7,17 @@ import java.util.List;
 /**
  * RBAC 数据范围：SELF / COURSE / ALL
  */
-public interface DataScopeService {
+public interface IDataScopeService {
 
     DataScopeResult resolve(Long userId);
 
     String resolveDataScope(Long userId);
 
     List<Long> resolveCourseIds(Long userId);
+
+    boolean canAccessCourse(Long userId, Long courseId);
+
+    void requireCourseAccess(Long userId, Long courseId);
+
+    boolean isStaffDataScope(Long userId);
 }

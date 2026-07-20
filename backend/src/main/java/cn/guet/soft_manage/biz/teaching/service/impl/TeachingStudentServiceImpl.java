@@ -2,10 +2,9 @@ package cn.guet.soft_manage.biz.teaching.service.impl;
 
 import cn.guet.soft_manage.biz.course.dao.CourseDao;
 import cn.guet.soft_manage.biz.course.dao.CourseEnrollmentDao;
-import cn.guet.soft_manage.biz.course.dao.CourseStaffDao;
 import cn.guet.soft_manage.biz.course.entity.Course;
 import cn.guet.soft_manage.biz.course.entity.CourseEnrollment;
-import cn.guet.soft_manage.biz.course.entity.CourseStaff;
+import cn.guet.soft_manage.biz.rbac.service.IDataScopeService;
 import cn.guet.soft_manage.biz.teaching.dto.TeachingStudentItemDTO;
 import cn.guet.soft_manage.biz.teaching.service.TeachingStudentService;
 import cn.guet.soft_manage.biz.user.dao.UserDao;
@@ -17,13 +16,10 @@ import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,13 +30,13 @@ public class TeachingStudentServiceImpl implements TeachingStudentService {
     private CourseDao courseDao;
 
     @Resource
-    private CourseStaffDao courseStaffDao;
-
-    @Resource
     private CourseEnrollmentDao courseEnrollmentDao;
 
     @Resource
     private UserDao userDao;
+
+    @Resource
+    private IDataScopeService dataScopeService;
 
     @Override
     public List<TeachingStudentItemDTO> listTeacherStudents(String name, String studentNo, String courseCode) {
@@ -49,7 +45,7 @@ public class TeachingStudentServiceImpl implements TeachingStudentService {
             return Collections.emptyList();
         }
 
-        List<Long> courseIds = findCourseIdsByTeacher(teacherId);
+        List<Long> courseIds = dataScopeService.resolveCourseIds(teacherId);
         if (courseIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -94,23 +90,6 @@ public class TeachingStudentServiceImpl implements TeachingStudentService {
                 .filter(item -> matchesName(item, nameKeyword))
                 .filter(item -> matchesStudentNo(item, studentNoKeyword))
                 .toList();
-    }
-
-    private List<Long> findCourseIdsByTeacher(Long teacherId) {
-        Set<Long> courseIds = new LinkedHashSet<>();
-
-        courseDao.selectList(new LambdaQueryWrapper<Course>()
-                        .eq(Course::getPrimaryTeacherId, teacherId)
-                        .select(Course::getId))
-                .forEach(course -> courseIds.add(course.getId()));
-
-        courseStaffDao.selectList(new LambdaQueryWrapper<CourseStaff>()
-                        .eq(CourseStaff::getUserId, teacherId)
-                        .eq(CourseStaff::getStaffStatus, CacheCode.COURSE_STAFF_STATUS_ACTIVE.getCode())
-                        .select(CourseStaff::getCourseId))
-                .forEach(staff -> courseIds.add(staff.getCourseId()));
-
-        return new ArrayList<>(courseIds);
     }
 
     private Map<Long, User> loadUsers(List<Long> userIds) {
