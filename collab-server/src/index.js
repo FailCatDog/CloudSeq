@@ -42,7 +42,7 @@ const server = new Server({
     }
   },
 
-  async onStateless({ payload, documentName }) {
+  async onStateless({ payload, document, documentName }) {
     try {
       const message = JSON.parse(payload)
       if (message?.type !== 'content-snapshot') return
@@ -50,13 +50,40 @@ const server = new Server({
       const meta = documentMeta.get(documentName)
       if (!meta) return
 
-      documentMeta.set(documentName, {
+      const contentMd = message.contentMd ?? meta.contentMd
+      const updateUser = message.userId ?? meta.updateUser
+      const nextMeta = {
         ...meta,
-        contentMd: message.contentMd ?? meta.contentMd,
-        updateUser: message.userId ?? meta.updateUser,
+        contentMd,
+        updateUser,
+      }
+      documentMeta.set(documentName, nextMeta)
+
+      // Stateless snapshots do not dirty Yjs, so onStoreDocument may never run
+      // after the last edit. Persist immediately so contentMd reaches the DB.
+      if (!document || contentMd == null || contentMd === '') return
+
+      const state = Y.encodeStateAsUpdate(document)
+      const result = await persistDocument({
+        nodeId: nextMeta.nodeId,
+        version: nextMeta.version,
+        yjsStateBase64: Buffer.from(state).toString('base64'),
+        contentMd,
+        updateUser: updateUser ?? null,
       })
-    } catch {
-      // ignore malformed payloads
+
+      if (result?.version != null) {
+        const latest = documentMeta.get(documentName) || nextMeta
+        documentMeta.set(documentName, {
+          ...latest,
+          version: result.version,
+        })
+      }
+    } catch (error) {
+      // Ignore malformed payloads / optimistic-lock races with onStoreDocument
+      if (error?.message) {
+        console.warn(`content-snapshot persist skipped: ${error.message}`)
+      }
     }
   },
 

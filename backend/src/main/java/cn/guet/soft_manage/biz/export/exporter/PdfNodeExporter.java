@@ -5,23 +5,24 @@ import cn.guet.soft_manage.biz.export.dto.ExportArtifact;
 import cn.guet.soft_manage.biz.export.dto.ExportContext;
 import cn.guet.soft_manage.biz.export.dto.ExportFormat;
 import cn.guet.soft_manage.biz.export.dto.ResolvedExportAsset;
-import cn.guet.soft_manage.biz.export.markdown.MarkdownBlock;
-import cn.guet.soft_manage.biz.export.markdown.MarkdownDocumentParser;
+import cn.guet.soft_manage.biz.export.markdown.MarkdownHtmlConverter;
 import cn.guet.soft_manage.biz.export.util.ExportFileNames;
+import cn.guet.soft_manage.biz.export.util.ImageMediaTypes;
 import cn.guet.soft_manage.frame.config.ExportProperties;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.HtmlUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Base64;
-import java.util.List;
 
 /**
- * Exports DOCUMENT nodes to PDF via Markdown → HTML → openhtmltopdf.
+ * Exports DOCUMENT nodes to PDF: TipTap markdown → HTML → openhtmltopdf.
  */
 @Component
 public class PdfNodeExporter implements NodeExporter {
@@ -51,30 +52,11 @@ public class PdfNodeExporter implements NodeExporter {
         }
 
         ExportAssetResolver resolver = ctx.getAssetResolver() != null ? ctx.getAssetResolver() : assetResolver;
-        List<MarkdownBlock> blocks = MarkdownDocumentParser.parse(contentMd);
+        String htmlBody = MarkdownHtmlConverter.toHtml(contentMd);
+        String rewritten = rewriteImages(htmlBody, ctx.getWorkspaceId(), resolver);
+        String html = wrapHtmlDocument(rewritten);
 
         try {
-            StringBuilder body = new StringBuilder();
-            long embeddedBytes = 0;
-            int orderedIndex = 0;
-            for (MarkdownBlock block : blocks) {
-                switch (block.getType()) {
-                    case HEADING -> appendHeading(body, block);
-                    case PARAGRAPH -> appendParagraph(body, nullToEmpty(block.getText()));
-                    case BULLET_ITEM -> {
-                        orderedIndex = 0;
-                        appendParagraph(body, "• " + nullToEmpty(block.getText()));
-                    }
-                    case ORDERED_ITEM -> {
-                        orderedIndex++;
-                        appendParagraph(body, orderedIndex + ". " + nullToEmpty(block.getText()));
-                    }
-                    case TABLE -> appendTable(body, block);
-                    case IMAGE -> embeddedBytes = appendImage(body, ctx.getWorkspaceId(), block, resolver, embeddedBytes);
-                }
-            }
-
-            String html = wrapHtmlDocument(body.toString());
             byte[] pdfBytes = renderPdf(html);
             return ExportArtifact.builder()
                 .bytes(pdfBytes)
@@ -86,6 +68,31 @@ public class PdfNodeExporter implements NodeExporter {
         } catch (Exception ex) {
             throw new BusinessException(BizResponseCode.EXPORT_RENDER_FAILED);
         }
+    }
+
+    private String rewriteImages(String html, Long workspaceId, ExportAssetResolver resolver) {
+        org.jsoup.nodes.Document dom = Jsoup.parseBodyFragment(html);
+        // openhtmltopdf requires XHTML (self-closing <img />); HTML5 <img></img> breaks the XML parser
+        dom.outputSettings().syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml);
+        Elements images = dom.select("img");
+        long embeddedBytes = 0;
+        for (Element img : images) {
+            String src = img.hasAttr("src") ? img.attr("src") : null;
+            ResolvedExportAsset asset = resolver == null ? null : resolver.resolve(workspaceId, src);
+            String mediaType = asset == null ? null : ImageMediaTypes.sniff(asset.getBytes(), asset.getContentType());
+            if (asset == null || asset.getBytes() == null || asset.getBytes().length == 0 || mediaType == null) {
+                img.replaceWith(new org.jsoup.nodes.Element("em").text(MISSING_IMAGE_PLACEHOLDER));
+                continue;
+            }
+            long next = embeddedBytes + asset.getBytes().length;
+            if (next > properties.getMaxEmbeddedImageBytes()) {
+                throw new BusinessException(BizResponseCode.EXPORT_IMAGES_TOO_LARGE);
+            }
+            embeddedBytes = next;
+            String base64 = Base64.getEncoder().encodeToString(asset.getBytes());
+            img.attr("src", "data:" + mediaType + ";base64," + base64);
+        }
+        return dom.body().html();
     }
 
     private byte[] renderPdf(String html) throws Exception {
@@ -135,93 +142,5 @@ public class PdfNodeExporter implements NodeExporter {
             </body>
             </html>
             """.formatted(FONT_FAMILY, bodyHtml);
-    }
-
-    private static void appendHeading(StringBuilder body, MarkdownBlock block) {
-        int level = block.getLevel() == null ? 1 : Math.min(6, Math.max(1, block.getLevel()));
-        body.append("<h").append(level).append('>')
-            .append(escape(nullToEmpty(block.getText())))
-            .append("</h").append(level).append('>');
-    }
-
-    private static void appendParagraph(StringBuilder body, String text) {
-        body.append("<p>").append(escape(text)).append("</p>");
-    }
-
-    private static void appendTable(StringBuilder body, MarkdownBlock block) {
-        List<List<String>> rows = block.getTableRows();
-        if (rows == null || rows.isEmpty()) {
-            return;
-        }
-        body.append("<table>");
-        for (List<String> cells : rows) {
-            body.append("<tr>");
-            if (cells != null) {
-                for (String cell : cells) {
-                    body.append("<td>").append(escape(nullToEmpty(cell))).append("</td>");
-                }
-            }
-            body.append("</tr>");
-        }
-        body.append("</table>");
-    }
-
-    private long appendImage(
-        StringBuilder body,
-        Long workspaceId,
-        MarkdownBlock block,
-        ExportAssetResolver resolver,
-        long embeddedBytes
-    ) {
-        ResolvedExportAsset asset = resolver == null ? null : resolver.resolve(workspaceId, block.getUrl());
-        String contentType = asset == null ? null : supportedImageContentType(asset.getContentType());
-        if (asset == null || asset.getBytes() == null || asset.getBytes().length == 0 || contentType == null) {
-            body.append("<p><em>").append(escape(MISSING_IMAGE_PLACEHOLDER)).append("</em></p>");
-            return embeddedBytes;
-        }
-
-        long next = embeddedBytes + asset.getBytes().length;
-        if (next > properties.getMaxEmbeddedImageBytes()) {
-            throw new BusinessException(BizResponseCode.EXPORT_IMAGES_TOO_LARGE);
-        }
-
-        String base64 = Base64.getEncoder().encodeToString(asset.getBytes());
-        String alt = escape(nullToEmpty(block.getAlt()));
-        body.append("<p><img src=\"data:")
-            .append(contentType)
-            .append(";base64,")
-            .append(base64)
-            .append("\" alt=\"")
-            .append(alt)
-            .append("\"/></p>");
-        return next;
-    }
-
-    /**
-     * Returns a normalized MIME type for JPEG/PNG/GIF, or {@code null} when unsupported (e.g. WebP).
-     */
-    private static String supportedImageContentType(String contentType) {
-        if (contentType == null) {
-            return null;
-        }
-        String ct = contentType.toLowerCase();
-        if (ct.contains("jpeg") || ct.contains("jpg")) {
-            return "image/jpeg";
-        }
-        if (ct.contains("png")) {
-            return "image/png";
-        }
-        if (ct.contains("gif")) {
-            return "image/gif";
-        }
-        return null;
-    }
-
-    private static String escape(String value) {
-        return HtmlUtils.htmlEscape(value);
-    }
-
-    private static String nullToEmpty(String value) {
-        return value == null ? "" : value;
     }
 }

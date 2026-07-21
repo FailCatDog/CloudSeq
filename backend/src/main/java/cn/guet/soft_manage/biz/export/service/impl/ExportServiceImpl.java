@@ -45,6 +45,11 @@ public class ExportServiceImpl implements ExportService {
 
     @Override
     public ExportArtifact export(Long nodeId, String formatParam) {
+        return export(nodeId, formatParam, null);
+    }
+
+    @Override
+    public ExportArtifact export(Long nodeId, String formatParam, String contentOverride) {
         ExportFormat format = ExportFormat.fromParam(formatParam);
         if (format == null) {
             throw new BusinessException(BizResponseCode.EXPORT_FORMAT_INVALID);
@@ -63,12 +68,16 @@ public class ExportServiceImpl implements ExportService {
             throw new BusinessException(BizResponseCode.DOCUMENT_CONTENT_NOT_FOUND);
         }
 
+        String contentMd = (contentOverride != null && !contentOverride.isBlank())
+                ? contentOverride
+                : (content.getContentMd() != null ? content.getContentMd() : "");
+
         ExportContext context = ExportContext.builder()
                 .nodeId(node.getId())
                 .workspaceId(node.getWorkspaceId())
                 .nodeType(node.getNodeType())
                 .title(node.getTitle())
-                .contentMd(content.getContentMd() != null ? content.getContentMd() : "")
+                .contentMd(contentMd)
                 .assetResolver(exportAssetResolver)
                 .build();
 

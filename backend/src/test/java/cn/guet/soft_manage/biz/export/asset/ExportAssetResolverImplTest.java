@@ -17,17 +17,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ExportAssetResolverImplTest {
     @Mock WorkspaceAssetDao assetDao;
     @Mock ObjectStorageService storage;
+    @Mock SafeExternalImageFetcher externalImageFetcher;
     ExportAssetResolverImpl resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new ExportAssetResolverImpl(assetDao, storage);
+        resolver = new ExportAssetResolverImpl(assetDao, storage, externalImageFetcher);
     }
 
     @Test
@@ -42,10 +45,27 @@ class ExportAssetResolverImplTest {
         ResolvedExportAsset got = resolver.resolve(1L, "/api/assets/9");
         assertNotNull(got);
         assertEquals(3, got.getBytes().length);
+        verify(externalImageFetcher, never()).fetch(org.mockito.ArgumentMatchers.any());
     }
 
     @Test
-    void rejectsExternalUrl() {
+    void resolvesExternalHttpUrlViaFetcher() {
+        ResolvedExportAsset fetched = ResolvedExportAsset.builder()
+            .bytes(new byte[]{1, 2, 3})
+            .contentType("image/png")
+            .fileName("a.png")
+            .build();
+        when(externalImageFetcher.fetch("https://pdai.tech/images/arch_sqlyuanli.png")).thenReturn(fetched);
+
+        ResolvedExportAsset got = resolver.resolve(1L, "https://pdai.tech/images/arch_sqlyuanli.png");
+        assertNotNull(got);
+        assertEquals("image/png", got.getContentType());
+        verify(externalImageFetcher).fetch("https://pdai.tech/images/arch_sqlyuanli.png");
+    }
+
+    @Test
+    void returnsNullWhenExternalFetchFails() {
+        when(externalImageFetcher.fetch("https://evil.example/x.png")).thenReturn(null);
         assertNull(resolver.resolve(1L, "https://evil.example/x.png"));
     }
 

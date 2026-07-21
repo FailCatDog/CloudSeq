@@ -228,7 +228,12 @@ const handleExport = async (format) => {
   exporting.value = true
   exportMessage.value = ''
   try {
-    await downloadNodeExportApi(props.docId, format)
+    let contentMd
+    if (editor.value) {
+      contentMd = editor.value.getMarkdown()
+      pushContentSnapshot(contentMd, { immediate: true })
+    }
+    await downloadNodeExportApi(props.docId, format, { contentMd })
   } catch (error) {
     exportMessage.value = error?.message || '导出失败'
   } finally {

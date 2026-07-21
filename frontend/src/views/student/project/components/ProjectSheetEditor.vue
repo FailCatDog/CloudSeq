@@ -182,7 +182,19 @@ const handleExportExcel = async () => {
   exporting.value = true
   exportMessage.value = ''
   try {
-    await downloadNodeExportApi(props.sheetId, 'xlsx')
+    let contentMd
+    if (ydoc.value) {
+      const reader = new Sheet({ ydoc: ydoc.value })
+      try {
+        contentMd = JSON.stringify(reader.toSnapshot())
+      } finally {
+        reader.destroy()
+      }
+    }
+    if (contentMd) {
+      pushContentSnapshot(contentMd, { immediate: true })
+    }
+    await downloadNodeExportApi(props.sheetId, 'xlsx', { contentMd })
   } catch (error) {
     exportMessage.value = error?.message || '导出失败'
   } finally {

@@ -5,27 +5,34 @@ import cn.guet.soft_manage.biz.export.dto.ExportArtifact;
 import cn.guet.soft_manage.biz.export.dto.ExportContext;
 import cn.guet.soft_manage.biz.export.dto.ExportFormat;
 import cn.guet.soft_manage.biz.export.dto.ResolvedExportAsset;
-import cn.guet.soft_manage.biz.export.markdown.MarkdownBlock;
-import cn.guet.soft_manage.biz.export.markdown.MarkdownDocumentParser;
+import cn.guet.soft_manage.biz.export.markdown.MarkdownHtmlConverter;
 import cn.guet.soft_manage.biz.export.util.ExportFileNames;
+import cn.guet.soft_manage.biz.export.util.ImageMediaTypes;
 import cn.guet.soft_manage.frame.config.ExportProperties;
 import cn.guet.soft_manage.frame.enums.BizResponseCode;
 import cn.guet.soft_manage.frame.exception.BusinessException;
 import org.apache.poi.util.Units;
+import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Exports DOCUMENT nodes to DOCX via Apache POI XWPF.
+ * Exports DOCUMENT nodes to DOCX via TipTap markdown → HTML → POI.
  */
 @Component
 public class DocxNodeExporter implements NodeExporter {
@@ -55,26 +62,13 @@ public class DocxNodeExporter implements NodeExporter {
         }
 
         ExportAssetResolver resolver = ctx.getAssetResolver() != null ? ctx.getAssetResolver() : assetResolver;
-        List<MarkdownBlock> blocks = MarkdownDocumentParser.parse(contentMd);
+        String html = MarkdownHtmlConverter.toHtml(contentMd);
 
         try (XWPFDocument document = new XWPFDocument()) {
             long embeddedBytes = 0;
-            int orderedIndex = 0;
-            for (MarkdownBlock block : blocks) {
-                switch (block.getType()) {
-                    case HEADING -> appendHeading(document, block);
-                    case PARAGRAPH -> appendParagraph(document, nullToEmpty(block.getText()));
-                    case BULLET_ITEM -> {
-                        orderedIndex = 0;
-                        appendParagraph(document, "• " + nullToEmpty(block.getText()));
-                    }
-                    case ORDERED_ITEM -> {
-                        orderedIndex++;
-                        appendParagraph(document, orderedIndex + ". " + nullToEmpty(block.getText()));
-                    }
-                    case TABLE -> appendTable(document, block);
-                    case IMAGE -> embeddedBytes = appendImage(document, ctx.getWorkspaceId(), block, resolver, embeddedBytes);
-                }
+            org.jsoup.nodes.Document dom = Jsoup.parseBodyFragment(html);
+            for (Element child : dom.body().children()) {
+                embeddedBytes = writeBlock(document, child, ctx.getWorkspaceId(), resolver, embeddedBytes);
             }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -91,51 +85,229 @@ public class DocxNodeExporter implements NodeExporter {
         }
     }
 
-    private static void appendHeading(XWPFDocument document, MarkdownBlock block) {
-        XWPFParagraph paragraph = document.createParagraph();
-        int level = block.getLevel() == null ? 1 : Math.min(6, Math.max(1, block.getLevel()));
-        paragraph.setStyle("Heading" + level);
-        XWPFRun run = paragraph.createRun();
-        run.setText(nullToEmpty(block.getText()));
-        run.setBold(true);
-        run.setFontSize(Math.max(12, 24 - (level - 1) * 2));
+    private long writeBlock(
+        XWPFDocument document,
+        Element el,
+        Long workspaceId,
+        ExportAssetResolver resolver,
+        long embeddedBytes
+    ) throws Exception {
+        String tag = el.normalName();
+        return switch (tag) {
+            case "h1", "h2", "h3", "h4", "h5", "h6" -> {
+                int level = tag.charAt(1) - '0';
+                XWPFParagraph p = document.createParagraph();
+                appendInline(p, el.childNodes(), false, false, level);
+                yield embeddedBytes;
+            }
+            case "p" -> writeParagraphElement(document, el, workspaceId, resolver, embeddedBytes);
+            case "ul", "ol" -> writeList(document, el, "ol".equals(tag), workspaceId, resolver, embeddedBytes);
+            case "table" -> {
+                writeTable(document, el);
+                yield embeddedBytes;
+            }
+            case "img" -> appendImage(document, workspaceId, el, resolver, embeddedBytes);
+            case "blockquote", "div", "section", "article" -> {
+                long bytes = embeddedBytes;
+                if (el.children().isEmpty()) {
+                    if (!el.ownText().isBlank()) {
+                        XWPFParagraph p = document.createParagraph();
+                        appendInline(p, el.childNodes(), false, false, 0);
+                    }
+                } else {
+                    for (Element child : el.children()) {
+                        bytes = writeBlock(document, child, workspaceId, resolver, bytes);
+                    }
+                }
+                yield bytes;
+            }
+            case "pre" -> {
+                XWPFParagraph p = document.createParagraph();
+                XWPFRun run = p.createRun();
+                run.setFontFamily("Courier New");
+                run.setText(el.text());
+                yield embeddedBytes;
+            }
+            case "hr" -> {
+                document.createParagraph();
+                yield embeddedBytes;
+            }
+            default -> writeParagraphElement(document, el, workspaceId, resolver, embeddedBytes);
+        };
     }
 
-    private static void appendParagraph(XWPFDocument document, String text) {
-        XWPFParagraph paragraph = document.createParagraph();
-        paragraph.createRun().setText(text);
+    private long writeParagraphElement(
+        XWPFDocument document,
+        Element el,
+        Long workspaceId,
+        ExportAssetResolver resolver,
+        long embeddedBytes
+    ) throws Exception {
+        List<Node> buffer = new ArrayList<>();
+        for (Node node : el.childNodes()) {
+            if (node instanceof Element child && "img".equals(child.normalName())) {
+                if (hasVisibleContent(buffer)) {
+                    XWPFParagraph p = document.createParagraph();
+                    appendInline(p, buffer, false, false, 0);
+                }
+                buffer = new ArrayList<>();
+                embeddedBytes = appendImage(document, workspaceId, child, resolver, embeddedBytes);
+            } else {
+                buffer.add(node);
+            }
+        }
+        if (hasVisibleContent(buffer) || el.childNodes().isEmpty()) {
+            XWPFParagraph p = document.createParagraph();
+            appendInline(p, buffer, false, false, 0);
+        }
+        return embeddedBytes;
     }
 
-    private static void appendTable(XWPFDocument document, MarkdownBlock block) {
-        List<List<String>> rows = block.getTableRows();
-        if (rows == null || rows.isEmpty()) {
+    private static boolean hasVisibleContent(List<Node> nodes) {
+        for (Node node : nodes) {
+            if (node instanceof TextNode tn && !tn.text().isBlank()) {
+                return true;
+            }
+            if (node instanceof Element el && !el.text().isBlank()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private long writeList(
+        XWPFDocument document,
+        Element list,
+        boolean ordered,
+        Long workspaceId,
+        ExportAssetResolver resolver,
+        long embeddedBytes
+    ) throws Exception {
+        int index = 0;
+        for (Element li : list.children()) {
+            if (!"li".equals(li.normalName())) {
+                continue;
+            }
+            index++;
+            XWPFParagraph p = document.createParagraph();
+            XWPFRun prefix = p.createRun();
+            prefix.setText(ordered ? (index + ". ") : "• ");
+
+            List<Node> buffer = new ArrayList<>();
+            for (Node node : li.childNodes()) {
+                if (node instanceof Element child && "img".equals(child.normalName())) {
+                    if (hasVisibleContent(buffer)) {
+                        appendInline(p, buffer, false, false, 0);
+                        buffer = new ArrayList<>();
+                        p = document.createParagraph();
+                    }
+                    embeddedBytes = appendImage(document, workspaceId, child, resolver, embeddedBytes);
+                } else if (node instanceof Element child && ("ul".equals(child.normalName()) || "ol".equals(child.normalName()))) {
+                    if (hasVisibleContent(buffer)) {
+                        appendInline(p, buffer, false, false, 0);
+                        buffer = new ArrayList<>();
+                    }
+                    embeddedBytes = writeList(document, child, "ol".equals(child.normalName()), workspaceId, resolver, embeddedBytes);
+                } else {
+                    buffer.add(node);
+                }
+            }
+            if (hasVisibleContent(buffer)) {
+                appendInline(p, buffer, false, false, 0);
+            }
+        }
+        return embeddedBytes;
+    }
+
+    private static void writeTable(XWPFDocument document, Element tableEl) {
+        Elements rows = tableEl.select("> thead > tr, > tbody > tr, > tr");
+        if (rows.isEmpty()) {
             return;
         }
-        int cols = rows.stream().mapToInt(List::size).max().orElse(0);
+        int cols = 0;
+        for (Element row : rows) {
+            cols = Math.max(cols, row.select("> th, > td").size());
+        }
         if (cols == 0) {
             return;
         }
         XWPFTable table = document.createTable(rows.size(), cols);
         for (int r = 0; r < rows.size(); r++) {
             XWPFTableRow row = table.getRow(r);
-            List<String> cells = rows.get(r);
+            Elements cells = rows.get(r).select("> th, > td");
             for (int c = 0; c < cols; c++) {
                 XWPFTableCell cell = row.getCell(c);
-                String value = c < cells.size() ? nullToEmpty(cells.get(c)) : "";
-                cell.setText(value);
+                String value = c < cells.size() ? cells.get(c).text() : "";
+                cell.removeParagraph(0);
+                XWPFParagraph p = cell.addParagraph();
+                XWPFRun run = p.createRun();
+                run.setText(value);
+                if (c < cells.size() && "th".equals(cells.get(c).normalName())) {
+                    run.setBold(true);
+                }
             }
+        }
+    }
+
+    private static void appendInline(
+        XWPFParagraph paragraph,
+        List<Node> nodes,
+        boolean bold,
+        boolean italic,
+        int headingLevel
+    ) {
+        for (Node node : nodes) {
+            if (node instanceof TextNode textNode) {
+                String text = textNode.text();
+                if (text.isEmpty()) {
+                    continue;
+                }
+                XWPFRun run = paragraph.createRun();
+                applyStyle(run, bold, italic, headingLevel);
+                run.setText(text);
+            } else if (node instanceof Element el) {
+                String tag = el.normalName();
+                switch (tag) {
+                    case "strong", "b" -> appendInline(paragraph, el.childNodes(), true, italic, headingLevel);
+                    case "em", "i" -> appendInline(paragraph, el.childNodes(), bold, true, headingLevel);
+                    case "br" -> paragraph.createRun().addBreak();
+                    case "code" -> {
+                        XWPFRun run = paragraph.createRun();
+                        run.setFontFamily("Courier New");
+                        run.setText(el.text());
+                    }
+                    case "img" -> {
+                        // images are handled by paragraph splitter
+                    }
+                    default -> appendInline(paragraph, el.childNodes(), bold, italic, headingLevel);
+                }
+            }
+        }
+    }
+
+    private static void applyStyle(XWPFRun run, boolean bold, boolean italic, int headingLevel) {
+        if (headingLevel > 0) {
+            run.setBold(true);
+            run.setFontSize(Math.max(12, 24 - (headingLevel - 1) * 2));
+        } else if (bold) {
+            run.setBold(true);
+        }
+        if (italic) {
+            run.setItalic(true);
         }
     }
 
     private long appendImage(
         XWPFDocument document,
         Long workspaceId,
-        MarkdownBlock block,
+        Element img,
         ExportAssetResolver resolver,
         long embeddedBytes
     ) throws Exception {
-        ResolvedExportAsset asset = resolver == null ? null : resolver.resolve(workspaceId, block.getUrl());
-        Integer pictureType = asset == null ? null : pictureType(asset.getContentType());
+        String src = img.hasAttr("src") ? img.attr("src") : null;
+        ResolvedExportAsset asset = resolver == null ? null : resolver.resolve(workspaceId, src);
+        String mediaType = asset == null ? null : ImageMediaTypes.sniff(asset.getBytes(), asset.getContentType());
+        Integer pictureType = toPoiPictureType(mediaType);
         if (asset == null || asset.getBytes() == null || asset.getBytes().length == 0 || pictureType == null) {
             appendMissingImagePlaceholder(document);
             return embeddedBytes;
@@ -146,7 +318,11 @@ public class DocxNodeExporter implements NodeExporter {
             throw new BusinessException(BizResponseCode.EXPORT_IMAGES_TOO_LARGE);
         }
 
+        int widthPx = parsePx(img.attr("width"), DEFAULT_IMAGE_WIDTH_PX);
+        int heightPx = parsePx(img.attr("height"), DEFAULT_IMAGE_HEIGHT_PX);
+
         XWPFParagraph paragraph = document.createParagraph();
+        paragraph.setAlignment(ParagraphAlignment.LEFT);
         XWPFRun run = paragraph.createRun();
         String fileName = asset.getFileName() != null && !asset.getFileName().isBlank()
             ? asset.getFileName()
@@ -156,8 +332,8 @@ public class DocxNodeExporter implements NodeExporter {
                 in,
                 pictureType,
                 fileName,
-                Units.pixelToEMU(DEFAULT_IMAGE_WIDTH_PX),
-                Units.pixelToEMU(DEFAULT_IMAGE_HEIGHT_PX)
+                Units.pixelToEMU(widthPx),
+                Units.pixelToEMU(heightPx)
             );
         }
         return next;
@@ -170,36 +346,32 @@ public class DocxNodeExporter implements NodeExporter {
         run.setText(MISSING_IMAGE_PLACEHOLDER);
     }
 
-    /**
-     * Maps MIME type to a POI picture type, or {@code null} when unsupported (e.g. WebP).
-     */
-    private static Integer pictureType(String contentType) {
-        if (contentType == null) {
+    private static Integer toPoiPictureType(String mediaType) {
+        if (mediaType == null) {
             return null;
         }
-        String ct = contentType.toLowerCase();
-        if (ct.contains("jpeg") || ct.contains("jpg")) {
-            return XWPFDocument.PICTURE_TYPE_JPEG;
-        }
-        if (ct.contains("png")) {
-            return XWPFDocument.PICTURE_TYPE_PNG;
-        }
-        if (ct.contains("gif")) {
-            return XWPFDocument.PICTURE_TYPE_GIF;
-        }
-        if (ct.contains("bmp")) {
-            return XWPFDocument.PICTURE_TYPE_BMP;
-        }
-        if (ct.contains("emf")) {
-            return XWPFDocument.PICTURE_TYPE_EMF;
-        }
-        if (ct.contains("wmf")) {
-            return XWPFDocument.PICTURE_TYPE_WMF;
-        }
-        return null;
+        return switch (mediaType) {
+            case "image/jpeg" -> XWPFDocument.PICTURE_TYPE_JPEG;
+            case "image/png" -> XWPFDocument.PICTURE_TYPE_PNG;
+            case "image/gif" -> XWPFDocument.PICTURE_TYPE_GIF;
+            case "image/bmp" -> XWPFDocument.PICTURE_TYPE_BMP;
+            default -> null;
+        };
     }
 
-    private static String nullToEmpty(String value) {
-        return value == null ? "" : value;
+    private static int parsePx(String raw, int fallback) {
+        if (raw == null || raw.isBlank()) {
+            return fallback;
+        }
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
+            return fallback;
+        }
+        try {
+            int v = Integer.parseInt(digits);
+            return v > 0 ? Math.min(v, 2000) : fallback;
+        } catch (NumberFormatException ex) {
+            return fallback;
+        }
     }
 }

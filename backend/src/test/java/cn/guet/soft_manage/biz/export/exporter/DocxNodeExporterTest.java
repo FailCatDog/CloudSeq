@@ -84,6 +84,76 @@ class DocxNodeExporterTest {
     }
 
     @Test
+    void embedsPngFromTipTapHtmlImgWithDimensions() throws Exception {
+        ExportAssetResolver resolver = (ws, url) -> {
+            if ("/api/assets/7".equals(url)) {
+                return ResolvedExportAsset.builder()
+                    .bytes(TINY_PNG)
+                    .contentType("image/png")
+                    .fileName("shot.png")
+                    .build();
+            }
+            return null;
+        };
+        DocxNodeExporter exporter = new DocxNodeExporter(new ExportProperties(), resolver);
+        ExportContext ctx = ExportContext.builder()
+            .nodeId(1L).workspaceId(1L).nodeType("DOCUMENT")
+            .title("HTML图")
+            .contentMd("<img class=\"ps-doc-image\" src=\"/api/assets/7\" alt=\"shot.png\" width=\"400\" height=\"300\" />\n")
+            .assetResolver(resolver)
+            .build();
+
+        ExportArtifact art = exporter.export(ctx);
+
+        try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(art.getBytes()))) {
+            assertFalse(doc.getAllPictures().isEmpty());
+            assertEquals(TINY_PNG.length, doc.getAllPictures().get(0).getData().length);
+        }
+    }
+
+    @Test
+    void rendersMarkdownBoldWithoutAsterisks() throws Exception {
+        ExportAssetResolver resolver = (ws, url) -> null;
+        DocxNodeExporter exporter = new DocxNodeExporter(new ExportProperties(), resolver);
+        ExportArtifact art = exporter.export(ExportContext.builder()
+            .nodeId(1L).workspaceId(1L).nodeType("DOCUMENT")
+            .title("加粗")
+            .contentMd("这是**粗体**文字")
+            .assetResolver(resolver)
+            .build());
+
+        try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(art.getBytes()))) {
+            String all = doc.getParagraphs().stream().map(p -> p.getText()).reduce("", String::concat);
+            assertFalse(all.contains("**"));
+            assertTrue(all.contains("粗体"));
+            boolean hasBold = doc.getParagraphs().stream()
+                .flatMap(p -> p.getRuns().stream())
+                .anyMatch(r -> Boolean.TRUE.equals(r.isBold()) && r.text() != null && r.text().contains("粗体"));
+            assertTrue(hasBold);
+        }
+    }
+
+    @Test
+    void embedsPngWhenContentTypeMissingUsingMagicBytes() throws Exception {
+        ExportAssetResolver resolver = (ws, url) -> ResolvedExportAsset.builder()
+            .bytes(TINY_PNG)
+            .contentType(null)
+            .fileName("x.bin")
+            .build();
+        DocxNodeExporter exporter = new DocxNodeExporter(new ExportProperties(), resolver);
+        ExportArtifact art = exporter.export(ExportContext.builder()
+            .nodeId(1L).workspaceId(1L).nodeType("DOCUMENT")
+            .title("魔数")
+            .contentMd("![x](/api/assets/1)")
+            .assetResolver(resolver)
+            .build());
+
+        try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(art.getBytes()))) {
+            assertFalse(doc.getAllPictures().isEmpty());
+        }
+    }
+
+    @Test
     void missingImageBecomesPlaceholder() throws Exception {
         ExportAssetResolver resolver = (ws, url) -> null;
         DocxNodeExporter exporter = new DocxNodeExporter(new ExportProperties(), resolver);
@@ -170,5 +240,30 @@ class DocxNodeExporterTest {
 
         BusinessException ex = assertThrows(BusinessException.class, () -> exporter.export(ctx));
         assertEquals(BizResponseCode.EXPORT_IMAGES_TOO_LARGE.getCode(), ex.getCode());
+    }
+
+    @Test
+    void embedsExternalHttpImageWhenResolverReturnsBytes() throws Exception {
+        ExportAssetResolver resolver = (ws, url) -> {
+            if ("https://pdai.tech/images/arch_sqlyuanli.png".equals(url)) {
+                return ResolvedExportAsset.builder()
+                    .bytes(TINY_PNG)
+                    .contentType("image/png")
+                    .fileName("arch.png")
+                    .build();
+            }
+            return null;
+        };
+        DocxNodeExporter exporter = new DocxNodeExporter(new ExportProperties(), resolver);
+        ExportArtifact art = exporter.export(ExportContext.builder()
+            .nodeId(1L).workspaceId(1L).nodeType("DOCUMENT")
+            .title("外链图")
+            .contentMd("<img class=\"ps-doc-image\" src=\"https://pdai.tech/images/arch_sqlyuanli.png\" width=\"780\" height=\"332\" />\n")
+            .assetResolver(resolver)
+            .build());
+
+        try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(art.getBytes()))) {
+            assertFalse(doc.getAllPictures().isEmpty());
+        }
     }
 }

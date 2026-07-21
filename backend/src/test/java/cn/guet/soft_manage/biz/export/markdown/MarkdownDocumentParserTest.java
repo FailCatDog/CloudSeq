@@ -27,6 +27,26 @@ class MarkdownDocumentParserTest {
     }
 
     @Test
+    void parsesTipTapHtmlImgWithDimensions() {
+        // TipTap ProjectDocImage.renderMarkdown emits HTML when width/height are set
+        var blocks = MarkdownDocumentParser.parse(
+            "# Title\n\n"
+                + "<img class=\"ps-doc-image\" src=\"/api/assets/99\" alt=\"shot.png\" width=\"400\" height=\"300\" />\n");
+        assertEquals(MarkdownBlock.Type.HEADING, blocks.get(0).getType());
+        assertEquals(MarkdownBlock.Type.IMAGE, blocks.get(1).getType());
+        assertEquals("/api/assets/99", blocks.get(1).getUrl());
+        assertEquals("shot.png", blocks.get(1).getAlt());
+    }
+
+    @Test
+    void parsesHtmlImgSrcWithQueryString() {
+        var blocks = MarkdownDocumentParser.parse(
+            "<img src=\"/api/assets/42?access_token=abc\" alt=\"x\" />\n");
+        assertEquals(MarkdownBlock.Type.IMAGE, blocks.get(0).getType());
+        assertEquals("/api/assets/42?access_token=abc", blocks.get(0).getUrl());
+    }
+
+    @Test
     void collectTextIsThreadSafeUnderConcurrentParse() throws Exception {
         int threads = 8;
         var executor = Executors.newFixedThreadPool(threads);

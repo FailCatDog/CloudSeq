@@ -47,4 +47,7 @@ export:
   max-document-chars: 100000
   max-sheet-cells: 50000
   max-embedded-image-bytes: 20971520
+  external-image-enabled: true
+  external-image-timeout-ms: 8000
+  external-image-max-bytes: 10485760
 

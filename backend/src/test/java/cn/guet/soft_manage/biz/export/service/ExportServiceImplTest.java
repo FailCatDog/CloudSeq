@@ -113,6 +113,43 @@ class ExportServiceImplTest {
     }
 
     @Test
+    void prefersLiveContentOverrideWhenDbSnapshotEmpty() {
+        Long nodeId = 30L;
+        Long workspaceId = 40L;
+        WorkspaceNode node = WorkspaceNode.builder()
+            .id(nodeId)
+            .workspaceId(workspaceId)
+            .nodeType("SHEET")
+            .title("成绩表")
+            .build();
+        WorkspaceContent content = WorkspaceContent.builder()
+            .nodeId(nodeId)
+            .contentMd("")
+            .build();
+        String liveSnapshot = "{\"version\":2,\"sheets\":[{\"name\":\"Sheet1\",\"cells\":{}}]}";
+        ExportArtifact rendered = ExportArtifact.builder()
+            .bytes(new byte[]{7, 8, 9})
+            .contentType(ExportFormat.XLSX.getContentType())
+            .fileName("成绩表.xlsx")
+            .build();
+
+        when(workspaceNodeDao.selectById(nodeId)).thenReturn(node);
+        when(workspaceAccessService.requireCurrentAccess(workspaceId))
+            .thenReturn(WorkspaceAccessContext.builder().canWrite(true).build());
+        when(workspaceContentDao.selectOne(any(Wrapper.class))).thenReturn(content);
+        when(formatRegistry.resolve("SHEET", ExportFormat.XLSX)).thenReturn(nodeExporter);
+        when(nodeExporter.export(any(ExportContext.class))).thenReturn(rendered);
+        when(exportDelivery.deliver(rendered)).thenReturn(rendered);
+
+        ExportArtifact result = exportService.export(nodeId, "xlsx", liveSnapshot);
+
+        assertSame(rendered, result);
+        ArgumentCaptor<ExportContext> ctxCaptor = ArgumentCaptor.forClass(ExportContext.class);
+        verify(nodeExporter).export(ctxCaptor.capture());
+        assertEquals(liveSnapshot, ctxCaptor.getValue().getContentMd());
+    }
+
+    @Test
     void rejectsUnknownFormat() {
         BusinessException ex = assertThrows(BusinessException.class,
             () -> exportService.export(10L, "unknown"));

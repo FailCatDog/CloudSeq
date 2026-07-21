@@ -20,4 +20,13 @@ public class ExportProperties {
 
     /** 内嵌图片总大小上限（字节） */
     private long maxEmbeddedImageBytes = 20L * 1024 * 1024;
+
+    /** 是否允许导出时临时下载外链图片 */
+    private boolean externalImageEnabled = true;
+
+    /** 单张外链图片下载超时（毫秒） */
+    private int externalImageTimeoutMs = 8000;
+
+    /** 单张外链图片大小上限（字节） */
+    private long externalImageMaxBytes = 10L * 1024 * 1024;
 }
