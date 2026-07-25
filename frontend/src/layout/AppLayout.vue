@@ -27,6 +27,16 @@
       <div class="wb-sidebar-footer">
         <button
           type="button"
+          class="wb-theme-toggle"
+          :aria-label="isDark ? '切换为浅色主题' : '切换为深色主题'"
+          @click="toggleTheme"
+        >
+          <span class="wb-theme-toggle__icon" aria-hidden="true">{{ isDark ? '浅' : '深' }}</span>
+          <span class="wb-theme-toggle__label">{{ isDark ? '浅色' : '深色' }}</span>
+        </button>
+
+        <button
+          type="button"
           class="wb-sidebar-toggle"
           :aria-expanded="sidebarExpanded"
           aria-controls="sidebar"
@@ -94,6 +104,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import BrandLogo from '@/components/BrandLogo.vue'
 import AppScrollArea from '@/components/AppScrollArea.vue'
+import { useTheme } from '@/composables/useTheme'
 import { BRAND_NAME } from '@/constants/brand'
 import { buildSidebarNav, usePermissionStore } from '@/stores/permissionStore'
 import { clearCollabTokenCache } from '@/utils/collabTokenCache'
@@ -103,6 +114,8 @@ import {
   getUserFromStorage,
   isStaffRole,
 } from '@/utils/roleHome'
+
+const { isDark, toggleTheme } = useTheme()
 
 const route = useRoute()
 const router = useRouter()

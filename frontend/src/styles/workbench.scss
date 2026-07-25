@@ -202,6 +202,45 @@
   padding: 0 4px;
 }
 
+.wb-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 10px;
+  padding: 0;
+  border-radius: var(--wb-radius-sm);
+  background: transparent;
+  color: var(--wb-sidebar-icon);
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.wb-theme-toggle:hover {
+  background: var(--wb-sidebar-active);
+  color: var(--wb-sidebar-icon-active);
+}
+
+.wb-theme-toggle__label {
+  display: none;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.wb-sidebar.expanded .wb-theme-toggle {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0 12px;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.wb-sidebar.expanded .wb-theme-toggle__label {
+  display: inline;
+}
+
 .wb-sidebar-toggle {
   width: 100%;
   height: 40px;
