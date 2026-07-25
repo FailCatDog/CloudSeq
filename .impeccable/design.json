@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-23T10:33:00.000Z",
+  "title": "Design System: 云序 CloudSeq",
+  "extensions": {
+    "tokenSource": "frontend/src/styles/_tokens.scss",
+    "defaultTheme": "dark",
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Ordered Lilac",
+        "canonical": "#8b5cf6",
+        "theme": "dark",
+        "cssVar": "--wb-purple",
+        "tonalRamp": ["#3b0764", "#5b21b6", "#6d28d9", "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ede9fe"]
+      },
+      "primary-light": {
+        "role": "primary",
+        "displayName": "Studio Mint",
+        "canonical": "#10b981",
+        "theme": "light",
+        "cssVar": "--wb-purple",
+        "tonalRamp": ["#064e3b", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5"]
+      },
+      "sidebar": {
+        "role": "secondary",
+        "displayName": "Ink Plum Sidebar",
+        "canonical": "#12101a",
+        "theme": "dark",
+        "cssVar": "--wb-sidebar-bg",
+        "tonalRamp": ["#0f0d16", "#12101a", "#16141f", "#1f1c2b", "#2d2a3e", "#3d3a52", "#5a5670", "#8b8b9e"]
+      },
+      "sidebar-light": {
+        "role": "secondary",
+        "displayName": "Forest Sidebar",
+        "canonical": "#1e3a2f",
+        "theme": "light",
+        "cssVar": "--wb-sidebar-bg",
+        "tonalRamp": ["#064e3b", "#14532d", "#1e3a2f", "#166534", "#059669", "#10b981", "#6ee7b7", "#d1fae5"]
+      },
+      "page-bg-dark": {
+        "role": "neutral",
+        "displayName": "Violet Studio Page",
+        "canonical": "#16141f",
+        "theme": "dark",
+        "cssVar": "--wb-bg-page",
+        "tonalRamp": ["#0f0d16", "#12101a", "#16141f", "#1f1c2b", "#2a2640", "#3d3a52", "#5a5670", "#7a7690"]
+      },
+      "page-bg": {
+        "role": "neutral",
+        "displayName": "Mint Page Mist",
+        "canonical": "#f5faf7",
+        "theme": "light",
+        "cssVar": "--wb-bg-page",
+        "tonalRamp": ["#14241c", "#5b7266", "#7a9186", "#d5e5db", "#e8f2ec", "#eef6f1", "#f5faf7", "#ffffff"]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card Porcelain",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#1a1a2e", "#4b4b5e", "#8b8b9e", "#e2e4ea", "#eceef3", "#f4f6fa", "#fafafc", "#ffffff"]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Ink Text",
+        "canonical": "#1a1a2e",
+        "tonalRamp": ["#0f0f1a", "#1a1a2e", "#4b4b5e", "#8b8b9e", "#a0a0b0", "#e2e4ea", "#f4f6fa", "#ffffff"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Workbench greetings and rare hero titles." },
+      "headline": { "displayName": "Headline", "purpose": "Page and section titles." },
+      "title": { "displayName": "Title", "purpose": "Card titles and form section labels." },
+      "body": { "displayName": "Body", "purpose": "Default UI copy and table cells at 14px." },
+      "label": { "displayName": "Label", "purpose": "Meta labels, table headers, status notes." }
+    },
+    "shadows": [
+      {
+        "name": "card-rest",
+        "value": "0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03)",
+        "purpose": "Default soft lift under cards and surface panels."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 3px rgba(139, 92, 246, 0.14)",
+        "purpose": "Keyboard focus affordance aligned to Ordered Lilac."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "ease",
+        "purpose": "Default state transitions (~0.15–0.28s) for sidebar, buttons, inputs."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sidebar-collapsed", "value": "72px" },
+      { "name": "sidebar-expanded", "value": "220px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ordered Lilac CTA for primary workbench actions.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">确认</button>",
+      "css": ".ds-btn-primary { background: var(--wb-purple, #8b5cf6); color: #ffffff; border: none; border-radius: 10px; height: 36px; padding: 0 16px; font: 600 14px/1 Inter, \"PingFang SC\", sans-serif; cursor: pointer; transition: background 0.18s ease; } .ds-btn-primary:hover { background: #7c3aed; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.14); } .ds-btn-primary:active { background: #6d28d9; }"
+    },
+    {
+      "name": "Dark Button",
+      "kind": "button",
+      "refersTo": "button-dark",
+      "description": "Charcoal solid action contrasting the violet CTA.",
+      "html": "<button class=\"ds-btn-dark\" type=\"button\">继续</button>",
+      "css": ".ds-btn-dark { background: #1a1a24; color: #ffffff; border: none; border-radius: 10px; height: 36px; padding: 0 16px; font: 600 14px/1 Inter, \"PingFang SC\", sans-serif; cursor: pointer; transition: opacity 0.18s ease; } .ds-btn-dark:hover { opacity: 0.92; } .ds-btn-dark:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.14); }"
+    },
+    {
+      "name": "Workbench Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Large-radius white card on mist page background.",
+      "html": "<article class=\"ds-card\"><h3 class=\"ds-card__title\">本周周报</h3><p class=\"ds-card__body\">截止日期周一 10:00，提交后教师可审阅。</p></article>",
+      "css": ".ds-card { background: #ffffff; color: #1a1a2e; border: 1px solid #e2e4ea; border-radius: 20px; padding: 22px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03); font-family: Inter, \"PingFang SC\", sans-serif; } .ds-card__title { margin: 0 0 8px; font-size: 16px; font-weight: 700; line-height: 1.4; } .ds-card__body { margin: 0; font-size: 14px; line-height: 1.5; color: #8b8b9e; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "36px field with hairline border and violet focus.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field__label\">课号</span><input class=\"ds-input\" type=\"text\" placeholder=\"输入课号\" /></label>",
+      "css": ".ds-field { display: grid; gap: 6px; font-family: Inter, \"PingFang SC\", sans-serif; } .ds-field__label { font-size: 12px; font-weight: 600; color: #4b4b5e; } .ds-input { height: 36px; padding: 0 12px; border: 1px solid #e2e4ea; border-radius: 10px; background: #ffffff; color: #1a1a2e; font: 400 14px/1.5 Inter, \"PingFang SC\", sans-serif; transition: border-color 0.18s ease, box-shadow 0.18s ease; } .ds-input::placeholder { color: #a0a0b0; } .ds-input:hover { border-color: #c4b5fd; } .ds-input:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.14); }"
+    },
+    {
+      "name": "Status Tag",
+      "kind": "chip",
+      "refersTo": "tag-pill",
+      "description": "Pill semantic tag for approvals and report states.",
+      "html": "<span class=\"ds-tag ds-tag--pending\">待审批</span>",
+      "css": ".ds-tag { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; font: 600 12px/1 Inter, \"PingFang SC\", sans-serif; } .ds-tag--pending { background: #dbeafe; color: #2563eb; } .ds-tag--success { background: #dcfce7; color: #15803d; } .ds-tag--warning { background: #fff7ed; color: #ea580c; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "sidebar-nav-active",
+      "description": "Ink Plum sidebar item with lilac active wash.",
+      "html": "<nav class=\"ds-side\" aria-label=\"Workbench\"><a class=\"ds-side__item\" href=\"#\">概览</a><a class=\"ds-side__item ds-side__item--active\" href=\"#\" aria-current=\"page\">周报</a></nav>",
+      "css": ".ds-side { display: grid; gap: 6px; width: 180px; padding: 16px; background: #2d2a3e; border-radius: 12px; font-family: Inter, \"PingFang SC\", sans-serif; } .ds-side__item { display: block; padding: 10px 12px; border-radius: 10px; color: rgba(255, 255, 255, 0.55); text-decoration: none; font-size: 13px; font-weight: 500; transition: background 0.18s ease, color 0.18s ease; } .ds-side__item:hover { color: #ffffff; background: rgba(255, 255, 255, 0.06); } .ds-side__item--active { color: #c4b5fd; background: rgba(139, 92, 246, 0.22); } .ds-side__item:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.35); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Ordered Studio",
+    "overview": "云序是一间有序的学院工作室：浅色内容区承载阅读与协作，深色侧栏锚定平台导航。气质对齐 PRODUCT.md 中的「轻快、学院感、工具感，并带一点平台感」；取飞书的「好找入口」与语雀的「好读好写」，不照搬整站视觉。\n\n密度以工作台任务流为准：一屏一事、主路径醒目、状态标签语义清晰。装饰服务于方位感（侧栏、卡片层级），不为热闹而热闹。明确拒绝信息堆满的教务系统、花哨教育 SaaS 模板感，以及用装饰性仪表盘冒充「有序」。",
+    "keyCharacteristics": [
+      "紫罗兰主色 + 墨紫侧栏 + 浅灰页底的三段式壳层",
+      "大圆角卡片（20px）与中圆角控件（10px）并存",
+      "轻抬升阴影表达层级，不靠重投影制造「高级感」",
+      "组件手感清晰利落、平台感偏强（Naive UI 主题与 workbench token 对齐）"
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Ordered Lilac 在任意一屏的强调占用应克制：主按钮、关键激活、少量高亮即可。大面积铺紫会破坏学院工作室的轻快感。",
+        "section": "colors"
+      },
+      {
+        "name": "The Status Is Not Decoration Rule",
+        "body": "语义标签色只表达业务状态，禁止当作营销色块或仪表盘装饰。",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "不引入第二展示字体。学院感来自节奏与留白，不来自衬线装饰。",
+        "section": "typography"
+      },
+      {
+        "name": "The Soft Lift Rule",
+        "body": "默认阴影保持极淡。若看起来像 2014 年后台或厚重教务皮肤，说明阴影过深或模糊过小。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 让「下一步」可见：入课、审批、解锁工作台、交周报等路径用清晰层级与状态标签表达。",
+      "Do 保持角色分流：学生工作台、教师教学端、管理端共用 token，不共用信息架构噪音。",
+      "Do 用 Ordered Lilac 做稀缺强调，用语义标签做状态，用 Soft Lift 做层级。",
+      "Do 文档与表格优先阅读舒适（语雀式），入口与导航优先好找（飞书式）。",
+      "Do 满足 WCAG AA：对比度、键盘焦点、色 + 文双通道状态。"
+    ],
+    "donts": [
+      "Don't 做成信息堆满的教务系统：密密麻麻的表格墙、无主次的筛选项、同时抢注意力的统计与告警。",
+      "Don't 用花哨教育 SaaS 模板感，或用装饰性仪表盘冒充「有序」。",
+      "Don't 在工作台常规面堆大面积紫渐变、玻璃拟态或霓虹描边。",
+      "Don't 用大于 1px 的彩色侧条当卡片/列表强调（禁止 side-stripe 套路）。",
+      "Don't 引入第二套无关主色（例如另起「教务蓝」）破坏平台一致性。",
+      "Don't 仅靠颜色区分状态；标签必须可读文字或等价形态。"
+    ]
+  }
+}
