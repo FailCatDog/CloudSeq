@@ -32,11 +32,11 @@
       },
       "sidebar-light": {
         "role": "secondary",
-        "displayName": "Forest Sidebar",
-        "canonical": "#1e3a2f",
+        "displayName": "White Sidebar",
+        "canonical": "#ffffff",
         "theme": "light",
         "cssVar": "--wb-sidebar-bg",
-        "tonalRamp": ["#064e3b", "#14532d", "#1e3a2f", "#166534", "#059669", "#10b981", "#6ee7b7", "#d1fae5"]
+        "tonalRamp": ["#1a1a2e", "#6b7280", "#9ca3af", "#e5e7eb", "#f3f4f6", "#f9fafb", "#ffffff", "#ecfdf5"]
       },
       "page-bg-dark": {
         "role": "neutral",
@@ -48,11 +48,11 @@
       },
       "page-bg": {
         "role": "neutral",
-        "displayName": "Mint Page Mist",
-        "canonical": "#f5faf7",
+        "displayName": "Studio White",
+        "canonical": "#ffffff",
         "theme": "light",
         "cssVar": "--wb-bg-page",
-        "tonalRamp": ["#14241c", "#5b7266", "#7a9186", "#d5e5db", "#e8f2ec", "#eef6f1", "#f5faf7", "#ffffff"]
+        "tonalRamp": ["#1a1a2e", "#6b7280", "#9ca3af", "#e5e7eb", "#f3f4f6", "#f9fafb", "#ffffff", "#ecfdf5"]
       },
       "card": {
         "role": "neutral",

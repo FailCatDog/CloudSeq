@@ -39,21 +39,22 @@ colors:
     primary: "#10b981"
     primary-hover: "#059669"
     primary-pressed: "#047857"
-    primary-soft: "#d1fae5"
-    primary-border: "#6ee7b7"
+    primary-soft: "#ecfdf5"
+    primary-border: "#a7f3d0"
     link: "#059669"
-    sidebar: "#1e3a2f"
-    sidebar-active: "rgba(16, 185, 129, 0.28)"
-    sidebar-icon-active: "#6ee7b7"
-    page-bg: "#f5faf7"
+    sidebar: "#ffffff"
+    sidebar-active: "rgba(16, 185, 129, 0.14)"
+    sidebar-icon-active: "#059669"
+    sidebar-label: "#1a1a2e"
+    page-bg: "#ffffff"
     card: "#ffffff"
-    search-bg: "#e8f2ec"
-    border: "#d5e5db"
-    text-primary: "#14241c"
-    text-secondary: "#5b7266"
-    text-muted: "#7a9186"
-    btn-dark: "#14241c"
-    hover-surface: "#fafafc"
+    search-bg: "#f3f4f6"
+    border: "#e5e7eb"
+    text-primary: "#1a1a2e"
+    text-secondary: "#6b7280"
+    text-muted: "#9ca3af"
+    btn-dark: "#1a1a24"
+    hover-surface: "#f3f4f6"
     online: "#16a34a"
     tag-pending-bg: "#dbeafe"
     tag-pending-text: "#2563eb"
@@ -155,7 +156,7 @@ components:
 
 **Creative North Star: "The Ordered Studio"**
 
-云序是一间有序的学院工作室：**默认深色紫罗兰壳层**（`#16141f` 页底 + 淡紫强调），可通过主题切换为**浅色薄荷**（`#f5faf7` 页底 + `#10b981` 强调）。气质对齐 PRODUCT.md 中的「轻快、学院感、工具感，并带一点平台感」；取飞书的「好找入口」与语雀的「好读好写」，不照搬整站视觉。
+云序是一间有序的学院工作室：**默认深色紫罗兰壳层**（`#16141f` 页底 + 淡紫强调），可通过主题切换为**浅色白底**（`#ffffff` 页底 + `#10b981` 仅作按钮/选中等辅助强调）。气质对齐 PRODUCT.md 中的「轻快、学院感、工具感，并带一点平台感」；取飞书的「好找入口」与语雀的「好读好写」，不照搬整站视觉。
 
 密度以工作台任务流为准：一屏一事、主路径醒目、状态标签语义清晰。装饰服务于方位感（侧栏、卡片层级），不为热闹而热闹。明确拒绝信息堆满的教务系统、花哨教育 SaaS 模板感，以及用装饰性仪表盘冒充「有序」。
 
@@ -177,12 +178,13 @@ components:
 - **Ink Plum Sidebar** (#12101a): 固定侧栏与项目空间深色壳；图标默认半透明白，激活为淡紫 (#c4b5fd)。
 - **Light Ink Text** (#f4f2fa): 主文案；次级 (#a8a4bc)、弱化 (#7a7690)。
 
-### Light theme — white + mint green
-- **Mint Page Mist** (#f5faf7): 页面背景，让白卡片浮起。
-- **Studio Mint** (#10b981): 主操作、焦点环、图标强调（映射 `--wb-purple*`）。Hover (#059669)、Pressed (#047857)、Soft (#d1fae5)、Border (#6ee7b7)。
-- **Forest Sidebar** (#1e3a2f): 侧栏深绿壳；激活为 #6ee7b7。
+### Light theme — white body + mint accents
+- **Studio White** (#ffffff): 页面与侧栏主体；白底主导，不铺大面积绿色。
+- **Studio Mint** (#10b981): 仅作辅助强调——主按钮、选中菜单、焦点环、链接（映射 `--wb-purple*`）。Hover (#059669)、Pressed (#047857)、Soft (#ecfdf5)、Border (#a7f3d0)。
+- **Selected Nav Soft** (rgba(16,185,129,0.14)): 侧栏选中底；图标/文案激活为 #059669。
 - **Card Porcelain** (#ffffff): 卡片、弹层、表格单元格底。
-- **Ink Text** (#14241c): 主文案；次级 (#5b7266)、弱化 (#7a9186)。
+- **Ink Text** (#1a1a2e): 主文案；次级 (#6b7280)、弱化 (#9ca3af)。中性灰，不带绿调。
+- **Neutral Fog** (#f3f4f6 / #e5e7eb): 搜索凹面与描边，保持白底层次。
 
 ### Shared neutral & semantic (theme-keyed in frontmatter `colors.dark` / `colors.light`)
 - **Search Fog** (#eceef3 light / #2a2640 dark): 搜索框与进度轨等次级凹面。

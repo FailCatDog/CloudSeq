@@ -27,6 +27,7 @@
   --wb-sidebar-active: rgba(139, 92, 246, 0.28);
   --wb-sidebar-icon: rgba(244, 242, 250, 0.55);
   --wb-sidebar-icon-active: #c4b5fd;
+  --wb-sidebar-label: #ffffff;
   --wb-purple: #8b5cf6;
   --wb-purple-light: #a78bfa;
   --wb-purple-dark: #7c3aed;
@@ -93,21 +94,23 @@
 }
 
 [data-theme='light'] {
+  // White-dominant shell; mint green only as accent (active nav, buttons, focus)
   color-scheme: light;
 
-  --wb-bg-page: #f5faf7;
+  --wb-bg-page: #ffffff;
   --wb-sidebar-width: 72px;
   --wb-sidebar-width-expanded: 220px;
-  --wb-sidebar-bg: #1e3a2f;
-  --wb-sidebar-active: rgba(16, 185, 129, 0.28);
-  --wb-sidebar-icon: rgba(255, 255, 255, 0.55);
-  --wb-sidebar-icon-active: #6ee7b7;
+  --wb-sidebar-bg: #ffffff;
+  --wb-sidebar-active: rgba(16, 185, 129, 0.14);
+  --wb-sidebar-icon: #6b7280;
+  --wb-sidebar-icon-active: #059669;
+  --wb-sidebar-label: #1a1a2e;
   --wb-purple: #10b981;
   --wb-purple-light: #34d399;
   --wb-purple-dark: #059669;
   --wb-purple-deeper: #047857;
-  --wb-purple-soft: #d1fae5;
-  --wb-purple-border: #6ee7b7;
+  --wb-purple-soft: #ecfdf5;
+  --wb-purple-border: #a7f3d0;
   --wb-purple-alpha-06: rgba(16, 185, 129, 0.06);
   --wb-purple-alpha-08: rgba(16, 185, 129, 0.08);
   --wb-purple-alpha-10: rgba(16, 185, 129, 0.1);
@@ -118,24 +121,24 @@
   --wb-purple-alpha-28: rgba(5, 150, 105, 0.28);
   --wb-purple-alpha-35: rgba(52, 211, 153, 0.35);
   --wb-purple-alpha-45: rgba(16, 185, 129, 0.45);
-  --wb-text-primary: #14241c;
-  --wb-text-secondary: #5b7266;
-  --wb-text-muted: #7a9186;
+  --wb-text-primary: #1a1a2e;
+  --wb-text-secondary: #6b7280;
+  --wb-text-muted: #9ca3af;
   --wb-card-bg: #ffffff;
-  --wb-search-bg: #e8f2ec;
-  --wb-search-border: #d5e5db;
-  --wb-card-shadow: 0 1px 3px rgba(20, 36, 28, 0.04), 0 4px 16px rgba(20, 36, 28, 0.03);
+  --wb-search-bg: #f3f4f6;
+  --wb-search-border: #e5e7eb;
+  --wb-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03);
   --wb-radius-card: 20px;
   --wb-radius-sm: 10px;
   --wb-radius-pill: 999px;
   --wb-link-blue: #059669;
-  --wb-btn-dark: #14241c;
-  --wb-progress-track: #e8f2ec;
-  --wb-timeline-line: #d5e5db;
-  --wb-code-bg: #eef6f1;
+  --wb-btn-dark: #1a1a24;
+  --wb-progress-track: #f3f4f6;
+  --wb-timeline-line: #e5e7eb;
+  --wb-code-bg: #f3f4f6;
   --wb-online-green: #16a34a;
   --wb-icon-purple: #10b981;
-  --wb-icon-dark: #14241c;
+  --wb-icon-dark: #1a1a24;
   --wb-icon-orange: #f97316;
 
   --wb-tag-pending-bg: #dbeafe;
