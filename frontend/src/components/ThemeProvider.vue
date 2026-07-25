@@ -5,13 +5,7 @@
     :locale="zhCN"
     :date-locale="dateZhCN"
   >
-    <n-dialog-provider>
-      <n-message-provider>
-        <div class="console-root">
-          <slot />
-        </div>
-      </n-message-provider>
-    </n-dialog-provider>
+    <slot />
   </n-config-provider>
 </template>
 
