@@ -1,0 +1,154 @@
+@use 'mixins' as *;
+
+// Shared scrollbar styling for main scroll containers
+.app-scrollbar,
+.wb-page-content,
+.ps-doc-editor-scroll,
+.ps-doc-outline__nav,
+.ps-board,
+.weekly-page,
+.ps-doc-editor-content .tiptap pre {
+  @include styled-scrollbar;
+}
+
+.app-scrollbar--thin,
+.ps-doc-editor-content .tiptap pre {
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: var(--scroll-size-thin);
+    height: var(--scroll-size-thin);
+  }
+}
+
+.app-scrollbar--hover-reveal {
+  scrollbar-color: var(--scroll-thumb-idle) var(--scroll-track);
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--scroll-thumb-idle);
+  }
+
+  &:hover {
+    scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--scroll-thumb);
+    }
+  }
+}
+
+// AppScrollArea layout helpers
+.app-scroll-area--y,
+.app-scroll-area__viewport.app-scroll-area--y {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.app-scroll-area--x,
+.app-scroll-area__viewport.app-scroll-area--x {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.app-scroll-area--both,
+.app-scroll-area__viewport.app-scroll-area--both {
+  overflow: auto;
+}
+
+.app-scroll-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.app-scroll-area--flex {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.app-scroll-area__viewport {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.app-scroll-area__viewport--overlay {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none;
+  }
+}
+
+.app-scroll-area__rail {
+  position: absolute;
+  z-index: 30;
+  pointer-events: auto;
+}
+
+.app-scroll-area__rail--y {
+  top: 4px;
+  right: 2px;
+  bottom: 4px;
+  width: 10px;
+}
+
+.app-scroll-area__rail--x {
+  left: 4px;
+  right: 4px;
+  bottom: 2px;
+  height: 10px;
+}
+
+.app-scroll-area__thumb {
+  position: absolute;
+  border-radius: var(--scroll-radius);
+  background-color: var(--scroll-thumb);
+  transition: background-color 0.18s ease, opacity 0.18s ease;
+
+  &:active {
+    cursor: grabbing;
+    background-color: var(--scroll-thumb-active);
+  }
+}
+
+.app-scroll-area__thumb--y {
+  right: 2px;
+  width: var(--scroll-size);
+  min-height: 24px;
+  cursor: grab;
+}
+
+.app-scroll-area__thumb--x {
+  bottom: 2px;
+  height: var(--scroll-size);
+  min-width: 24px;
+  cursor: grab;
+}
+
+.app-scroll-area--overlay:hover .app-scroll-area__thumb,
+.app-scroll-area__thumb:hover {
+  background-color: var(--scroll-thumb-hover);
+}
+
+.app-scroll-area--overlay-thin .app-scroll-area__thumb--y {
+  width: var(--scroll-size-thin);
+}
+
+.app-scroll-area--overlay-thin .app-scroll-area__thumb--x {
+  height: var(--scroll-size-thin);
+}
+
+.app-scroll-area--overlay-hover .app-scroll-area__thumb {
+  opacity: 0.38;
+}
+
+.app-scroll-area--overlay-hover:hover .app-scroll-area__thumb {
+  opacity: 1;
+}

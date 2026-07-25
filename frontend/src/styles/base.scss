@@ -1,0 +1,221 @@
+// Global reset + shared utilities still used by live views/components.
+// Dead prototype shell (top-bar / dashboard-grid / gantt mock…) removed.
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei',
+    sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--wb-text-primary);
+  background: var(--wb-bg-page);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#app {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wb-text-muted);
+}
+
+.surface-card {
+  padding: 22px;
+  border: 1px solid var(--wb-search-border);
+  background: var(--wb-card-bg);
+  border-radius: var(--wb-radius-sm);
+  box-shadow: var(--wb-card-shadow);
+}
+
+.workspace-page-grid {
+  display: grid;
+  gap: 20px;
+}
+
+// Global lightweight prompt / confirm dialog
+.app-prompt-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.app-prompt-dialog {
+  width: min(100%, 400px);
+  padding: 22px 22px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--wb-search-border);
+  background: var(--wb-card-bg);
+  box-shadow: var(--wb-card-shadow), 0 24px 48px rgba(15, 23, 42, 0.16);
+}
+
+.app-prompt-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--wb-text-primary);
+}
+
+.app-prompt-message {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--wb-text-secondary);
+}
+
+.app-prompt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.app-prompt-field--inline {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.app-prompt-table-size {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.app-prompt-table-size__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.app-prompt-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--wb-text-primary);
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--wb-purple);
+  }
+}
+
+.app-prompt-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wb-text-primary);
+}
+
+.app-prompt-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--wb-search-border);
+  border-radius: 8px;
+  background: var(--wb-card-bg);
+  color: var(--wb-text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::placeholder {
+    color: var(--wb-text-muted);
+  }
+
+  &:focus {
+    border-color: var(--wb-purple);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.14);
+  }
+}
+
+.app-prompt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.app-prompt-btn {
+  min-width: 72px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-prompt-btn--ghost {
+  background: var(--wb-search-bg);
+  color: var(--wb-text-primary);
+
+  &:hover {
+    background: var(--wb-search-border);
+  }
+}
+
+.app-prompt-btn--primary {
+  background: var(--wb-purple);
+  color: #fff;
+
+  &:hover {
+    background: var(--wb-purple-light);
+  }
+}
+
+.app-prompt-btn--danger {
+  background: #ef4444;
+  color: #fff;
+
+  &:hover {
+    background: #dc2626;
+  }
+}

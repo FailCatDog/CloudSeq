@@ -1,4 +1,4 @@
-/* 教师端 / 管理端 — Naive UI 页面布局辅助 */
+/* 教师�?/ 管理�?�?Naive UI 页面布局辅助 */
 .console-root {
   width: 100%;
 }
@@ -74,7 +74,7 @@
 .console-filter__label {
   font-size: 13px;
   font-weight: 600;
-  color: #4f4f63;
+  color: var(--wb-text-secondary);
 }
 
 .console-filter__actions {
@@ -99,34 +99,34 @@
 
 .console-table-card .n-data-table {
   --n-border-radius: 20px;
-  --n-th-text-color: #3f3f55;
+  --n-th-text-color: var(--wb-text-secondary);
   --n-td-text-color: var(--wb-text-primary);
 }
 
-/* 筛选 / 列表 / 分页 三块白底内容框 */
+/* 筛�?/ 列表 / 分页 三块白底内容�?*/
 .console-panel {
-  background: #fff;
+  background: var(--wb-card-bg);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: var(--wb-card-shadow);
 }
 
 .console-panel.n-card {
-  --n-color: #fff;
-  --n-color-embedded: #fff;
+  --n-color: var(--wb-card-bg);
+  --n-color-embedded: var(--wb-card-bg);
 }
 
-.console-panel--table :deep(.n-card__content) {
+.console-panel--table .n-card__content {
   padding: 0;
 }
 
 .console-panel--table .n-data-table {
   --n-border-radius: 0;
-  --n-th-text-color: #3f3f55;
+  --n-th-text-color: var(--wb-text-secondary);
   --n-td-text-color: var(--wb-text-primary);
 }
 
-.console-panel--pager :deep(.n-card__content) {
+.console-panel--pager .n-card__content {
   padding: 0;
 }
 
@@ -138,10 +138,10 @@
   gap: 6px;
   padding: 6px 16px;
   min-height: 0;
-  background: #fff;
+  background: var(--wb-card-bg);
 }
 
-.console-pagination :deep(.n-pagination) {
+.console-pagination .n-pagination {
   --n-item-size: 26px;
   --n-item-font-size: 12px;
 }

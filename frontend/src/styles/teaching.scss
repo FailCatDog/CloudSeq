@@ -1,17 +1,4 @@
-/* Teacher shell & dashboard — aligned with docs/静态页面原型/teacher/teaching.css */
-
-:root {
-  --wb-tag-pending-bg: #dbeafe;
-  --wb-tag-pending-text: #2563eb;
-  --wb-tag-success-bg: #dcfce7;
-  --wb-tag-success-text: #15803d;
-  --wb-tag-warning-bg: #fff7ed;
-  --wb-tag-warning-text: #ea580c;
-  --wb-tag-danger-bg: #fee2e2;
-  --wb-tag-danger-text: #dc2626;
-  --wb-tag-muted-bg: #f3f4f6;
-  --wb-tag-muted-text: #6b7280;
-}
+/* Teacher shell � status tokens in _tokens.scss */
 
 .wb-hero-course {
   display: inline-flex;

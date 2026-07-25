@@ -1,0 +1,41 @@
+// Shared mixins for global stylesheets
+
+@mixin focus-ring($color: var(--wb-purple), $alpha: 0.14, $width: 3px) {
+  outline: none;
+  border-color: $color;
+  box-shadow: 0 0 0 $width var(--wb-purple-alpha-14, rgba(139, 92, 246, $alpha));
+}
+
+@mixin styled-scrollbar($size: var(--scroll-size)) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+
+  &::-webkit-scrollbar {
+    width: $size;
+    height: $size;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--scroll-track);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--scroll-thumb);
+    border-radius: var(--scroll-radius);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.18s ease;
+
+    &:hover {
+      background-color: var(--scroll-thumb-hover);
+    }
+
+    &:active {
+      background-color: var(--scroll-thumb-active);
+    }
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
