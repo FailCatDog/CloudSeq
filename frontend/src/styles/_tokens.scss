@@ -1,0 +1,168 @@
+// Design tokens — CSS custom properties (runtime theme)
+// Default / dark = violet surfaces; light = white + mint green accents.
+// Accent slot keeps --wb-purple* names; light theme recolors them to green.
+
+@mixin wb-legacy-aliases {
+  --bg: var(--wb-bg-page);
+  --surface: var(--wb-card-bg);
+  --surface-2: var(--wb-search-bg);
+  --line: var(--wb-search-border);
+  --text: var(--wb-text-primary);
+  --muted: var(--wb-text-secondary);
+  --primary: var(--wb-purple);
+  --primary-weak: var(--wb-purple-soft);
+  --shadow: var(--wb-card-shadow);
+  --radius: var(--wb-radius-card);
+  --radius-sm: var(--wb-radius-sm);
+}
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --wb-bg-page: #16141f;
+  --wb-sidebar-width: 72px;
+  --wb-sidebar-width-expanded: 220px;
+  --wb-sidebar-bg: #12101a;
+  --wb-sidebar-active: rgba(139, 92, 246, 0.28);
+  --wb-sidebar-icon: rgba(244, 242, 250, 0.55);
+  --wb-sidebar-icon-active: #c4b5fd;
+  --wb-purple: #8b5cf6;
+  --wb-purple-light: #a78bfa;
+  --wb-purple-dark: #7c3aed;
+  --wb-purple-deeper: #6d28d9;
+  --wb-purple-soft: rgba(139, 92, 246, 0.18);
+  --wb-purple-border: #5b4b8a;
+  --wb-purple-alpha-06: rgba(139, 92, 246, 0.06);
+  --wb-purple-alpha-08: rgba(139, 92, 246, 0.08);
+  --wb-purple-alpha-10: rgba(139, 92, 246, 0.1);
+  --wb-purple-alpha-12: rgba(139, 92, 246, 0.12);
+  --wb-purple-alpha-14: rgba(139, 92, 246, 0.14);
+  --wb-purple-alpha-16: rgba(139, 92, 246, 0.16);
+  --wb-purple-alpha-20: rgba(139, 92, 246, 0.2);
+  --wb-purple-alpha-28: rgba(124, 58, 237, 0.28);
+  --wb-purple-alpha-35: rgba(167, 139, 250, 0.35);
+  --wb-purple-alpha-45: rgba(139, 92, 246, 0.45);
+  --wb-text-primary: #f4f2fa;
+  --wb-text-secondary: #a8a4bc;
+  --wb-text-muted: #7a7690;
+  --wb-card-bg: #1f1c2b;
+  --wb-search-bg: #2a2640;
+  --wb-search-border: #3d3a52;
+  --wb-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.28);
+  --wb-radius-card: 20px;
+  --wb-radius-sm: 10px;
+  --wb-radius-pill: 999px;
+  --wb-link-blue: #a78bfa;
+  --wb-btn-dark: #0f0d16;
+  --wb-progress-track: #2a2640;
+  --wb-timeline-line: #3d3a52;
+  --wb-code-bg: #2a2640;
+  --wb-online-green: #22c55e;
+  --wb-icon-purple: #8b5cf6;
+  --wb-icon-dark: #c4b5fd;
+  --wb-icon-orange: #f97316;
+
+  --wb-tag-pending-bg: rgba(37, 99, 235, 0.22);
+  --wb-tag-pending-text: #93c5fd;
+  --wb-tag-success-bg: rgba(22, 163, 74, 0.22);
+  --wb-tag-success-text: #86efac;
+  --wb-tag-success-border: rgba(134, 239, 172, 0.45);
+  --wb-tag-warning-bg: rgba(234, 88, 12, 0.2);
+  --wb-tag-warning-text: #fdba74;
+  --wb-tag-warning-border: rgba(253, 186, 116, 0.45);
+  --wb-tag-danger-bg: rgba(220, 38, 38, 0.22);
+  --wb-tag-danger-text: #fca5a5;
+  --wb-tag-danger-border: rgba(252, 165, 165, 0.45);
+  --wb-tag-danger-soft: rgba(220, 38, 38, 0.12);
+  --wb-tag-muted-bg: #2a2640;
+  --wb-tag-muted-text: #a8a4bc;
+  --wb-tag-draft-bg: rgba(180, 83, 9, 0.25);
+  --wb-tag-draft-text: #fcd34d;
+
+  --scroll-size: 8px;
+  --scroll-size-thin: 6px;
+  --scroll-radius: 999px;
+  --scroll-track: transparent;
+  --scroll-thumb: rgba(196, 181, 253, 0.55);
+  --scroll-thumb-hover: var(--wb-purple-light);
+  --scroll-thumb-active: var(--wb-purple);
+  --scroll-thumb-idle: rgba(196, 181, 253, 0.28);
+
+  @include wb-legacy-aliases;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --wb-bg-page: #f5faf7;
+  --wb-sidebar-width: 72px;
+  --wb-sidebar-width-expanded: 220px;
+  --wb-sidebar-bg: #1e3a2f;
+  --wb-sidebar-active: rgba(16, 185, 129, 0.28);
+  --wb-sidebar-icon: rgba(255, 255, 255, 0.55);
+  --wb-sidebar-icon-active: #6ee7b7;
+  --wb-purple: #10b981;
+  --wb-purple-light: #34d399;
+  --wb-purple-dark: #059669;
+  --wb-purple-deeper: #047857;
+  --wb-purple-soft: #d1fae5;
+  --wb-purple-border: #6ee7b7;
+  --wb-purple-alpha-06: rgba(16, 185, 129, 0.06);
+  --wb-purple-alpha-08: rgba(16, 185, 129, 0.08);
+  --wb-purple-alpha-10: rgba(16, 185, 129, 0.1);
+  --wb-purple-alpha-12: rgba(16, 185, 129, 0.12);
+  --wb-purple-alpha-14: rgba(16, 185, 129, 0.14);
+  --wb-purple-alpha-16: rgba(16, 185, 129, 0.16);
+  --wb-purple-alpha-20: rgba(16, 185, 129, 0.2);
+  --wb-purple-alpha-28: rgba(5, 150, 105, 0.28);
+  --wb-purple-alpha-35: rgba(52, 211, 153, 0.35);
+  --wb-purple-alpha-45: rgba(16, 185, 129, 0.45);
+  --wb-text-primary: #14241c;
+  --wb-text-secondary: #5b7266;
+  --wb-text-muted: #7a9186;
+  --wb-card-bg: #ffffff;
+  --wb-search-bg: #e8f2ec;
+  --wb-search-border: #d5e5db;
+  --wb-card-shadow: 0 1px 3px rgba(20, 36, 28, 0.04), 0 4px 16px rgba(20, 36, 28, 0.03);
+  --wb-radius-card: 20px;
+  --wb-radius-sm: 10px;
+  --wb-radius-pill: 999px;
+  --wb-link-blue: #059669;
+  --wb-btn-dark: #14241c;
+  --wb-progress-track: #e8f2ec;
+  --wb-timeline-line: #d5e5db;
+  --wb-code-bg: #eef6f1;
+  --wb-online-green: #16a34a;
+  --wb-icon-purple: #10b981;
+  --wb-icon-dark: #14241c;
+  --wb-icon-orange: #f97316;
+
+  --wb-tag-pending-bg: #dbeafe;
+  --wb-tag-pending-text: #2563eb;
+  --wb-tag-success-bg: #dcfce7;
+  --wb-tag-success-text: #15803d;
+  --wb-tag-success-border: #86efac;
+  --wb-tag-warning-bg: #fff7ed;
+  --wb-tag-warning-text: #ea580c;
+  --wb-tag-warning-border: #fed7aa;
+  --wb-tag-danger-bg: #fee2e2;
+  --wb-tag-danger-text: #dc2626;
+  --wb-tag-danger-border: #fecaca;
+  --wb-tag-danger-soft: #fef2f2;
+  --wb-tag-muted-bg: #f3f4f6;
+  --wb-tag-muted-text: #6b7280;
+  --wb-tag-draft-bg: #fef3c7;
+  --wb-tag-draft-text: #b45309;
+
+  --scroll-size: 8px;
+  --scroll-size-thin: 6px;
+  --scroll-radius: 999px;
+  --scroll-track: transparent;
+  --scroll-thumb: rgba(16, 185, 129, 0.55);
+  --scroll-thumb-hover: var(--wb-purple-light);
+  --scroll-thumb-active: var(--wb-purple);
+  --scroll-thumb-idle: rgba(16, 185, 129, 0.28);
+
+  @include wb-legacy-aliases;
+}
