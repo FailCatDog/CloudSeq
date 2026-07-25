@@ -1,38 +1,72 @@
 ---
 name: 云序 CloudSeq
 description: 面向软件项目学习的团队协作工作台
+defaultTheme: dark
+tokenSource: frontend/src/styles/_tokens.scss
 colors:
-  primary: "#8b5cf6"
-  primary-hover: "#7c3aed"
-  primary-pressed: "#6d28d9"
-  primary-soft: "#ede9fe"
-  primary-border: "#c4b5fd"
-  link: "#6366f1"
-  sidebar: "#2d2a3e"
-  sidebar-icon-active: "#c4b5fd"
-  page-bg: "#f4f6fa"
-  card: "#ffffff"
-  search-bg: "#eceef3"
-  border: "#e2e4ea"
-  text-primary: "#1a1a2e"
-  text-secondary: "#8b8b9e"
-  text-muted: "#a0a0b0"
-  text-secondary-strong: "#4b4b5e"
-  btn-dark: "#1a1a24"
-  hover-surface: "#fafafc"
-  online: "#22c55e"
-  tag-pending-bg: "#dbeafe"
-  tag-pending-text: "#2563eb"
-  tag-success-bg: "#dcfce7"
-  tag-success-text: "#15803d"
-  tag-warning-bg: "#fff7ed"
-  tag-warning-text: "#ea580c"
-  tag-danger-bg: "#fee2e2"
-  tag-danger-text: "#dc2626"
-  tag-draft-bg: "#fef3c7"
-  tag-draft-text: "#b45309"
-  tag-muted-bg: "#f3f4f6"
-  tag-muted-text: "#6b7280"
+  dark:
+    primary: "#8b5cf6"
+    primary-hover: "#7c3aed"
+    primary-pressed: "#6d28d9"
+    primary-soft: "rgba(139, 92, 246, 0.18)"
+    primary-border: "#5b4b8a"
+    link: "#a78bfa"
+    sidebar: "#12101a"
+    sidebar-active: "rgba(139, 92, 246, 0.28)"
+    sidebar-icon-active: "#c4b5fd"
+    page-bg: "#16141f"
+    card: "#1f1c2b"
+    search-bg: "#2a2640"
+    border: "#3d3a52"
+    text-primary: "#f4f2fa"
+    text-secondary: "#a8a4bc"
+    text-muted: "#7a7690"
+    btn-dark: "#0f0d16"
+    online: "#22c55e"
+    tag-pending-bg: "rgba(37, 99, 235, 0.22)"
+    tag-pending-text: "#93c5fd"
+    tag-success-bg: "rgba(22, 163, 74, 0.22)"
+    tag-success-text: "#86efac"
+    tag-warning-bg: "rgba(234, 88, 12, 0.2)"
+    tag-warning-text: "#fdba74"
+    tag-danger-bg: "rgba(220, 38, 38, 0.22)"
+    tag-danger-text: "#fca5a5"
+    tag-draft-bg: "rgba(180, 83, 9, 0.25)"
+    tag-draft-text: "#fcd34d"
+    tag-muted-bg: "#2a2640"
+    tag-muted-text: "#a8a4bc"
+  light:
+    primary: "#10b981"
+    primary-hover: "#059669"
+    primary-pressed: "#047857"
+    primary-soft: "#d1fae5"
+    primary-border: "#6ee7b7"
+    link: "#059669"
+    sidebar: "#1e3a2f"
+    sidebar-active: "rgba(16, 185, 129, 0.28)"
+    sidebar-icon-active: "#6ee7b7"
+    page-bg: "#f5faf7"
+    card: "#ffffff"
+    search-bg: "#e8f2ec"
+    border: "#d5e5db"
+    text-primary: "#14241c"
+    text-secondary: "#5b7266"
+    text-muted: "#7a9186"
+    btn-dark: "#14241c"
+    hover-surface: "#fafafc"
+    online: "#16a34a"
+    tag-pending-bg: "#dbeafe"
+    tag-pending-text: "#2563eb"
+    tag-success-bg: "#dcfce7"
+    tag-success-text: "#15803d"
+    tag-warning-bg: "#fff7ed"
+    tag-warning-text: "#ea580c"
+    tag-danger-bg: "#fee2e2"
+    tag-danger-text: "#dc2626"
+    tag-draft-bg: "#fef3c7"
+    tag-draft-text: "#b45309"
+    tag-muted-bg: "#f3f4f6"
+    tag-muted-text: "#6b7280"
 typography:
   display:
     fontFamily: "Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif"
@@ -78,40 +112,40 @@ spacing:
   xl: "24px"
 components:
   button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.card}"
+    backgroundColor: "{colors.dark.primary}"
+    textColor: "{colors.dark.card}"
     rounded: "{rounded.sm}"
     padding: "0 16px"
     height: "36px"
   button-primary-hover:
-    backgroundColor: "{colors.primary-hover}"
-    textColor: "{colors.card}"
+    backgroundColor: "{colors.dark.primary-hover}"
+    textColor: "{colors.dark.card}"
     rounded: "{rounded.sm}"
     height: "36px"
   button-dark:
-    backgroundColor: "{colors.btn-dark}"
-    textColor: "{colors.card}"
+    backgroundColor: "{colors.dark.btn-dark}"
+    textColor: "{colors.dark.card}"
     rounded: "{rounded.sm}"
     padding: "0 16px"
     height: "36px"
   card-surface:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.text-primary}"
+    backgroundColor: "{colors.dark.card}"
+    textColor: "{colors.dark.text-primary}"
     rounded: "{rounded.card}"
     padding: "22px"
   input-field:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.text-primary}"
+    backgroundColor: "{colors.dark.card}"
+    textColor: "{colors.dark.text-primary}"
     rounded: "{rounded.sm}"
     height: "36px"
   tag-pill:
-    backgroundColor: "{colors.primary-soft}"
-    textColor: "{colors.primary-pressed}"
+    backgroundColor: "{colors.dark.primary-soft}"
+    textColor: "{colors.dark.primary-pressed}"
     rounded: "{rounded.pill}"
     padding: "2px 10px"
   sidebar-nav-active:
-    backgroundColor: "rgba(139, 92, 246, 0.22)"
-    textColor: "{colors.sidebar-icon-active}"
+    backgroundColor: "{colors.dark.sidebar-active}"
+    textColor: "{colors.dark.sidebar-icon-active}"
     rounded: "{rounded.sm}"
 ---
 
@@ -121,12 +155,12 @@ components:
 
 **Creative North Star: "The Ordered Studio"**
 
-云序是一间有序的学院工作室：浅色内容区承载阅读与协作，深色侧栏锚定平台导航。气质对齐 PRODUCT.md 中的「轻快、学院感、工具感，并带一点平台感」；取飞书的「好找入口」与语雀的「好读好写」，不照搬整站视觉。
+云序是一间有序的学院工作室：**默认深色紫罗兰壳层**（`#16141f` 页底 + 淡紫强调），可通过主题切换为**浅色薄荷**（`#f5faf7` 页底 + `#10b981` 强调）。气质对齐 PRODUCT.md 中的「轻快、学院感、工具感，并带一点平台感」；取飞书的「好找入口」与语雀的「好读好写」，不照搬整站视觉。
 
 密度以工作台任务流为准：一屏一事、主路径醒目、状态标签语义清晰。装饰服务于方位感（侧栏、卡片层级），不为热闹而热闹。明确拒绝信息堆满的教务系统、花哨教育 SaaS 模板感，以及用装饰性仪表盘冒充「有序」。
 
 **Key Characteristics:**
-- 紫罗兰主色 + 墨紫侧栏 + 浅灰页底的三段式壳层
+- 默认深色紫罗兰壳层；浅色主题为白卡片 + 薄荷强调 + 深绿侧栏
 - 大圆角卡片（20px）与中圆角控件（10px）并存
 - 轻抬升阴影表达层级，不靠重投影制造「高级感」
 - 组件手感清晰利落、平台感偏强（Naive UI 主题与 workbench token 对齐）
@@ -150,7 +184,7 @@ components:
 - **Card Porcelain** (#ffffff): 卡片、弹层、表格单元格底。
 - **Ink Text** (#14241c): 主文案；次级 (#5b7266)、弱化 (#7a9186)。
 
-### Shared neutral & semantic (light baseline in frontmatter)
+### Shared neutral & semantic (theme-keyed in frontmatter `colors.dark` / `colors.light`)
 - **Search Fog** (#eceef3 light / #2a2640 dark): 搜索框与进度轨等次级凹面。
 - **Hairline Border** (#e2e4ea light / #3d3a52 dark): 分割线与输入描边。
 - **Charcoal Action** (#1a1a24 light / #0f0d16 dark): 深色实心按钮（与主 accent CTA 分工）。
