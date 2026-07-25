@@ -489,6 +489,7 @@
   background: var(--wb-card-bg);
   box-shadow: var(--wb-card-shadow), 0 8px 24px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--wb-search-border);
+  color: var(--wb-text-primary);
 }
 
 .wb-user-menu--sidebar {
@@ -873,7 +874,7 @@
 }
 
 .wb-featured-task-item:hover {
-  background: #fafafc;
+  background: var(--wb-search-bg);
 }
 
 .wb-featured-task-title {
@@ -1132,7 +1133,7 @@
 }
 
 .wb-task-item:hover {
-  background: #fafafc;
+  background: var(--wb-search-bg);
 }
 
 .wb-task-checkbox {
@@ -1154,7 +1155,7 @@
 .wb-checkmark {
   width: 20px;
   height: 20px;
-  border: 2px solid #d1d5db;
+  border: 2px solid var(--wb-search-border);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -1322,11 +1323,11 @@
 }
 
 .wb-topic-hint--success {
-  color: #15803d;
+  color: var(--wb-tag-success-text);
 }
 
 .wb-topic-hint--warning {
-  color: #c2410c;
+  color: var(--wb-tag-warning-text);
 }
 
 .wb-topic-badge {
@@ -1340,8 +1341,8 @@
 }
 
 .wb-topic-badge--success {
-  color: #15803d;
-  background: #dcfce7;
+  color: var(--wb-tag-success-text);
+  background: var(--wb-tag-success-bg);
 }
 
 .wb-topic-badge--pending {
@@ -1450,7 +1451,7 @@
 }
 
 .wb-project-new {
-  border: 2px dashed #d1d5db;
+  border: 2px dashed var(--wb-search-border);
   box-shadow: none;
   align-items: center;
   justify-content: center;
@@ -1461,14 +1462,14 @@
 
 .wb-project-new:hover {
   border-color: var(--wb-purple-border);
-  background: #fafafe;
+  background: var(--wb-search-bg);
 }
 
 .wb-new-project-icon {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #f3f4f6;
+  background: var(--wb-search-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1614,7 +1615,7 @@
 .wb-timeline-content blockquote {
   margin: 8px 0 0;
   padding: 10px 14px;
-  background: #fafafc;
+  background: var(--wb-search-bg);
   border-left: 3px solid var(--wb-purple-border);
   border-radius: 0 8px 8px 0;
   font-size: 12.5px;
