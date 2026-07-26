@@ -46,7 +46,7 @@ const modules = computed(() =>
 )
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .admin-dashboard {
   gap: 20px;
 }

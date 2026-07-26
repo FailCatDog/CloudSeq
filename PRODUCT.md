@@ -6,28 +6,38 @@ product
 
 ## Users
 
-People using the app to complete focused work efficiently, likely inside a structured workflow where clarity and speed matter more than flourish.
+软件项目课程中的三类角色，在浏览器里完成教学协作：
+
+- **学生**：从课号加入、组队、选题与审批，到项目空间内推进任务（看板/甘特）、协作文档与表格、按时提交周报。
+- **教师**：开课与课号管理、审批选题、查看小组与周报，掌握进度与逾期风险。
+- **管理员**：用户、角色、菜单与字典等平台治理，不介入教学业务本身。
+
+使用场景偏课程节奏：周报有截止、审批有门槛、工作台按状态解锁能力，需要清晰「下一步做什么」。
 
 ## Product Purpose
 
-This product exists to help users get through core tasks with minimal friction, clear structure, and confidence in what to do next. Success looks like faster completion, fewer mistakes, and an interface that stays out of the way while still feeling polished.
+云序 CloudSeq（口号：让项目，有序发生）是面向软件项目学习的团队协作工作台，聚合小组空间、任务进度、文档协作与周报管理。
+
+成功看起来像：学生少迷路、协作少踩坑；教师监管省事、审批与周报一眼可判；管理员配置权限与字典时路径明确、不干扰教学端。
 
 ## Brand Personality
 
-Minimal, precise, efficient. The tone should feel calm and competent, with a strong bias toward clarity over decoration.
+轻快、学院感、工具感，并带一点平台感。语气冷静可信，像好用的协作工具，而不是热闹的营销页或沉重的教务后台。
+
+参考体感：飞书（协作流清晰、工作台好找入口）、语雀（文档阅读与写作舒适、知识结构干净）。取它们的「好找、好读、好推进」，不照搬整站视觉。
 
 ## Anti-references
 
-Avoid generic corporate SaaS, cluttered layouts, unnecessary ornament, and anything that feels like a template rather than a real product.
+明确避免信息堆满的教务系统：密密麻麻的表格墙、无主次的筛选项、同时抢注意力的统计与告警。也避免花哨教育 SaaS 模板感，以及用装饰性仪表盘冒充「有序」。
 
 ## Design Principles
 
-- Make the primary path obvious and easy to complete.
-- Reduce cognitive load by keeping hierarchy clear and content tightly scoped.
-- Favor crisp, intentional interactions over visual noise.
-- Use restraint so the interface feels trustworthy and efficient.
-- Preserve consistency so users build confidence quickly.
+- 让「下一步」可见：入课、审批、解锁工作台、交周报等里程碑路径一眼可读。
+- 角色分流干净：学生工作台、教师教学端、管理端各做各的事，不互相污染信息架构。
+- 协作优先于展示：文档、表格、任务以推进与阅读舒适为先，少堆指标。
+- 轻快但不轻浮：学院感与平台感并存，界面可信、节奏清楚。
+- 一致可预期：同类操作、状态与导航在三端保持同一套逻辑。
 
 ## Accessibility & Inclusion
 
-Design for WCAG AA baseline. Ensure strong contrast, keyboard accessibility, readable type, and sensible focus states. Consider reduced-motion friendliness and color-blind-safe patterns where color is used to communicate meaning.
+以 WCAG AA 为基线：足够对比度、键盘可达、可读字号与清晰焦点。尊重减少动效偏好；用颜色表达状态时辅以文字或形态，避免仅靠色相区分。

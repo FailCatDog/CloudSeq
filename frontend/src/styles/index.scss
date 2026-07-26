@@ -1,8 +1,10 @@
 // Global styles entry — order matters for cascade
 @use 'tokens';
 @use 'base';
+@use 'theme-transition';
 @use 'workbench';
 @use 'teaching';
 @use 'console';
 @use 'scrollbar';
 @use 'project-space';
+@use 'project-editor-theme';

@@ -339,7 +339,7 @@ const columns = computed(() => [
 onMounted(loadRoles)
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .w-full {
   width: 100%;
 }

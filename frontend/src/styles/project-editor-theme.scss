@@ -1,0 +1,385 @@
+/* Project doc / sheet editors — follow system theme tokens (beats hardcoded #fff) */
+
+.ps-doc-editor {
+  background: var(--wb-bg-page) !important;
+  color: var(--wb-text-primary);
+}
+
+.ps-doc-outline,
+.ps-doc-comments {
+  background: var(--wb-card-bg) !important;
+  border-color: var(--wb-search-border) !important;
+  color: var(--wb-text-secondary);
+}
+
+.ps-doc-outline__nav,
+.ps-doc-outline .app-scroll-area,
+.ps-doc-outline .app-scroll-area__viewport {
+  background: transparent !important;
+}
+
+.ps-doc-outline__header,
+.ps-doc-comments__header {
+  border-bottom-color: var(--wb-search-border) !important;
+  background: var(--wb-card-bg) !important;
+}
+
+.ps-doc-outline__title,
+.ps-doc-outline__empty,
+.ps-doc-article-updated,
+.ps-doc-editor-loading,
+.ps-doc-page-state {
+  color: var(--wb-text-muted) !important;
+}
+
+.ps-doc-comments.is-open {
+  border-left-color: var(--wb-search-border) !important;
+}
+
+.ps-doc-comments__close,
+.ps-doc-comments-rail {
+  color: var(--wb-text-muted) !important;
+  background: var(--wb-card-bg) !important;
+  border-color: var(--wb-search-border) !important;
+}
+
+.ps-doc-comments__close:hover,
+.ps-doc-comments-rail:hover {
+  color: var(--wb-purple) !important;
+  border-color: var(--wb-purple-border) !important;
+  background: var(--wb-purple-soft) !important;
+}
+
+.ps-doc-comments-rail__badge {
+  background: var(--wb-purple) !important;
+}
+
+.ps-outline-item,
+.ps-outline-item__label {
+  color: var(--wb-text-secondary) !important;
+}
+
+.ps-outline-item__toggle {
+  color: var(--wb-text-muted) !important;
+}
+
+.ps-outline-item__toggle:hover {
+  background: var(--wb-purple-alpha-08) !important;
+  color: var(--wb-text-secondary) !important;
+}
+
+.ps-outline-item:hover {
+  background: var(--wb-purple-alpha-08) !important;
+}
+
+.ps-outline-item:hover .ps-outline-item__label {
+  color: var(--wb-text-primary) !important;
+}
+
+.ps-outline-item.is-active {
+  background: var(--wb-purple-soft) !important;
+}
+
+.ps-outline-item.is-active .ps-outline-item__label {
+  color: var(--wb-purple) !important;
+}
+
+.ps-outline-item--h1 .ps-outline-item__label {
+  color: var(--wb-text-primary) !important;
+}
+
+.ps-outline-item--h4 .ps-outline-item__label,
+.ps-outline-item--h5 .ps-outline-item__label {
+  color: var(--wb-text-muted) !important;
+}
+
+.ps-doc-editor-title,
+.ps-doc-editor-content .tiptap,
+.ps-doc-editor-content .ProseMirror {
+  color: var(--wb-text-primary) !important;
+}
+
+.ps-doc-editor-title::placeholder {
+  color: var(--wb-text-muted) !important;
+}
+
+.ps-doc-article-avatar {
+  border-color: var(--wb-card-bg) !important;
+  background: color-mix(in srgb, var(--ps-collab-color, var(--wb-purple)) 16%, var(--wb-card-bg)) !important;
+}
+
+.ps-doc-export-btn,
+.ps-sheet-export-btn {
+  background: var(--wb-card-bg) !important;
+  border-color: var(--wb-search-border) !important;
+  color: var(--wb-text-secondary) !important;
+}
+
+.ps-doc-export-btn:hover:not(:disabled),
+.ps-sheet-export-btn:hover:not(:disabled),
+.ps-doc-export-btn[aria-expanded='true'] {
+  background: var(--wb-search-bg) !important;
+  border-color: var(--wb-purple-border) !important;
+  color: var(--wb-text-primary) !important;
+}
+
+.ps-doc-export-menu,
+.ps-table-bar__menu {
+  background: var(--wb-card-bg) !important;
+  border-color: var(--wb-search-border) !important;
+  box-shadow: var(--wb-card-shadow) !important;
+  color: var(--wb-text-primary);
+}
+
+.ps-doc-export-menu-item,
+.ps-table-bar__menu button {
+  color: var(--wb-text-secondary) !important;
+}
+
+.ps-doc-export-menu-item:hover:not(:disabled),
+.ps-table-bar__menu button:hover:not(:disabled) {
+  background: var(--wb-search-bg) !important;
+  color: var(--wb-text-primary) !important;
+}
+
+.ps-table-bar__align {
+  background: var(--wb-search-bg) !important;
+}
+
+.ps-table-bar__icon {
+  color: var(--wb-text-muted) !important;
+}
+
+.ps-table-bar__icon:hover {
+  background: var(--wb-card-bg) !important;
+  color: var(--wb-text-primary) !important;
+}
+
+.ps-table-bar__icon.is-active {
+  background: var(--wb-card-bg) !important;
+  color: var(--wb-purple) !important;
+  box-shadow: 0 0 0 1px var(--wb-purple-alpha-20) !important;
+}
+
+.ps-format-picker__icon {
+  color: var(--wb-text-secondary) !important;
+}
+
+.ps-doc-editor-content .tiptap h5,
+.ps-format-icon--h5 {
+  color: var(--wb-text-muted) !important;
+}
+
+.ps-doc-editor-content .tiptap code,
+.ps-doc-editor-content .ProseMirror code {
+  background: var(--wb-code-bg) !important;
+  color: var(--wb-text-primary) !important;
+}
+
+.ps-doc-editor-content .tiptap pre,
+.ps-doc-editor-content .ProseMirror pre {
+  background: var(--wb-code-bg) !important;
+  color: var(--wb-text-primary) !important;
+}
+
+.ps-doc-editor-content .tiptap blockquote,
+.ps-doc-editor-content .ProseMirror blockquote {
+  border-left-color: var(--wb-purple-border) !important;
+  color: var(--wb-text-secondary) !important;
+}
+
+.ps-doc-editor-content .tiptap hr,
+.ps-doc-editor-content .ProseMirror hr {
+  border-color: var(--wb-search-border) !important;
+}
+
+.ps-doc-comments__composer {
+  background: var(--wb-card-bg) !important;
+  border-top-color: var(--wb-search-border) !important;
+}
+
+.ps-comment-gutter__row.is-panel-active .ps-comment-gutter__btn,
+.ps-comment-gutter__badge {
+  color: var(--wb-purple) !important;
+  background: var(--wb-purple-soft) !important;
+}
+
+.ps-comment-gutter__badge {
+  color: #fff !important;
+  background: var(--wb-purple) !important;
+}
+
+
+.ps-doc-editor-content .tiptap table td,
+.ps-doc-editor-content .tiptap table th,
+.ps-doc-editor-content .ProseMirror table td,
+.ps-doc-editor-content .ProseMirror table th {
+  border-color: var(--wb-search-border) !important;
+}
+
+.ps-doc-editor-content .tiptap table th,
+.ps-doc-editor-content .ProseMirror table th {
+  background: var(--wb-search-bg) !important;
+}
+
+/* —— Sheet editor —— */
+.ps-sheet-editor {
+  background: var(--wb-bg-page) !important;
+  color: var(--wb-text-primary);
+}
+
+.ps-sheet-editor-head {
+  border-bottom-color: var(--wb-search-border) !important;
+}
+
+.ps-sheet-editor-title {
+  color: var(--wb-text-primary) !important;
+}
+
+.ps-sheet-editor-title:focus {
+  box-shadow: inset 0 -2px 0 var(--wb-purple-alpha-35) !important;
+}
+
+.ps-sheet-editor-meta,
+.ps-sheet-editor-loading {
+  color: var(--wb-text-muted) !important;
+}
+
+.ps-sheet-editor-canvas {
+  background: var(--wb-card-bg) !important;
+  color: var(--wb-text-primary);
+}
+
+/* SpeedSheet chrome — force DOM surfaces onto system tokens */
+.ps-sheet-editor {
+  .speed-sheet-root,
+  .sheet-viewport,
+  .sheet-scroll,
+  .sheet-container,
+  .ss-sheet,
+  .ss-workbook,
+  .ss-canvas-wrap,
+  .speed-sheet-canvas-wrap,
+  [class*='sheet-scroll'],
+  [class*='SheetScroll'] {
+    background: var(--wb-card-bg) !important;
+    color: var(--wb-text-primary) !important;
+  }
+
+  .sheet-bar {
+    background: var(--wb-search-bg) !important;
+    border-top-color: var(--wb-search-border) !important;
+    color: var(--wb-text-secondary) !important;
+  }
+
+  .sheet-tab {
+    border-right-color: var(--wb-search-border) !important;
+    color: var(--wb-text-secondary) !important;
+  }
+
+  .sheet-tab:first-child {
+    border-left-color: var(--wb-search-border) !important;
+  }
+
+  .sheet-tab:hover {
+    background: var(--wb-purple-alpha-08) !important;
+    color: var(--wb-text-primary) !important;
+  }
+
+  .sheet-tab.active {
+    background: var(--wb-card-bg) !important;
+    color: var(--wb-purple) !important;
+    border-bottom-color: var(--wb-purple) !important;
+  }
+
+  .sheet-tab-add-btn,
+  .sheet-tab-menu-btn,
+  .sheet-tab-arrow {
+    color: var(--wb-text-muted) !important;
+  }
+
+  .sheet-tab-add-btn:hover,
+  .sheet-tab-menu-btn:hover,
+  .sheet-tab-arrow:hover:not(:disabled) {
+    color: var(--wb-purple) !important;
+    background: var(--wb-purple-alpha-08) !important;
+  }
+
+  .sheet-scrollbar-y,
+  .sheet-scrollbar-x,
+  [class*='sheet-scrollbar'] {
+    background: var(--wb-search-bg) !important;
+  }
+
+  .sheet-scrollbar-thumb,
+  [class*='scrollbar-thumb'] {
+    background: var(--scroll-thumb) !important;
+  }
+
+  .cell-editor,
+  .row-move-hint,
+  .formula-error-tip {
+    background: var(--wb-card-bg) !important;
+    color: var(--wb-text-primary) !important;
+    border-color: var(--wb-purple-border) !important;
+  }
+
+  /* Formula bar (below toolbar) — SpeedSheet uses ant-color-bg-container which stays light */
+  .sheet-formula-bar {
+    background: var(--wb-card-bg) !important;
+    border-bottom-color: var(--wb-search-border) !important;
+    color: var(--wb-text-primary) !important;
+  }
+
+  .sheet-formula-bar .cell-ref-input,
+  .sheet-formula-bar .formula-input,
+  .sheet-formula-bar .ant-input,
+  .sheet-formula-bar .ant-input-affix-wrapper {
+    background: var(--wb-search-bg) !important;
+    border-color: var(--wb-search-border) !important;
+    color: var(--wb-text-primary) !important;
+  }
+
+  .sheet-formula-bar .fx-label {
+    color: var(--wb-text-muted) !important;
+  }
+
+  .formula-rich-input__mirror {
+    color: var(--wb-text-primary) !important;
+  }
+
+  .formula-rich-input__field {
+    caret-color: var(--wb-text-primary) !important;
+  }
+
+  /* Ant Design toolbar surfaces inside sheet */
+  .ant-btn,
+  .ant-input,
+  .ant-select-selector,
+  .ant-dropdown-menu {
+    background: var(--wb-card-bg) !important;
+    border-color: var(--wb-search-border) !important;
+    color: var(--wb-text-primary) !important;
+  }
+
+  .ant-layout,
+  .ant-layout-header,
+  .ss-toolbar,
+  [class*='toolbar'] {
+    background: var(--wb-bg-page) !important;
+    border-color: var(--wb-search-border) !important;
+    color: var(--wb-text-primary) !important;
+  }
+}
+
+/*
+ * SpeedSheet paints the grid on <canvas> with hardcoded light colors and has no
+ * theme API yet. Invert + hue-rotate approximates a dark grid while keeping
+ * selection/accent hues roughly intact. DOM overlays are themed above.
+ */
+[data-theme='dark'] .ps-sheet-editor {
+  .sheet-canvas,
+  canvas.sheet-canvas {
+    filter: invert(1) hue-rotate(180deg);
+  }
+}

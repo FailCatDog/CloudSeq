@@ -1,9 +1,21 @@
 <template>
-  <section class="auth-page">
+  <!-- Auth is always violet-dark brand surface, independent of global light/dark toggle -->
+  <section class="auth-page" data-theme="dark">
+    <div class="auth-bg" aria-hidden="true">
+      <div class="auth-bg__base"></div>
+      <div
+        v-for="tile in floatTiles"
+        :key="tile.id"
+        class="auth-bg__tile"
+        :style="tile.style"
+      />
+    </div>
+
     <div class="auth-shell">
       <div class="auth-visual" aria-hidden="true">
         <div class="visual-orbit visual-orbit--one"></div>
         <div class="visual-orbit visual-orbit--two"></div>
+        <div class="visual-orbit visual-orbit--three"></div>
         <div class="visual-mark">
           <BrandLogo :size="80" src="/logo.png" />
         </div>
@@ -223,6 +235,27 @@ const loginError = ref('')
 const registerError = ref('')
 const successMessage = ref('')
 
+/** Rising square tiles for the auth page background */
+const floatTiles = Array.from({ length: 28 }, (_, i) => {
+  const size = 6 + ((i * 5) % 14)
+  const left = ((i * 37) % 96) + 2
+  const duration = 10 + ((i * 3) % 14)
+  const delay = -((i * 1.7) % 16)
+  const drift = ((i % 5) - 2) * 18
+  const opacity = 0.18 + ((i % 6) * 0.06)
+  return {
+    id: i,
+    style: {
+      '--tile-size': `${size}px`,
+      '--tile-left': `${left}%`,
+      '--tile-duration': `${duration}s`,
+      '--tile-delay': `${delay}s`,
+      '--tile-drift': `${drift}px`,
+      '--tile-opacity': String(opacity),
+    },
+  }
+})
+
 const loginForm = reactive({ username: '', password: '', remember: true })
 const registerForm = reactive({
   username: '',
@@ -294,56 +327,159 @@ const goReset = () => {
 @use '@/styles/mixins' as *;
 
 .auth-page {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 28px;
+  color-scheme: dark;
+  background: #12101a;
+  color: var(--wb-text-primary);
+}
+
+/* —— Floating square background —— */
+.auth-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.auth-bg__base {
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(circle at 12% 18%, var(--wb-purple-alpha-12), transparent 28%),
-    radial-gradient(circle at 88% 82%, rgba(99, 102, 241, 0.1), transparent 24%),
-    var(--wb-bg-page);
+    radial-gradient(ellipse 55% 45% at 18% 22%, rgba(139, 92, 246, 0.28), transparent 58%),
+    radial-gradient(ellipse 50% 40% at 82% 78%, rgba(124, 58, 237, 0.22), transparent 55%),
+    linear-gradient(160deg, #0c0a14 0%, #16122a 45%, #12101a 100%);
+}
+
+.auth-bg__tile {
+  position: absolute;
+  bottom: -40px;
+  left: var(--tile-left);
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: 2px;
+  background: linear-gradient(145deg, rgba(196, 181, 253, 0.75), rgba(139, 92, 246, 0.35));
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: auth-tile-rise var(--tile-duration) linear infinite;
+  animation-delay: var(--tile-delay);
+}
+
+@keyframes auth-tile-rise {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: var(--tile-opacity);
+  }
+
+  78% {
+    opacity: var(--tile-opacity);
+  }
+
+  100% {
+    transform: translate3d(var(--tile-drift), calc(-100vh - 80px), 0) rotate(120deg);
+    opacity: 0;
+  }
+}
+
+@keyframes auth-orbit-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 .auth-shell {
+  position: relative;
+  z-index: 1;
   width: min(100%, 1060px);
   min-height: 700px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(420px, 520px);
   overflow: hidden;
-  border: 1px solid var(--wb-purple-alpha-12);
+  border: 1px solid rgba(196, 181, 253, 0.16);
   border-radius: 28px;
   background: var(--wb-card-bg);
   box-shadow:
-    0 24px 60px rgba(45, 42, 62, 0.1),
-    0 0 0 1px var(--wb-purple-alpha-12) inset;
+    0 28px 80px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(139, 92, 246, 0.12) inset;
 }
 
 .auth-visual {
   position: relative;
+  overflow: hidden;
   background:
-    radial-gradient(circle at 28% 22%, var(--wb-purple-alpha-35), transparent 34%),
-    radial-gradient(circle at 72% 78%, rgba(124, 58, 237, 0.18), transparent 30%),
-    linear-gradient(165deg, var(--wb-sidebar-bg) 0%, #3b3560 48%, #4c3d7a 100%);
+    radial-gradient(circle at 28% 22%, rgba(167, 139, 250, 0.28), transparent 34%),
+    radial-gradient(circle at 72% 78%, rgba(124, 58, 237, 0.22), transparent 30%),
+    linear-gradient(165deg, #0f0d16 0%, #1a1630 48%, #2a2150 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .visual-orbit {
   position: absolute;
   left: 50%;
-  top: 50%;
-  border-radius: var(--wb-radius-pill);
+  top: 42%;
+  border-radius: 50%;
   border: 1px solid rgba(196, 181, 253, 0.22);
   transform: translate(-50%, -50%);
+  will-change: transform;
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #c4b5fd;
+    box-shadow: 0 0 10px rgba(167, 139, 250, 0.8);
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
 
   &--one {
-    width: 220px;
-    height: 220px;
+    width: 200px;
+    height: 200px;
+    animation: auth-orbit-spin 12s linear infinite;
   }
 
   &--two {
-    width: 320px;
-    height: 320px;
+    width: 280px;
+    height: 280px;
+    border-color: rgba(167, 139, 250, 0.16);
+    animation: auth-orbit-spin 18s linear infinite reverse;
+
+    &::after {
+      width: 5px;
+      height: 5px;
+    }
+  }
+
+  &--three {
+    width: 360px;
+    height: 360px;
+    border-color: rgba(139, 92, 246, 0.1);
+    animation: auth-orbit-spin 26s linear infinite;
+
+    &::after {
+      width: 4px;
+      height: 4px;
+      opacity: 0.7;
+    }
   }
 }
 
@@ -351,20 +487,25 @@ const goReset = () => {
   position: absolute;
   left: 50%;
   top: 42%;
+  z-index: 1;
   transform: translate(-50%, -50%);
   display: grid;
   place-items: center;
   width: 108px;
   height: 108px;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.22);
+  background: rgba(31, 28, 43, 0.92);
+  border: 1px solid rgba(196, 181, 253, 0.28);
+  box-shadow:
+    0 20px 44px rgba(0, 0, 0, 0.35),
+    0 0 32px rgba(139, 92, 246, 0.25);
 }
 
 .auth-brand-copy {
   position: absolute;
   left: 50%;
   bottom: 72px;
+  z-index: 1;
   transform: translateX(-50%);
   width: min(100%, 320px);
   text-align: center;
@@ -381,14 +522,14 @@ const goReset = () => {
   font-size: 24px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #f8fafc;
+  color: #f4f2fa;
 }
 
 .auth-brand-slogan {
   margin-top: 10px;
   font-size: 15px;
   font-weight: 600;
-  color: var(--wb-purple-border);
+  color: #c4b5fd;
 }
 
 .auth-brand-tagline {
@@ -422,7 +563,7 @@ const goReset = () => {
   padding: 28px 32px 32px;
   backface-visibility: hidden;
   transform-style: preserve-3d;
-  background: var(--wb-card-bg);
+  background: #1f1c2b;
   transition: transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
   overflow: hidden;
 
@@ -442,8 +583,8 @@ const goReset = () => {
   padding: 4px;
   margin-bottom: 16px;
   border-radius: 14px;
-  background: var(--wb-search-bg);
-  border: 1px solid var(--wb-search-border);
+  background: #2a2640;
+  border: 1px solid #3d3a52;
   flex-shrink: 0;
 }
 
@@ -451,15 +592,15 @@ const goReset = () => {
   height: 40px;
   border-radius: var(--wb-radius-sm);
   background: transparent;
-  color: var(--wb-tag-muted-text);
+  color: #a8a4bc;
   font-size: 14px;
   font-weight: 600;
   transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 
   &.active {
-    background: var(--wb-card-bg);
-    color: var(--wb-purple-deeper);
-    box-shadow: 0 2px 8px var(--wb-purple-alpha-12);
+    background: #16141f;
+    color: #c4b5fd;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
   }
 }
 
@@ -483,7 +624,7 @@ const goReset = () => {
     }
 
     .auth-form__actions {
-      background: var(--wb-card-bg);
+      background: #1f1c2b;
     }
   }
 
@@ -504,7 +645,7 @@ const goReset = () => {
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--wb-purple);
+    color: #a78bfa;
   }
 
   &__actions {
@@ -533,40 +674,40 @@ const goReset = () => {
   label {
     font-size: 13px;
     font-weight: 600;
-    color: var(--wb-text-primary);
+    color: #f4f2fa;
   }
 
   input,
   textarea,
   select {
     width: 100%;
-    border: 1px solid var(--wb-search-border);
+    border: 1px solid #3d3a52;
     border-radius: var(--wb-radius-sm);
     padding: 12px 14px;
-    background: var(--wb-search-bg);
-    color: var(--wb-text-primary);
+    background: #2a2640;
+    color: #f4f2fa;
     transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   }
 
   input {
     &::placeholder {
-      color: var(--wb-text-muted);
+      color: #7a7690;
     }
 
     &:hover {
-      border-color: var(--wb-purple-border);
-      background: var(--wb-card-bg);
+      border-color: #5b4b8a;
+      background: #252238;
     }
 
     &:focus {
-      @include focus-ring($color: var(--wb-purple-light), $width: 4px);
-      background: var(--wb-card-bg);
+      @include focus-ring($color: #a78bfa, $width: 4px);
+      background: #252238;
     }
   }
 }
 
 .field-required {
-  color: var(--wb-tag-warning-text);
+  color: #fdba74;
 }
 
 .form-row {
@@ -580,27 +721,27 @@ const goReset = () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--wb-tag-muted-text);
+  color: #a8a4bc;
   font-size: 13px;
   cursor: pointer;
 
   input {
     width: 16px;
     height: 16px;
-    accent-color: var(--wb-purple-dark);
+    accent-color: #8b5cf6;
   }
 }
 
 .link-btn,
 .inline-link {
   background: transparent;
-  color: var(--wb-purple-dark);
+  color: #a78bfa;
   padding: 0;
   font-weight: 600;
   font-size: 13px;
 
   &:hover {
-    color: var(--wb-purple-deeper);
+    color: #c4b5fd;
   }
 }
 
@@ -608,22 +749,22 @@ const goReset = () => {
   width: 100%;
   height: 48px;
   border-radius: var(--wb-radius-sm);
-  background: linear-gradient(135deg, var(--wb-purple-light) 0%, var(--wb-purple) 42%, var(--wb-purple-dark) 100%);
-  color: #fff;
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 42%, #7c3aed 100%);
+  color: #f8f5ff;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  box-shadow: 0 12px 28px var(--wb-purple-alpha-28);
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.38);
   transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 16px 32px rgba(124, 58, 237, 0.34);
+    box-shadow: 0 16px 32px rgba(124, 58, 237, 0.48);
   }
 
   &:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: 0 8px 18px rgba(124, 58, 237, 0.24);
+    box-shadow: 0 8px 18px rgba(124, 58, 237, 0.32);
   }
 
   &:disabled {
@@ -644,7 +785,7 @@ const goReset = () => {
   margin: 0;
   text-align: center;
   font-size: 13px;
-  color: var(--wb-text-secondary);
+  color: #a8a4bc;
 }
 
 .error-text,
@@ -656,22 +797,23 @@ const goReset = () => {
 .error-text {
   padding: 10px 12px;
   border-radius: var(--wb-radius-sm);
-  background: var(--wb-tag-danger-soft);
-  border: 1px solid var(--wb-tag-danger-border);
-  color: var(--wb-tag-danger-text);
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(252, 165, 165, 0.45);
+  color: #fca5a5;
 }
 
 .success-toast {
   position: fixed;
   left: 50%;
   top: 28px;
+  z-index: 2;
   transform: translateX(-50%);
   padding: 12px 18px;
   border-radius: var(--wb-radius-pill);
-  background: var(--wb-card-bg);
-  border: 1px solid var(--wb-tag-success-border);
-  box-shadow: var(--wb-card-shadow);
-  color: var(--wb-tag-success-text);
+  background: #1f1c2b;
+  border: 1px solid rgba(134, 239, 172, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  color: #86efac;
 }
 
 @media (max-width: 980px) {
@@ -700,6 +842,18 @@ const goReset = () => {
   .auth-panel,
   .submit-btn {
     transition: none;
+  }
+
+  .auth-bg__tile,
+  .visual-orbit {
+    animation: none !important;
+  }
+
+  .auth-bg__tile {
+    opacity: 0.22;
+    bottom: auto;
+    top: var(--tile-left);
+    transform: none;
   }
 }
 </style>

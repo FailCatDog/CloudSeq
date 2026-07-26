@@ -248,7 +248,7 @@ const handleSubmit = () => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .menu-form-dialog {
   max-height: min(70vh, 640px);
   overflow: auto;

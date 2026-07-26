@@ -27,7 +27,7 @@ const subNav = computed(() => buildAdminSubNav(permissionStore.menus()))
 const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .admin-subnav {
   display: flex;
   flex-wrap: wrap;

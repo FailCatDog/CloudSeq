@@ -57,6 +57,7 @@ import { computed, onBeforeUnmount, onMounted, provide } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import ProjectDocTree from './components/ProjectDocTree.vue'
 import { PROJECT_DOCS_KEY, useProjectDocs } from '@/composables/useProjectDocs'
+import { resolveActiveProjectNavPath } from './projectNav'
 
 const route = useRoute()
 const projectDocs = useProjectDocs()
@@ -101,16 +102,12 @@ const navItems = [
   },
 ]
 
-const activeNavPath = computed(() => {
-  if (route.name === 'project-doc' || route.name === 'project-sheet') return null
-  const match = navItems.find((item) => {
-    if (item.to === '/workspace/project/board') return route.name === 'project-board'
-    if (item.to === '/workspace/project/gantt') return route.name === 'project-gantt'
-    if (item.to === '/workspace/project/weekly') return route.name === 'project-weekly'
-    return route.path === item.to || route.path.startsWith(`${item.to}/`)
-  })
-  return match?.to ?? null
-})
+const activeNavPath = computed(() =>
+  resolveActiveProjectNavPath(
+    route,
+    navItems.map((item) => item.to),
+  ),
+)
 
 const handleCreateDocument = async (parentId = null) => {
   try {

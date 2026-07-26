@@ -28,7 +28,7 @@ defineProps({
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .brand-logo {
   display: block;
   object-fit: contain;

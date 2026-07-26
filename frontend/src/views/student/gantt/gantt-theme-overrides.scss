@@ -1,0 +1,114 @@
+/* Force CloudSeq system tokens onto jordium-gantt — beats child [data-theme=dark] reinjection of grey palette */
+
+@mixin gantt-system-tokens {
+  --gantt-primary: var(--wb-purple) !important;
+  --gantt-primary-color: var(--wb-purple) !important;
+  --gantt-primary-dark: var(--wb-purple-dark) !important;
+  --gantt-primary-hover: var(--wb-purple-light) !important;
+  --gantt-primary-light: var(--wb-purple-alpha-20) !important;
+  --gantt-primary-lightest: var(--wb-purple-soft) !important;
+  --gantt-bg-primary: var(--wb-card-bg) !important;
+  --gantt-bg-secondary: var(--wb-search-bg) !important;
+  --gantt-bg-tertiary: var(--wb-card-bg) !important;
+  --gantt-bg-toolbar: var(--wb-bg-page) !important;
+  --gantt-bg-hover: var(--wb-purple-soft) !important;
+  --gantt-bg-hover-parent: var(--wb-purple-alpha-14) !important;
+  --gantt-border-color: var(--wb-search-border) !important;
+  --gantt-border-light: var(--wb-search-border) !important;
+  --gantt-border-medium: var(--wb-search-border) !important;
+  --gantt-border-dark: var(--wb-search-border) !important;
+  --gantt-text-primary: var(--wb-text-primary) !important;
+  --gantt-text-secondary: var(--wb-text-secondary) !important;
+  --gantt-text-muted: var(--wb-text-muted) !important;
+  --gantt-text-header: var(--wb-text-primary) !important;
+  --gantt-text-white: #ffffff !important;
+  --gantt-text-parent: var(--wb-text-primary) !important;
+  --gantt-success: var(--wb-online-green) !important;
+  --gantt-warning: var(--wb-icon-orange) !important;
+  --gantt-danger: var(--wb-tag-danger-text) !important;
+  --gantt-scrollbar-thumb: var(--scroll-thumb) !important;
+  --gantt-scrollbar-thumb-hover: var(--scroll-thumb-hover) !important;
+}
+
+.gantt-page {
+  .gantt-root,
+  .gantt-root[data-theme='light'],
+  .gantt-root[data-theme='dark'],
+  .gantt-root *,
+  .gantt-root [data-theme='light'],
+  .gantt-root [data-theme='dark'] {
+    @include gantt-system-tokens;
+  }
+
+  .gantt-root,
+  .gantt-root[data-theme='light'],
+  .gantt-root[data-theme='dark'] {
+    background: var(--wb-bg-page) !important;
+    color: var(--wb-text-primary);
+    color-scheme: inherit;
+  }
+
+  /* Component hardcodes #fff on panels — replace with system surface */
+  .gantt-panel,
+  .gantt-panel-left,
+  .gantt-panel-right {
+    background: var(--wb-bg-page) !important;
+    box-shadow: none !important;
+    color: var(--wb-text-primary);
+  }
+
+  .gantt-toolbar {
+    background: var(--wb-bg-page) !important;
+    border-bottom-color: var(--wb-search-border) !important;
+    box-shadow: none !important;
+  }
+
+  .task-list,
+  .task-list-body,
+  .task-list .task-row {
+    background: var(--wb-card-bg) !important;
+    color: var(--wb-text-primary) !important;
+  }
+
+  .task-list-header,
+  .task-list-header .col,
+  .timeline-header {
+    background: var(--wb-search-bg) !important;
+    color: var(--wb-text-primary) !important;
+  }
+
+  .task-list .task-row .col,
+  .task-list .task-row .cell {
+    color: var(--wb-text-primary) !important;
+  }
+
+  .weekend {
+    background-color: var(--wb-purple-alpha-06) !important;
+    opacity: 1;
+  }
+
+  .day-column {
+    border-right-color: var(--wb-search-border) !important;
+  }
+
+  .gantt-splitter {
+    background: var(--wb-search-border) !important;
+  }
+
+  /* Hide built-in theme toggle — system sidebar owns theme */
+  .gantt-toolbar .theme-toggle,
+  .gantt-toolbar [title='Theme'],
+  .gantt-toolbar [title='主题'],
+  .gantt-toolbar [aria-label='Theme'],
+  .gantt-toolbar [aria-label='主题'] {
+    display: none !important;
+  }
+}
+
+.drawer-overlay,
+.drawer-overlay[data-theme='light'],
+.drawer-overlay[data-theme='dark'] {
+  @include gantt-system-tokens;
+  background: var(--wb-card-bg) !important;
+  color: var(--wb-text-primary) !important;
+}

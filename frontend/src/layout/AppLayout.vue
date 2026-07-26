@@ -29,7 +29,7 @@
           type="button"
           class="wb-theme-toggle"
           :aria-label="isDark ? '切换为浅色主题' : '切换为深色主题'"
-          @click="toggleTheme"
+          @click="onToggleTheme"
         >
           <span class="wb-theme-toggle__icon" aria-hidden="true">{{ isDark ? '浅' : '深' }}</span>
           <span class="wb-theme-toggle__label">{{ isDark ? '浅色' : '深色' }}</span>
@@ -116,6 +116,21 @@ import {
 } from '@/utils/roleHome'
 
 const { isDark, toggleTheme } = useTheme()
+
+const onToggleTheme = (event) => {
+  const el = event?.currentTarget
+  if (!(el instanceof Element)) {
+    toggleTheme()
+    return
+  }
+  const rect = el.getBoundingClientRect()
+  toggleTheme({
+    origin: {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    },
+  })
+}
 
 const route = useRoute()
 const router = useRouter()

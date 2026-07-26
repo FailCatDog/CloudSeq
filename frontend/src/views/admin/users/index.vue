@@ -255,7 +255,7 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .user-role-hint {
   margin: 0 0 16px;
   color: var(--wb-text-secondary);

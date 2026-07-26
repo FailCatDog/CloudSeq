@@ -22,7 +22,7 @@ defineProps({
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .guest-state {
   display: grid;
   gap: 10px;

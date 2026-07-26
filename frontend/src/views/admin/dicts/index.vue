@@ -455,7 +455,7 @@ const keyColumns = computed(() => [
 onMounted(loadKeys)
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .dict-expand {
   padding: 4px 8px 12px;
 }

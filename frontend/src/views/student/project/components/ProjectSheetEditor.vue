@@ -2,12 +2,14 @@
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import { Sheet, createDefaultDocumentContent } from '@speed-sheet/core'
 import * as Y from 'yjs'
-import { getCurrentInstance, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { theme as antTheme, ConfigProvider } from 'ant-design-vue'
+import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { invalidateCollabToken } from '@/utils/collabTokenCache'
 import { formatDocUpdateLabel } from '@/utils/formatDocUpdate'
 import { NODE_TITLE_MAX_LENGTH } from '@/constants/fieldLimits'
 import { ensureSpeedSheetUi, loadSpeedSheetComponent } from '@/plugins/speedSheet'
 import { downloadNodeExportApi } from '@/api/export'
+import { useTheme } from '@/composables/useTheme'
 
 const sheetDocNeedsInit = (doc) => {
   const sheets = doc.getMap('sheets')
@@ -55,6 +57,15 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:title', 'snapshot'])
+
+const { isDark } = useTheme()
+const sheetAntTheme = computed(() => ({
+  algorithm: isDark.value ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
+  token: {
+    colorPrimary: isDark.value ? '#8b5cf6' : '#10b981',
+    borderRadius: 8,
+  },
+}))
 
 const SpeedSheet = shallowRef(null)
 const ydoc = shallowRef(null)
@@ -239,49 +250,51 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="ps-sheet-editor">
-    <header class="ps-sheet-editor-head">
-      <input
-        class="ps-sheet-editor-title"
-        :value="title"
-        type="text"
-        placeholder="未命名表格"
-        :readonly="!canWrite"
-        :maxlength="NODE_TITLE_MAX_LENGTH"
-        @input="handleTitleInput"
-      >
-      <div class="ps-sheet-editor-meta">
-        <span v-if="lastEditedLabel">{{ lastEditedLabel }}</span>
-        <button
-          type="button"
-          class="ps-sheet-export-btn"
-          :disabled="exporting"
-          @click="handleExportExcel"
+  <ConfigProvider :theme="sheetAntTheme">
+    <div class="ps-sheet-editor">
+      <header class="ps-sheet-editor-head">
+        <input
+          class="ps-sheet-editor-title"
+          :value="title"
+          type="text"
+          placeholder="未命名表格"
+          :readonly="!canWrite"
+          :maxlength="NODE_TITLE_MAX_LENGTH"
+          @input="handleTitleInput"
         >
-          {{ exporting ? '导出中…' : '导出 Excel' }}
-        </button>
-        <span v-if="exportMessage" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ exportMessage }}</span>
-        <span v-else-if="sheetUiError" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ sheetUiError }}</span>
-        <span v-else-if="collabError" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ collabError }}</span>
-      </div>
-    </header>
+        <div class="ps-sheet-editor-meta">
+          <span v-if="lastEditedLabel">{{ lastEditedLabel }}</span>
+          <button
+            type="button"
+            class="ps-sheet-export-btn"
+            :disabled="exporting"
+            @click="handleExportExcel"
+          >
+            {{ exporting ? '导出中…' : '导出 Excel' }}
+          </button>
+          <span v-if="exportMessage" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ exportMessage }}</span>
+          <span v-else-if="sheetUiError" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ sheetUiError }}</span>
+          <span v-else-if="collabError" class="ps-sheet-editor-notice ps-sheet-editor-notice--error">{{ collabError }}</span>
+        </div>
+      </header>
 
-    <div class="ps-sheet-editor-body">
-      <div v-if="!SpeedSheet || !collabReady" class="ps-sheet-editor-loading">
-        {{ sheetUiError ? '表格组件不可用' : '加载表格…' }}
+      <div class="ps-sheet-editor-body">
+        <div v-if="!SpeedSheet || !collabReady" class="ps-sheet-editor-loading">
+          {{ sheetUiError ? '表格组件不可用' : '加载表格…' }}
+        </div>
+        <component
+          :is="SpeedSheet"
+          v-else-if="ydoc"
+          class="ps-sheet-editor-canvas"
+          :ydoc="ydoc"
+          :editable="canWrite"
+          lang="zh"
+          show-toolbar
+          show-formula-bar
+          show-sheet-tabs
+          @change="handleChange"
+        />
       </div>
-      <component
-        :is="SpeedSheet"
-        v-else-if="ydoc"
-        class="ps-sheet-editor-canvas"
-        :ydoc="ydoc"
-        :editable="canWrite"
-        lang="zh"
-        show-toolbar
-        show-formula-bar
-        show-sheet-tabs
-        @change="handleChange"
-      />
     </div>
-  </div>
+  </ConfigProvider>
 </template>

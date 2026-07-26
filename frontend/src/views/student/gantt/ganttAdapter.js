@@ -6,9 +6,9 @@ export const DRAFT_ROW_ID = 'draft-row'
 const TASK_STATUS = PLAN_TASK_STATUS
 
 const TASK_BAR_COLORS = {
-  [TASK_STATUS.NOT_STARTED]: '#8b5cf6',
-  [TASK_STATUS.IN_PROGRESS]: '#7c3aed',
-  [TASK_STATUS.COMPLETED]: '#a78bfa',
+  [TASK_STATUS.NOT_STARTED]: '#a0a0b0', // --wb-text-muted
+  [TASK_STATUS.IN_PROGRESS]: '#8b5cf6', // --wb-purple
+  [TASK_STATUS.COMPLETED]: '#22c55e', // --wb-online-green
   [TASK_STATUS.CANCELLED]: '#a0a0b0',
 }
 

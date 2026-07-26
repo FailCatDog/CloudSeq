@@ -27,7 +27,7 @@ defineProps({
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .admin-placeholder__head {
   display: flex;
   align-items: flex-start;

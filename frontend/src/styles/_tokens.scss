@@ -94,14 +94,14 @@
 }
 
 [data-theme='light'] {
-  // White-dominant shell; mint green only as accent (active nav, buttons, focus)
+  // Mint-layered shell: mint page + mint sidebar + white cards; green accents
   color-scheme: light;
 
-  --wb-bg-page: #ffffff;
+  --wb-bg-page: #f3faf7;
   --wb-sidebar-width: 72px;
   --wb-sidebar-width-expanded: 220px;
-  --wb-sidebar-bg: #ffffff;
-  --wb-sidebar-active: rgba(16, 185, 129, 0.14);
+  --wb-sidebar-bg: #eef8f3;
+  --wb-sidebar-active: rgba(16, 185, 129, 0.16);
   --wb-sidebar-icon: #6b7280;
   --wb-sidebar-icon-active: #059669;
   --wb-sidebar-label: #1a1a2e;
@@ -122,20 +122,20 @@
   --wb-purple-alpha-35: rgba(52, 211, 153, 0.35);
   --wb-purple-alpha-45: rgba(16, 185, 129, 0.45);
   --wb-text-primary: #1a1a2e;
-  --wb-text-secondary: #6b7280;
-  --wb-text-muted: #9ca3af;
+  --wb-text-secondary: #4b6358;
+  --wb-text-muted: #7a9488;
   --wb-card-bg: #ffffff;
-  --wb-search-bg: #f3f4f6;
-  --wb-search-border: #e5e7eb;
-  --wb-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03);
+  --wb-search-bg: #e6f5ee;
+  --wb-search-border: #d8ebe3;
+  --wb-card-shadow: 0 1px 3px rgba(6, 78, 59, 0.04), 0 4px 16px rgba(6, 78, 59, 0.03);
   --wb-radius-card: 20px;
   --wb-radius-sm: 10px;
   --wb-radius-pill: 999px;
   --wb-link-blue: #059669;
   --wb-btn-dark: #1a1a24;
-  --wb-progress-track: #f3f4f6;
-  --wb-timeline-line: #e5e7eb;
-  --wb-code-bg: #f3f4f6;
+  --wb-progress-track: #e6f5ee;
+  --wb-timeline-line: #d8ebe3;
+  --wb-code-bg: #e6f5ee;
   --wb-online-green: #16a34a;
   --wb-icon-purple: #10b981;
   --wb-icon-dark: #1a1a24;
@@ -153,8 +153,8 @@
   --wb-tag-danger-text: #dc2626;
   --wb-tag-danger-border: #fecaca;
   --wb-tag-danger-soft: #fef2f2;
-  --wb-tag-muted-bg: #f3f4f6;
-  --wb-tag-muted-text: #6b7280;
+  --wb-tag-muted-bg: #e6f5ee;
+  --wb-tag-muted-text: #4b6358;
   --wb-tag-draft-bg: #fef3c7;
   --wb-tag-draft-text: #b45309;
 

@@ -6,7 +6,7 @@
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .admin-frame {
   display: flex;
   flex-direction: column;
