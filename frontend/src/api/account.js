@@ -19,3 +19,18 @@ export const registerApi = (data) => {
 export const getProfileApi = (userId) => {
   return request(`${API_PREFIX}/profile/${userId}`)
 }
+
+export const getProfileStatusApi = () => {
+  return request(`${API_PREFIX}/profile/status`)
+}
+
+export const getPermissionsApi = () => {
+  return request(`${API_PREFIX}/permissions`)
+}
+
+export const updateProfileApi = (data) => {
+  return request(`${API_PREFIX}/profile`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}

@@ -43,3 +43,12 @@ export const deleteWeeklyReportApi = (id) => {
     method: 'DELETE',
   })
 }
+
+export const getTeacherWeeklyReviewApi = (params = {}) => {
+  const search = new URLSearchParams()
+  if (params.courseId != null) search.set('courseId', String(params.courseId))
+  if (params.reportYear != null) search.set('reportYear', String(params.reportYear))
+  if (params.reportWeek != null) search.set('reportWeek', String(params.reportWeek))
+  const query = search.toString()
+  return request(query ? `${API_PREFIX}/teacher/review?${query}` : `${API_PREFIX}/teacher/review`)
+}
