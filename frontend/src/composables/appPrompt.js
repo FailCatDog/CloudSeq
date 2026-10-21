@@ -1,6 +1,5 @@
 import { reactive } from 'vue'
 import { TABLE_DEFAULT_SIZE } from '@/constants/docBlockFormats'
-import { PROMPT_TEXT_MAX_LENGTH } from '@/constants/fieldLimits'
 
 /** @typedef {'prompt' | 'confirm' | 'tableSize'} AppPromptMode */
 
@@ -11,7 +10,6 @@ import { PROMPT_TEXT_MAX_LENGTH } from '@/constants/fieldLimits'
  * @property {string} [label]
  * @property {string} [defaultValue]
  * @property {string} [placeholder]
- * @property {number} [maxLength]
  * @property {string} [confirmLabel]
  * @property {string} [cancelLabel]
  * @property {boolean} [danger]
@@ -26,7 +24,6 @@ export const appPromptState = reactive({
   label: '',
   defaultValue: '',
   placeholder: '',
-  maxLength: PROMPT_TEXT_MAX_LENGTH,
   confirmLabel: '确定',
   cancelLabel: '取消',
   confirmDanger: false,
@@ -70,7 +67,6 @@ export const openAppPrompt = (options = {}) => {
       label: options.label ?? '',
       defaultValue: options.defaultValue ?? '',
       placeholder: options.placeholder ?? '',
-      maxLength: options.maxLength ?? PROMPT_TEXT_MAX_LENGTH,
       confirmLabel: options.confirmLabel ?? '确定',
       cancelLabel: options.cancelLabel ?? '取消',
       confirmDanger: false,
@@ -96,7 +92,6 @@ export const openAppTableSize = (options = {}) => {
       label: '',
       defaultValue: '',
       placeholder: '',
-      maxLength: PROMPT_TEXT_MAX_LENGTH,
       tableRows: options.rows ?? TABLE_DEFAULT_SIZE.rows,
       tableCols: options.cols ?? TABLE_DEFAULT_SIZE.cols,
       tableWithHeaderRow: options.withHeaderRow ?? TABLE_DEFAULT_SIZE.withHeaderRow,
@@ -125,7 +120,6 @@ export const openAppConfirm = (options = {}) => {
       label: '',
       defaultValue: '',
       placeholder: '',
-      maxLength: PROMPT_TEXT_MAX_LENGTH,
       confirmLabel: options.confirmLabel ?? '确定',
       cancelLabel: options.cancelLabel ?? '取消',
       confirmDanger: Boolean(options.danger),

@@ -1,11 +1,5 @@
 <script setup>
 import { nextTick, ref, watch } from 'vue'
-import {
-  PROMPT_TEXT_MAX_LENGTH,
-  TABLE_MAX_COLS,
-  TABLE_MAX_ROWS,
-  TABLE_MIN_SIZE,
-} from '@/constants/fieldLimits'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -19,7 +13,6 @@ const props = defineProps({
   label: { type: String, default: '' },
   defaultValue: { type: String, default: '' },
   placeholder: { type: String, default: '' },
-  maxLength: { type: Number, default: PROMPT_TEXT_MAX_LENGTH },
   confirmLabel: { type: String, default: '确定' },
   cancelLabel: { type: String, default: '取消' },
   confirmDanger: { type: Boolean, default: false },
@@ -36,7 +29,9 @@ const rowsValue = ref(3)
 const colsValue = ref(3)
 const withHeaderRowValue = ref(true)
 
-const TABLE_MIN = TABLE_MIN_SIZE
+const TABLE_MIN = 1
+const TABLE_MAX_ROWS = 20
+const TABLE_MAX_COLS = 12
 
 const clampTableSize = (value, max) => {
   const num = Number.parseInt(String(value), 10)
@@ -131,7 +126,6 @@ const handleKeydown = (event) => {
             type="text"
             class="app-prompt-input"
             :placeholder="placeholder"
-            :maxlength="maxLength"
             autocomplete="off"
             @keydown.enter.prevent="handleConfirm"
           >

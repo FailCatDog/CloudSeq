@@ -1,24 +1,22 @@
-import { computed, inject, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { openAppConfirm, openAppPrompt } from '@/composables/appPrompt'
 import { getDocumentApi } from '@/api/document'
-import { getSheetApi, issueSheetCollabTokenApi } from '@/api/sheet'
 import { getCollabSession } from '@/utils/collabTokenCache'
 import {
   createWorkspaceNodeApi,
   deleteWorkspaceNodeApi,
+  getCurrentWorkspaceApi,
   getWorkspaceTreeApi,
   renameWorkspaceNodeApi,
 } from '@/api/workspace'
-import { loadCurrentWorkspace, useWorkspace } from '@/composables/useWorkspace'
 import { WORKSPACE_NODE_TYPE } from '@/constants/workspace'
 
 const TITLE_SAVE_DELAY_MS = 500
 
 const findNode = (nodes, id) => {
-  const targetId = String(id)
   for (const node of nodes) {
-    if (String(node.id) === targetId) return node
+    if (node.id === id) return node
     if (node.children?.length) {
       const found = findNode(node.children, id)
       if (found) return found
@@ -44,32 +42,19 @@ const uniqueTitle = (nodes, base) => {
 }
 
 const isDocumentNode = (node) => node?.nodeType === WORKSPACE_NODE_TYPE.DOCUMENT
-const isSheetNode = (node) => node?.nodeType === WORKSPACE_NODE_TYPE.SHEET
-const isLeafNode = (node) => isDocumentNode(node) || isSheetNode(node)
-
-export const PROJECT_DOCS_KEY = Symbol('projectDocs')
-
-export function useProjectDocsContext() {
-  const ctx = inject(PROJECT_DOCS_KEY)
-  if (!ctx) {
-    throw new Error('useProjectDocsContext must be used within ProjectLayout')
-  }
-  return ctx
-}
 
 export function useProjectDocs() {
   const router = useRouter()
   const route = useRoute()
-  const { workspaceId } = useWorkspace()
+  const workspaceId = ref(null)
   const rootTitle = ref('项目文档')
   const nodes = ref([])
-  const activeLeafId = ref(null)
+  const activeDocId = ref(null)
   const activeDocDetail = ref(null)
-  const activeSheetDetail = ref(null)
   const expandedFolders = ref(new Set())
   const renamingNodeId = ref(null)
   const renameOriginalTitle = ref('')
-  const pendingOpenLeafId = ref(null)
+  const pendingOpenDocId = ref(null)
   const loading = ref(false)
   const errorMessage = ref('')
 
@@ -77,17 +62,14 @@ export function useProjectDocs() {
   let pendingTitleNodeId = null
   let pendingTitle = ''
   let latestContentSnapshot = ''
-  let latestSheetSnapshot = ''
-
-  const activeDocId = computed(() => activeLeafId.value)
 
   const activeDoc = computed(() => {
-    if (activeLeafId.value == null) return null
-    const node = findNode(nodes.value, activeLeafId.value)
+    if (activeDocId.value == null) return null
+    const node = findNode(nodes.value, activeDocId.value)
     if (!node || !isDocumentNode(node)) return null
 
     const detail = activeDocDetail.value
-    if (!detail || String(detail.nodeId) !== String(activeLeafId.value)) {
+    if (!detail || detail.nodeId !== activeDocId.value) {
       return {
         ...node,
         content: '',
@@ -95,7 +77,6 @@ export function useProjectDocs() {
         canWrite: false,
         collab: null,
         loading: true,
-        updateDate: null,
       }
     }
 
@@ -106,36 +87,6 @@ export function useProjectDocs() {
       canWrite: detail.canWrite,
       collab: detail.collab,
       loading: detail.loading,
-      updateDate: detail.updateDate ?? null,
-    }
-  })
-
-  const activeSheet = computed(() => {
-    if (activeLeafId.value == null) return null
-    const node = findNode(nodes.value, activeLeafId.value)
-    if (!node || !isSheetNode(node)) return null
-
-    const detail = activeSheetDetail.value
-    if (!detail || String(detail.nodeId) !== String(activeLeafId.value)) {
-      return {
-        ...node,
-        contentJson: '',
-        version: null,
-        canWrite: false,
-        collab: null,
-        loading: true,
-        updateDate: null,
-      }
-    }
-
-    return {
-      ...node,
-      contentJson: detail.contentJson,
-      version: detail.version,
-      canWrite: detail.canWrite,
-      collab: detail.collab,
-      loading: detail.loading,
-      updateDate: detail.updateDate ?? null,
     }
   })
 
@@ -143,7 +94,8 @@ export function useProjectDocs() {
     loading.value = true
     errorMessage.value = ''
     try {
-      const workspace = await loadCurrentWorkspace()
+      const workspace = await getCurrentWorkspaceApi()
+      workspaceId.value = workspace.id
 
       const tree = await getWorkspaceTreeApi(workspace.id)
       rootTitle.value = '项目文档'
@@ -155,7 +107,7 @@ export function useProjectDocs() {
     }
   }
 
-  const saveLeafTitle = async (nodeId, title) => {
+  const saveDocTitle = async (nodeId, title) => {
     if (!title?.trim()) return
     await renameWorkspaceNodeApi(nodeId, { title: title.trim() })
   }
@@ -170,7 +122,7 @@ export function useProjectDocs() {
       pendingTitle = ''
       if (id == null || !title) return
       try {
-        await saveLeafTitle(id, title)
+        await saveDocTitle(id, title)
       } catch (error) {
         window.alert(error?.message || '标题保存失败')
       }
@@ -188,7 +140,7 @@ export function useProjectDocs() {
     const title = pendingTitle
     pendingTitleNodeId = null
     pendingTitle = ''
-    await saveLeafTitle(id, title)
+    await saveDocTitle(id, title)
   }
 
   const loadDocument = async (nodeId) => {
@@ -199,7 +151,6 @@ export function useProjectDocs() {
       canWrite: false,
       loading: true,
     }
-    activeSheetDetail.value = null
     try {
       const [doc, collab] = await Promise.all([
         getDocumentApi(nodeId),
@@ -213,7 +164,6 @@ export function useProjectDocs() {
         canWrite: Boolean(doc.canWrite),
         loading: false,
         collab,
-        updateDate: doc.updateDate ?? null,
       }
       latestContentSnapshot = doc.contentMd ?? ''
 
@@ -221,113 +171,68 @@ export function useProjectDocs() {
       if (node && doc.title) node.title = doc.title
     } catch (error) {
       activeDocDetail.value = null
-      activeLeafId.value = null
+      activeDocId.value = null
       throw error
     }
   }
 
-  const loadSheet = async (nodeId) => {
-    activeSheetDetail.value = {
-      nodeId,
-      contentJson: '',
-      version: 0,
-      canWrite: false,
-      loading: true,
-    }
-    activeDocDetail.value = null
-    try {
-      const [sheet, collab] = await Promise.all([
-        getSheetApi(nodeId),
-        getCollabSession(nodeId, { issueTokenApi: issueSheetCollabTokenApi }),
-      ])
-
-      activeSheetDetail.value = {
-        nodeId: sheet.nodeId,
-        contentJson: sheet.contentJson ?? '',
-        version: sheet.version,
-        canWrite: Boolean(sheet.canWrite),
-        loading: false,
-        collab,
-        updateDate: sheet.updateDate ?? null,
-      }
-      latestSheetSnapshot = sheet.contentJson ?? ''
-
-      const node = findNode(nodes.value, nodeId)
-      if (node && sheet.title) node.title = sheet.title
-    } catch (error) {
-      activeSheetDetail.value = null
-      activeLeafId.value = null
-      throw error
-    }
-  }
-
-  const loadLeafByRoute = async (id) => {
+  const loadDocByRoute = async (id) => {
     const node = findNode(nodes.value, id)
-    if (!isLeafNode(node)) {
+    if (!isDocumentNode(node)) {
       await router.replace('/workspace/project/board')
       return
     }
+    if (String(activeDocId.value) === String(id) && activeDocDetail.value && !activeDocDetail.value.loading) return
 
-    if (String(activeLeafId.value) === String(id)) {
-      const detail = isDocumentNode(node) ? activeDocDetail.value : activeSheetDetail.value
-      if (detail && !detail.loading) return
-    }
-
-    activeLeafId.value = id
+    activeDocId.value = id
     errorMessage.value = ''
+
     await flushPendingSaves()
 
     try {
-      if (isDocumentNode(node)) {
-        await loadDocument(id)
-      } else {
-        await loadSheet(id)
-      }
+      await loadDocument(id)
     } catch (error) {
-      errorMessage.value = error?.message || (isDocumentNode(node) ? '加载文档失败' : '加载表格失败')
+      errorMessage.value = error?.message || '加载文档失败'
     }
   }
 
-  const selectLeaf = async (id) => {
+  const selectDoc = async (id) => {
     const node = findNode(nodes.value, id)
-    if (!isLeafNode(node)) return
+    if (!isDocumentNode(node)) return
 
     const nodeId = String(id)
-    const routeName = isSheetNode(node) ? 'project-sheet' : 'project-doc'
-    if (route.name === routeName && String(route.params.nodeId) === nodeId) {
-      await loadLeafByRoute(id)
+    if (route.name === 'project-doc' && String(route.params.nodeId) === nodeId) {
+      await loadDocByRoute(id)
       return
     }
-    await router.push({ name: routeName, params: { nodeId } })
+    await router.push({ name: 'project-doc', params: { nodeId } })
   }
 
   watch(
     [() => route.name, () => route.params.nodeId, nodes],
     async ([name, nodeId]) => {
-      if ((name !== 'project-doc' && name !== 'project-sheet') || !nodeId) return
+      if (name !== 'project-doc' || !nodeId) return
       if (!findNode(nodes.value, nodeId)) return
-      await loadLeafByRoute(nodeId)
+      await loadDocByRoute(nodeId)
     },
     { immediate: true },
   )
 
   watch(
     () => route.name,
-    (name, prevName) => {
-      const leavingLeafRoute = prevName === 'project-doc' || prevName === 'project-sheet'
-      const enteringLeafRoute = name === 'project-doc' || name === 'project-sheet'
-      if (leavingLeafRoute && !enteringLeafRoute) {
-        void flushPendingSaves()
-        clearActiveLeaf()
+    async (name, prevName) => {
+      if (name === 'project-doc') return
+
+      if (activeDocId.value != null) {
+        activeDocId.value = null
+        activeDocDetail.value = null
+      }
+
+      if (prevName === 'project-doc') {
+        await flushPendingSaves()
       }
     },
   )
-
-  const clearActiveLeaf = () => {
-    activeLeafId.value = null
-    activeDocDetail.value = null
-    activeSheetDetail.value = null
-  }
 
   const toggleFolder = (id) => {
     const next = new Set(expandedFolders.value)
@@ -384,32 +289,7 @@ export function useProjectDocs() {
       expandedFolders.value = new Set([...expandedFolders.value, targetParentId])
     }
     if (created?.id != null) {
-      pendingOpenLeafId.value = created.id
-      startRenameNode(created.id)
-    }
-
-    return created
-  }
-
-  const createSheet = async (parentId = null) => {
-    if (!workspaceId.value) throw new Error('工作区未加载')
-
-    const defaultTitle = uniqueTitle(nodes.value, '未命名表格')
-    const targetParentId = parentId ?? null
-    const created = await createWorkspaceNodeApi({
-      workspaceId: workspaceId.value,
-      parentId: targetParentId,
-      nodeType: WORKSPACE_NODE_TYPE.SHEET,
-      title: defaultTitle,
-    })
-
-    await loadTree()
-
-    if (targetParentId != null) {
-      expandedFolders.value = new Set([...expandedFolders.value, targetParentId])
-    }
-    if (created?.id != null) {
-      pendingOpenLeafId.value = created.id
+      pendingOpenDocId.value = created.id
       startRenameNode(created.id)
     }
 
@@ -423,42 +303,36 @@ export function useProjectDocs() {
     renamingNodeId.value = nodeId
   }
 
-  const defaultLeafTitle = (node) => {
-    if (isSheetNode(node)) return '未命名表格'
-    if (isDocumentNode(node)) return '未命名文档'
-    return '新建文件夹'
-  }
-
   const commitNodeRename = async (nodeId, title) => {
     if (renamingNodeId.value == null || String(renamingNodeId.value) !== String(nodeId)) return
 
     const node = findNode(nodes.value, nodeId)
     const originalTitle = renameOriginalTitle.value
-    const shouldOpenLeaf = pendingOpenLeafId.value != null
-      && String(pendingOpenLeafId.value) === String(nodeId)
+    const shouldOpenDoc = pendingOpenDocId.value != null
+      && String(pendingOpenDocId.value) === String(nodeId)
 
     renamingNodeId.value = null
     renameOriginalTitle.value = ''
-    pendingOpenLeafId.value = null
+    pendingOpenDocId.value = null
 
     if (!node) return
 
     const trimmed = title?.trim()
-    const finalTitle = trimmed || originalTitle || defaultLeafTitle(node)
+    const fallbackTitle = isDocumentNode(node) ? '未命名文档' : '新建文件夹'
+    const finalTitle = trimmed || originalTitle || fallbackTitle
 
     if (finalTitle === originalTitle) {
-      if (shouldOpenLeaf) await selectLeaf(nodeId)
+      if (shouldOpenDoc) await selectDoc(nodeId)
       return
     }
 
     node.title = finalTitle
     try {
       await renameWorkspaceNodeApi(nodeId, { title: finalTitle })
-      if (shouldOpenLeaf) {
-        await selectLeaf(nodeId)
-      } else if (activeLeafId.value === nodeId && isLeafNode(node)) {
-        if (isDocumentNode(node)) await loadDocument(nodeId)
-        else await loadSheet(nodeId)
+      if (shouldOpenDoc) {
+        await selectDoc(nodeId)
+      } else if (activeDocId.value === nodeId && isDocumentNode(node)) {
+        await loadDocument(nodeId)
       }
     } catch (error) {
       node.title = originalTitle
@@ -474,25 +348,13 @@ export function useProjectDocs() {
 
     renamingNodeId.value = null
     renameOriginalTitle.value = ''
-    pendingOpenLeafId.value = null
+    pendingOpenDocId.value = null
   }
 
   const updateDocSnapshot = (content) => {
     latestContentSnapshot = content ?? ''
     const detail = activeDocDetail.value
-    if (detail) {
-      detail.contentMd = latestContentSnapshot
-      detail.updateDate = new Date().toISOString()
-    }
-  }
-
-  const updateSheetSnapshot = (contentJson) => {
-    latestSheetSnapshot = contentJson ?? ''
-    const detail = activeSheetDetail.value
-    if (detail) {
-      detail.contentJson = latestSheetSnapshot
-      detail.updateDate = new Date().toISOString()
-    }
+    if (detail) detail.contentMd = latestContentSnapshot
   }
 
   const updateDocTitle = (id, title) => {
@@ -501,20 +363,7 @@ export function useProjectDocs() {
     node.title = title.trim()
 
     const detail = activeDocDetail.value
-    if (!detail || String(detail.nodeId) !== String(id) || !detail.canWrite || detail.loading) return
-
-    pendingTitleNodeId = id
-    pendingTitle = title.trim()
-    scheduleTitleSave(id)
-  }
-
-  const updateSheetTitle = (id, title) => {
-    const node = findNode(nodes.value, id)
-    if (!node || !title.trim()) return
-    node.title = title.trim()
-
-    const detail = activeSheetDetail.value
-    if (!detail || String(detail.nodeId) !== String(id) || !detail.canWrite || detail.loading) return
+    if (!detail || detail.nodeId !== id || !detail.canWrite || detail.loading) return
 
     pendingTitleNodeId = id
     pendingTitle = title.trim()
@@ -531,11 +380,7 @@ export function useProjectDocs() {
     const node = findNode(nodes.value, nodeId)
     if (!node) throw new Error('节点不存在')
 
-    const label = node.nodeType === WORKSPACE_NODE_TYPE.FOLDER
-      ? '文件夹'
-      : isSheetNode(node)
-        ? '表格'
-        : '文档'
+    const label = node.nodeType === WORKSPACE_NODE_TYPE.FOLDER ? '文件夹' : '文档'
 
     const confirmed = await openAppConfirm({
       title: '删除确认',
@@ -549,9 +394,10 @@ export function useProjectDocs() {
     await flushPendingSaves()
     await deleteWorkspaceNodeApi(nodeId)
 
-    if (activeLeafId.value != null && activeLeafId.value === nodeId) {
-      clearActiveLeaf()
-      if (route.name === 'project-doc' || route.name === 'project-sheet') {
+    if (activeDocId.value != null && activeDocId.value === nodeId) {
+      activeDocId.value = null
+      activeDocDetail.value = null
+      if (route.name === 'project-doc') {
         await router.push('/workspace/project/board')
       }
     }
@@ -564,30 +410,22 @@ export function useProjectDocs() {
     rootTitle,
     nodes,
     activeDocId,
-    activeLeafId,
     activeDoc,
-    activeSheet,
     expandedFolders,
     renamingNodeId,
     loading,
     errorMessage,
     loadTree,
-    selectDoc: selectLeaf,
-    selectLeaf,
+    selectDoc,
     toggleFolder,
     createDocument,
-    createSheet,
     createFolder,
     renameNode,
     commitNodeRename,
     cancelNodeRename,
     deleteNode,
     updateDocSnapshot,
-    updateSheetSnapshot,
     updateDocTitle,
-    updateSheetTitle,
     flushPendingSaves,
-    clearActiveDoc: clearActiveLeaf,
-    clearActiveLeaf,
   }
 }

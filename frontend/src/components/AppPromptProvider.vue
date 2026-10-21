@@ -20,7 +20,6 @@ const handleCancel = () => {
     :label="appPromptState.label"
     :default-value="appPromptState.defaultValue"
     :placeholder="appPromptState.placeholder"
-    :max-length="appPromptState.maxLength"
     :confirm-label="appPromptState.confirmLabel"
     :cancel-label="appPromptState.cancelLabel"
     :confirm-danger="appPromptState.confirmDanger"
