@@ -41,9 +41,15 @@ CloudSeq/
 
 ## 配置说明
 
-首次启动前，请分别检查 `backend/src/main/resources/application.yml`、`application-dev.yml`、`application-prod.yml`，以及 `collab-server` 的配置，并按本地环境配置数据库、Redis、MinIO、服务地址和协作服务密钥。请使用环境变量或本地未提交配置提供真实凭证，不要将密码、JWT 密钥或内部服务密钥提交到代码仓库。
+后端配置示例位于 `backend/src/main/resources/application-example.yml`。请在本地复制为 `application.yml`，再按实际环境修改配置；数据库、Redis、MinIO 和协作服务的凭证建议通过环境变量提供。真实环境配置文件已加入 `.gitignore`，不要提交密码、JWT 密钥或内部服务密钥。
 
-后端默认使用 `dev` Spring Profile，HTTP 端口为 `19001`。前端开发服务器使用 Vite，协作服务端口和前端代理配置请以 `frontend/vite.config.js`、`collab-server/src/config.js` 及后端配置为准。
+示例配置使用 `example` Spring Profile，HTTP 端口默认为 `19001`。可在 `backend` 目录启动时指定 profile：
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=example
+```
+
+前端开发服务器使用 Vite，协作服务端口和前端代理配置请以 `frontend/vite.config.js`、`collab-server/src/config.js` 及后端配置为准。
 
 ## 本地开发
 

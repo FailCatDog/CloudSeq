@@ -48,3 +48,8 @@ build/
 /.idea/
 /frontend/.idea/
 .agents
+
+# 本地 Spring Boot 配置（提交 application-example.yml 示例）
+/backend/src/main/resources/application.yml
+/backend/src/main/resources/application-*.yml
+!/backend/src/main/resources/application-example.yml
