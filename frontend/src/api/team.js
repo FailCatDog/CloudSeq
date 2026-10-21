@@ -16,6 +16,18 @@ export const addTeamMemberApi = (data) => {
   })
 }
 
+/** 当前学生加入指定小组 */
+export const joinTeamApi = (teamId) => {
+  return request(`${API_PREFIX}/${teamId}/join`, {
+    method: 'POST',
+  })
+}
+
+/** 当前学生同课号下可加入的小组 */
+export const listCourseTeamsApi = () => {
+  return request(`${API_PREFIX}/course-teams`)
+}
+
 export const removeTeamMemberApi = (teamId, userId) => {
   const params = new URLSearchParams({
     teamId: String(teamId),
@@ -51,6 +63,27 @@ export const submitTeamTopicApi = (data) => {
 
 export const listTeamTopicApprovalsApi = (teamId) => {
   return request(`${API_PREFIX}/${teamId}/topic-approvals`)
+}
+
+export const listTeacherTopicApprovalsApi = (params = {}) => {
+  const search = new URLSearchParams()
+  if (params.approvalStatus) search.set('approvalStatus', params.approvalStatus)
+  const query = search.toString()
+  return request(query ? `${API_PREFIX}/topic-approvals?${query}` : `${API_PREFIX}/topic-approvals`)
+}
+
+export const listTeacherTeamOverviewApi = (params = {}) => {
+  const search = new URLSearchParams()
+  if (params.teamStatus) search.set('teamStatus', params.teamStatus)
+  const query = search.toString()
+  return request(query ? `${API_PREFIX}/overview?${query}` : `${API_PREFIX}/overview`)
+}
+
+export const reviewTopicApprovalApi = (data) => {
+  return request(`${API_PREFIX}/topic/review`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
 }
 
 export const getCurrentTeamApi = () => {

@@ -4,4 +4,5 @@ import { CacheCode } from '@/constants/cacheCode.js'
 export const WORKSPACE_NODE_TYPE = {
   FOLDER: CacheCode.WORKSPACE_NODE_TYPE_FOLDER,
   DOCUMENT: CacheCode.WORKSPACE_NODE_TYPE_DOCUMENT,
+  SHEET: CacheCode.WORKSPACE_NODE_TYPE_SHEET,
 }

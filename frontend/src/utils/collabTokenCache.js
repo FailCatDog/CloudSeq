@@ -1,4 +1,5 @@
 import { issueCollabTokenApi } from '@/api/document'
+import { issueSheetCollabTokenApi } from '@/api/sheet'
 
 /** 距过期前多久视为需要刷新（毫秒） */
 const REFRESH_BUFFER_MS = 60_000
@@ -278,12 +279,12 @@ const toCollabSession = (entry) => ({
   getToken: () => resolveCollabToken(entry.nodeId),
 })
 
-const fetchCollabToken = async (nodeId) => {
+const fetchCollabToken = async (nodeId, issueTokenApi = issueCollabTokenApi) => {
   const key = normalizeNodeId(nodeId)
 
   if (inflight.has(key)) return inflight.get(key)
 
-  const promise = issueCollabTokenApi(nodeId)
+  const promise = issueTokenApi(nodeId)
     .then((collab) => {
       const entry = {
         nodeId: key,
@@ -312,17 +313,20 @@ const resolveCachedEntry = (nodeId) => {
 }
 
 /** 获取协同会话（优先复用未过期的缓存 token） */
-export const getCollabSession = async (nodeId) => {
+export const getCollabSession = async (nodeId, { issueTokenApi = issueCollabTokenApi } = {}) => {
   const cached = resolveCachedEntry(nodeId)
-  if (cached) return toCollabSession(cached)
-  return toCollabSession(await fetchCollabToken(nodeId))
+  const entry = cached || await fetchCollabToken(nodeId, issueTokenApi)
+  return {
+    ...toCollabSession(entry),
+    getToken: () => resolveCollabToken(nodeId, { issueTokenApi }),
+  }
 }
 
 /** 供 Hocuspocus 连接时获取 token，必要时自动刷新 */
-export const resolveCollabToken = async (nodeId) => {
+export const resolveCollabToken = async (nodeId, { issueTokenApi = issueCollabTokenApi } = {}) => {
   const cached = resolveCachedEntry(nodeId)
   if (cached) return cached.token
-  return (await fetchCollabToken(nodeId)).token
+  return (await fetchCollabToken(nodeId, issueTokenApi)).token
 }
 
 /** 鉴权失败时清除缓存，下次会重新签发 */
